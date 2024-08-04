@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 15:42:21 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 15:42:22 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 15:54:51 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,12 +35,14 @@ namespace TTY {
 
 static size_t    VGA_WIDTH;
 static size_t    VGA_HEIGHT;
-static uint16_t *VGA_MEMORY;
+static uint16_t *VGA_MEMORY = nullptr;
+;
 
 static size_t    terminal_row;
 static size_t    terminal_col;
 static uint8_t   terminal_color;
-static uint16_t *terminal_buffer;
+static uint16_t *terminal_buffer = nullptr;
+;
 
 static char s_ansi_escape_mode = '\0';
 static int  s_ansi_escape_index = 0;
@@ -73,6 +75,7 @@ void initialize() {
 		VGA_WIDTH = fb.width;
 		VGA_HEIGHT = fb.height;
 		VGA_MEMORY = (uint16_t *) fb.addr;
+		dprintln("width: {}, height: {}, bpp: {}, pitch: {}", fb.width, fb.height, fb.bpp, fb.pitch);
 	} else {
 		VGA_WIDTH = 80;
 		VGA_HEIGHT = 25;
@@ -87,13 +90,7 @@ void initialize() {
 
 	if (s_multiboot_info->flags & (1 << 12))
 		if (s_multiboot_info->framebuffer.type != 2)
-			Kernel::panic("Invalid framebuffer_type in multiboot info");
-
-	for (int i = 0; i < 16; i++) {
-		terminal_color = vga_entry_color((vga_color) i, VGA_COLOR_BLACK);
-		putchar('#');
-	}
-	putchar('\n');
+			dprintln("Invalid framebuffer_type in multiboot info");
 }
 
 void setcolor(uint8_t color) {
@@ -144,50 +141,50 @@ static void handle_ansi_SGR() {
 		terminal_color = vga_set_foreground(VGA_COLOR_BLACK, terminal_color);
 		break;
 	case 31:
-		terminal_color = vga_set_foreground(VGA_COLOR_RED, terminal_color);
+		terminal_color = vga_set_foreground(VGA_COLOR_LIGHT_RED, terminal_color);
 		break;
 	case 32:
-		terminal_color = vga_set_foreground(VGA_COLOR_GREEN, terminal_color);
+		terminal_color = vga_set_foreground(VGA_COLOR_LIGHT_GREEN, terminal_color);
 		break;
 	case 33:
 		terminal_color = vga_set_foreground(VGA_COLOR_LIGHT_BROWN, terminal_color);
 		break;
 	case 34:
-		terminal_color = vga_set_foreground(VGA_COLOR_BLUE, terminal_color);
+		terminal_color = vga_set_foreground(VGA_COLOR_LIGHT_BLUE, terminal_color);
 		break;
 	case 35:
-		terminal_color = vga_set_foreground(VGA_COLOR_MAGENTA, terminal_color);
+		terminal_color = vga_set_foreground(VGA_COLOR_LIGHT_MAGENTA, terminal_color);
 		break;
 	case 36:
-		terminal_color = vga_set_foreground(VGA_COLOR_CYAN, terminal_color);
+		terminal_color = vga_set_foreground(VGA_COLOR_LIGHT_CYAN, terminal_color);
 		break;
 	case 37:
-		terminal_color = vga_set_foreground(VGA_COLOR_DARK_GREY, terminal_color);
+		terminal_color = vga_set_foreground(VGA_COLOR_LIGHT_GREY, terminal_color);
 		break;
 
 	case 40:
 		terminal_color = vga_set_background(VGA_COLOR_BLACK, terminal_color);
 		break;
 	case 41:
-		terminal_color = vga_set_background(VGA_COLOR_RED, terminal_color);
+		terminal_color = vga_set_background(VGA_COLOR_LIGHT_RED, terminal_color);
 		break;
 	case 42:
-		terminal_color = vga_set_background(VGA_COLOR_GREEN, terminal_color);
+		terminal_color = vga_set_background(VGA_COLOR_LIGHT_GREEN, terminal_color);
 		break;
 	case 43:
 		terminal_color = vga_set_background(VGA_COLOR_LIGHT_BROWN, terminal_color);
 		break;
 	case 44:
-		terminal_color = vga_set_background(VGA_COLOR_BLUE, terminal_color);
+		terminal_color = vga_set_background(VGA_COLOR_LIGHT_BLUE, terminal_color);
 		break;
 	case 45:
-		terminal_color = vga_set_background(VGA_COLOR_MAGENTA, terminal_color);
+		terminal_color = vga_set_background(VGA_COLOR_LIGHT_MAGENTA, terminal_color);
 		break;
 	case 46:
-		terminal_color = vga_set_background(VGA_COLOR_CYAN, terminal_color);
+		terminal_color = vga_set_background(VGA_COLOR_LIGHT_CYAN, terminal_color);
 		break;
 	case 47:
-		terminal_color = vga_set_background(VGA_COLOR_DARK_GREY, terminal_color);
+		terminal_color = vga_set_background(VGA_COLOR_LIGHT_GREY, terminal_color);
 		break;
 	}
 }
@@ -311,6 +308,8 @@ static void handle_ansi_escape(char c) {
 }
 
 void putchar(char c) {
+	if (VGA_MEMORY == nullptr)
+		return;
 	if (s_ansi_escape_mode)
 		return handle_ansi_escape(c);
 

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 01:34:31 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 15:29:55 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 15:52:29 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,8 +141,9 @@ void *kmalloc(size_t size) {
 }
 
 void kfree(void *addr) {
+	if (addr == nullptr)
+		return;
 	// TODO: use binary search etc.
-
 	size_t node_index = -1;
 	for (size_t i = 0; i < s_kmalloc_node_count; i++) {
 		if (s_kmalloc_node_head[i].addr == addr) {

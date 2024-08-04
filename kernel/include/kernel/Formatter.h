@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 15:15:39 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 15:47:15 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 16:07:19 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,15 +33,11 @@ static size_t print_argument(const char *format, T arg);
 template <void (*PUTC_LIKE)(char), typename T>
 static void print_value(T value, const ValueFormat &format);
 
-/*
-
-    IMPLEMENTATION
-*/
-
 struct ValueFormat {
 	int  base = 10;
 	int  percision = 3;
 	bool upper = false;
+	int  fill = 0;
 };
 
 template <void (*PUTC_LIKE)(char)> void print(const char *format) {
@@ -84,6 +80,15 @@ size_t print_argument(const char *format, Arg argument) {
 		if (!format[i] || format[i] == '}')
 			break;
 
+		if ('0' <= format[i] && format[i] <= '9') {
+			int fill = 0;
+			while ('0' <= format[i] && format[i] <= '9') {
+				fill = (fill * 10) + (format[i] - '0');
+				i++;
+			}
+			value_format.fill = fill;
+		}
+
 		switch (format[i]) {
 		case 'b':
 			value_format.base = 2;
@@ -120,7 +125,17 @@ size_t print_argument(const char *format, Arg argument) {
 			value_format.upper = false;
 			i++;
 			break;
+		case 'x':
+			value_format.base = 16;
+			value_format.upper = false;
+			i++;
+			break;
 		case 'H':
+			value_format.base = 16;
+			value_format.upper = true;
+			i++;
+			break;
+		case 'X':
 			value_format.base = 16;
 			value_format.upper = true;
 			i++;
@@ -165,8 +180,11 @@ static char value_to_base_char(uint8_t value, int base, bool upper) {
 
 template <void (*PUTC_LIKE)(char), typename T>
 void print_integer(T value, const ValueFormat &format) {
-	if (value == 0)
-		return PUTC_LIKE('0');
+	if (value == 0) {
+		for (int i = 0; i < format.fill || i < 1; i++)
+			PUTC_LIKE('0');
+		return;
+	}
 
 	bool sign = false;
 
@@ -186,6 +204,9 @@ void print_integer(T value, const ValueFormat &format) {
 		*(--ptr) = value_to_base_char(value % format.base, format.base, format.upper);
 		value /= format.base;
 	}
+
+	while (ptr >= buffer + sizeof(buffer) - format.fill)
+		*(--ptr) = '0';
 
 	if (sign)
 		*(--ptr) = '-';

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 11:14:27 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 12:09:07 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 15:57:47 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,7 +81,6 @@ INTERRUPT_HANDLER(0x10, "Coprocessor error")
 void handle_irq() {
 	uint16_t isr = PIC::get_isr();
 	if (!isr) {
-		kprint("Spurious IRQ\n");
 		return;
 	}
 
@@ -153,8 +152,8 @@ void initialize() {
 	REGISTER_HANDLER(0x0f);
 	REGISTER_HANDLER(0x10);
 
-	for (uint8_t i = 0; i < sizeof(s_irq_handlers) / sizeof(*s_irq_handlers); i++)
-		s_irq_handlers[i] = nullptr;
+	for (uint8_t i = 0; i < 16; i++)
+		register_irq_handler(i, nullptr);
 
 	flush_idt();
 }

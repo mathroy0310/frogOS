@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 00:31:20 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 15:44:11 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 15:56:37 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,6 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	kprintln("\e[32mHello from the kernel!\e[0m");
 	dprintln("\e[32mHello from the kernel!\e[0m");
 	
-
 	ENABLE_INTERRUPTS();
 
 	for (;;) {

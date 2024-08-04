@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/04 11:38:17 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/04 11:38:18 by mathroy0310    `                          #
+#    Updated: 2024/08/04 16:04:45 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,8 +27,8 @@ LIBDIR?=$(EXEC_PREFIX)/lib
  
 CFLAGS:=$(CFLAGS) -D__is_libc -Iinclude -ffreestanding -Wall -Wextra
 CPPFLAGS:=$(CPPFLAGS)
-LIBK_CFLAGS:=$(CFLAGS)
-LIBK_CPPFLAGS:=$(CPPFLAGS) -D__is_libk
+LIBK_CFLAGS:=$(CFLAGS) -D__is_libk
+LIBK_CPPFLAGS:=$(CPPFLAGS)
  
 ARCHDIR=arch/$(HOSTARCH)
  
@@ -41,27 +41,27 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
  
 BUILDDIR=$(abspath build)
  
-FREEOBJS=\
-$(ARCH_FREEOBJS) \
-stdio/printf.o \
-stdio/putchar.o \
-stdio/puts.o \
-stdlib/abort.o \
-string/memcmp.o \
-string/memcpy.o \
-string/memmove.o \
-string/memset.o \
-string/strcpy.o \
-string/strlen.o \
-string/strncpy.o \
-string/strstr.o \
+FREEOBJS=			\
+$(ARCH_FREEOBJS)	\
+stdio/printf.o		\
+stdio/putchar.o		\
+stdio/puts.o		\
+stdlib/abort.o		\
+string/memcmp.o		\
+string/memcpy.o		\
+string/memmove.o	\
+string/memset.o		\
+string/strcpy.o		\
+string/strlen.o		\
+string/strncpy.o	\
+string/strstr.o		\
  
-HOSTEDOBJS=\
-$(ARCH_HOSTEDOBJS) \
+HOSTEDOBJS=			\
+$(ARCH_HOSTEDOBJS)	\
  
-OBJS=\
-$(FREEOBJS) \
-$(HOSTEDOBJS) \
+OBJS=				\
+$(FREEOBJS)			\
+$(HOSTEDOBJS)		\
  
 LIBK_OBJS=$(FREEOBJS:.o=.libk.o)
  
