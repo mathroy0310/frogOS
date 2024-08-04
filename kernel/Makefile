@@ -35,7 +35,7 @@ kernel/kernel.o \
 kernel/kmalloc.o \
 kernel/PIC.o \
 kernel/PIT.o \
-kernel/PS2.o \
+kernel/Keyboard.o \
 kernel/SSP.o \
  
 OBJS=\

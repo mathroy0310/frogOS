@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 00:31:04 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 12:11:59 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 12:17:12 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,6 +102,8 @@ void terminal_putchar(char c) {
 	if (c == '\n') {
 		terminal_col = 0;
 		terminal_row++;
+	} else if (c == '\t') {
+		c = ' ';
 	} else if (c == '\b') {
 		if (terminal_col > 0)
 			terminal_col--;

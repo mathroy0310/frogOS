@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 00:31:20 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 12:09:36 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 12:22:54 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 #include <kernel/IO.h>
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
-#include <kernel/PS2.h>
+#include <kernel/Keyboard.h>
 #include <kernel/kmalloc.h>
 #include <kernel/kprint.h>
 #include <kernel/multiboot.h>
@@ -31,6 +31,14 @@
 #define ENABLE_INTERRUPTS() asm volatile("sti")
 
 multiboot_info_t *s_multiboot_info;
+
+void on_key_press(Keyboard::Key key, uint8_t modifiers, bool pressed) {
+	if (pressed) {
+		char ascii = Keyboard::key_to_ascii(key, modifiers);
+		if (ascii)
+			kprint("{}", ascii);
+	}
+}
 
 extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	DISABLE_INTERRUPTS();
@@ -48,7 +56,7 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	IDT::initialize();
 
 	PIT::initialize();
-	PS2::initialize();
+	Keyboard::initialize(on_key_press);
 
 	// printf("Hello from the kernel!\n");
 	kprint("Hello from the kernel!\n");
