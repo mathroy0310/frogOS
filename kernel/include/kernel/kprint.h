@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 01:34:14 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 11:26:46 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 15:02:41 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,24 @@ template <typename T> static void kprint_signed(T value) {
 		*(--ptr) = '-';
 
 	terminal_write(ptr, sizeof(buffer) - (ptr - buffer));
+}
+
+template <typename T> static void kprint_floating(T value, int percision) {
+	uint64_t int_part = (uint64_t) value;
+	T        frac_part = value - (T) int_part;
+
+	kprint_signed(int_part);
+
+	terminal_write(".", 1);
+
+	while (percision > 0) {
+		frac_part *= 10;
+		if (percision == 1)
+			frac_part += 0.5;
+		char digit = (uint8_t) frac_part % 10 + '0';
+		terminal_write(&digit, 1);
+		percision--;
+	}
 }
 
 template <typename T> static void kprint_unsigned(T value) {
@@ -104,6 +122,16 @@ template <> void kprint_val(unsigned long int value) {
 }
 template <> void kprint_val(unsigned long long int value) {
 	kprint_unsigned(value);
+}
+
+template <> void kprint_val(float value) {
+	kprint_floating(value, 3);
+}
+template <> void kprint_val(double value) {
+	kprint_floating(value, 3);
+}
+template <> void kprint_val(long double value) {
+	kprint_floating(value, 3);
 }
 
 template <> void kprint_val(char value) {
