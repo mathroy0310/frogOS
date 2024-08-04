@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 01:34:31 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 01:34:32 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 11:26:00 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,8 +53,6 @@ void kmalloc_initialize() {
 
 	if (!valid)
 		Kernel::panic("Could not find enough space for kmalloc");
-
-	memset(s_kmalloc_info.base_addr, 0, s_kmalloc_info.total_size);
 
 	s_kmalloc_info.used = 0;
 }
