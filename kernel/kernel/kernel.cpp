@@ -6,16 +6,17 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 00:31:20 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 12:22:54 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 15:24:51 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <kernel/GDT.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
+#include <kernel/Keyboard.h>
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
-#include <kernel/Keyboard.h>
+#include <kernel/Serial.h>
 #include <kernel/kmalloc.h>
 #include <kernel/kprint.h>
 #include <kernel/multiboot.h>
@@ -34,6 +35,11 @@ multiboot_info_t *s_multiboot_info;
 
 void on_key_press(Keyboard::Key key, uint8_t modifiers, bool pressed) {
 	if (pressed) {
+		if (key == Keyboard::Key::Escape) {
+			kprint("time since boot: {} ms\n", PIT::ms_since_boot());
+			return;
+		}
+
 		char ascii = Keyboard::key_to_ascii(key, modifiers);
 		if (ascii)
 			kprint("{}", ascii);
@@ -46,9 +52,12 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	s_multiboot_info = mbi;
 
 	if (magic != 0x2BADB002)
-		goto halt;
+		return;
+	if (mbi->framebuffer.type != 2)
+		return;
 
-	terminal_initialize();
+	TTY::initialize();
+	Serial::initialize();
 
 	kmalloc_initialize();
 	PIC::initialize();
@@ -59,10 +68,19 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	Keyboard::initialize(on_key_press);
 
 	// printf("Hello from the kernel!\n");
-	kprint("Hello from the kernel!\n");
+	kprintln("Hello from the kernel!");
+
+	dprintln("Hello emulator from kernel!");
+
+	int **lol = new int *[10];
+	for (int i = 0; i < 10; i++)
+		lol[i] = new int;
+
+	kprint("{.2}\n", -12.123f);
+	kprint("0x{.H}", 0xcafebabe);
+
 	ENABLE_INTERRUPTS();
 
-halt:
 	for (;;) {
 		asm("hlt");
 	}
