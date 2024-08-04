@@ -1,22 +1,19 @@
 /* ************************************************************************** */
 /*                                                             _              */
 /*                                                 __   ___.--'_\`.           */
-/*   IDT.h                                        ( _\`.' -   'o\` )          */
+/*   PS2.h                                        ( _\`.' -   'o\` )          */
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 11:06:06 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 11:53:51 by mathroy0310    `                         */
+/*   Created: 2024/08/04 11:54:55 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/04 11:54:56 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include <stdint.h>
+namespace PS2 {
 
-constexpr uint8_t IRQ_VECTOR_BASE = 0x50;
-
-namespace IDT {
 void initialize();
-void register_irq_handler(uint8_t irq, void (*f)());
-} // namespace IDT
+
+}

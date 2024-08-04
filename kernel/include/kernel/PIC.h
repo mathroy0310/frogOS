@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                             _              */
 /*                                                 __   ___.--'_\`.           */
-/*   IDT.h                                        ( _\`.' -   'o\` )          */
+/*   PIC.h                                        ( _\`.' -   'o\` )          */
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 11:06:06 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 11:53:51 by mathroy0310    `                         */
+/*   Created: 2024/08/04 11:54:36 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/04 11:54:36 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,13 @@
 
 #include <stdint.h>
 
-constexpr uint8_t IRQ_VECTOR_BASE = 0x50;
+namespace PIC {
 
-namespace IDT {
 void initialize();
-void register_irq_handler(uint8_t irq, void (*f)());
-} // namespace IDT
+void eoi(uint8_t);
+void unmask(uint8_t);
+void mask(uint8_t);
+
+uint16_t get_isr();
+
+} // namespace PIC
