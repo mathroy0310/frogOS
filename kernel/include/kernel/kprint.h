@@ -1,10 +1,10 @@
 #pragma once
 
-#include <kernel/Printer.h>
+#include <kernel/Formatter.h>
 #include <kernel/tty.h>
 
-#define kprint Printer::print<TTY::putchar>
-#define kprintln Printer::println<TTY::putchar>
+#define kprint Formatter::print<TTY::putchar>
+#define kprintln Formatter::println<TTY::putchar>
 
 #if 0
 

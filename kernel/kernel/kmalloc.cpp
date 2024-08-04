@@ -6,12 +6,12 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 01:34:31 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 15:09:56 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 15:29:55 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <kernel/Serial.h>
 #include <kernel/kmalloc.h>
-#include <kernel/kprint.h>
 #include <kernel/multiboot.h>
 #include <kernel/panic.h>
 
@@ -41,7 +41,7 @@ static size_t s_kmalloc_allocated = 0;
 
 void kmalloc_initialize() {
 	if (!(s_multiboot_info->flags & (1 << 6)))
-		Kernel::panic("Bootloader didn't give a memory map");
+		Kernel::panic("Kmalloc: Bootloader didn't give a memory map");
 
 	// Validate kmalloc memory
 	bool valid = false;
@@ -50,12 +50,8 @@ void kmalloc_initialize() {
 		    (multiboot_memory_map_t *) (s_multiboot_info->mmap_addr + i);
 
 		if (mmmt->type == 1) {
-			uint8_t *ptr1 = (uint8_t *) mmmt->base_addr;
-			uint8_t *ptr2 = (uint8_t *) s_kmalloc_base;
-			size_t   len1 = mmmt->length;
-			size_t   len2 = s_kmalloc_size;
-
-			if (ptr1 <= ptr2 && ptr1 + len1 >= ptr2 + len2) {
+			if (mmmt->base_addr <= (uint64_t) s_kmalloc_base && (uint64_t) s_kmalloc_end <= mmmt->base_addr + mmmt->length) {
+				dprintln("Total usable RAM: {} MB", (float) mmmt->length / MB);
 				valid = true;
 				break;
 			}
@@ -65,7 +61,7 @@ void kmalloc_initialize() {
 	}
 
 	if (!valid)
-		Kernel::panic("Could not find enough space for kmalloc");
+		Kernel::panic("Kmalloc: Could not find 1 MB of memory");
 
 	s_kmalloc_node_count = 1;
 	s_kmalloc_node_head = (kmalloc_node *) s_kmalloc_node_base;
@@ -80,12 +76,16 @@ void kmalloc_initialize() {
 }
 
 void kmalloc_dump_nodes() {
+	dprintln("Kmalloc memory available {} MB", (float) s_kmalloc_available / MB);
+	dprintln("Kmalloc memory allocated {} MB", (float) s_kmalloc_allocated / MB);
+	dprintln("Using {}/{} nodes", s_kmalloc_node_count, s_kmalloc_max_nodes);
 	for (size_t i = 0; i < s_kmalloc_node_count; i++) {
 		kmalloc_node &node = s_kmalloc_node_head[i];
-		if (i < 10)
-			kprint(" ");
-		kprint(" ({}) {}, node at {}, free: {}, size: {}\n", i, (void *) &node,
-		       (void *) node.addr, node.free, node.size);
+		if (i < 10) {
+			dprint(" ");
+		}
+		dprintln(" ({}) {}, node at {}, free: {}, size: {}", i, (void *) &node,
+		         (void *) node.addr, node.free, node.size);
 	}
 }
 
@@ -101,7 +101,7 @@ void *kmalloc(size_t size) {
 	}
 
 	if (valid_node_index == size_t(-1)) {
-		kprint("Could not allocate {} bytes\n", size);
+		dprintln("\e[33mKmalloc: Could not allocate {} bytes\e[0m", size);
 		return nullptr;
 	}
 
@@ -115,7 +115,7 @@ void *kmalloc(size_t size) {
 	}
 
 	if (s_kmalloc_node_count == s_kmalloc_max_nodes) {
-		kprint("Out of kmalloc nodes\n");
+		dprintln("\e[33mKmalloc: Out of kmalloc nodes\e[0m");
 		return nullptr;
 	}
 
@@ -152,7 +152,8 @@ void kfree(void *addr) {
 	}
 
 	if (node_index == size_t(-1)) {
-		kprint("Attempting to free unallocated pointer {}\n", addr);
+		dprintln(
+		    "\e[33mKmalloc: Attempting to free unallocated pointer {}\e[0m", addr);
 		return;
 	}
 

@@ -5,8 +5,8 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 00:31:10 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 00:31:10 by mathroy0310    `                         */
+/*   Created: 2024/08/04 15:42:19 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/04 15:42:20 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,8 +33,16 @@ enum vga_color {
 	VGA_COLOR_WHITE = 15,
 };
 
+static inline uint8_t vga_set_foreground(enum vga_color fg, uint8_t color) {
+	return (color & 0xf0) | fg;
+}
+
+static inline uint8_t vga_set_background(enum vga_color bg, uint8_t color) {
+	return (bg << 4) | (color & 0x0f);
+}
+
 static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) {
-	return fg | bg << 4;
+	return (bg << 4) | fg;
 }
 
 static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {

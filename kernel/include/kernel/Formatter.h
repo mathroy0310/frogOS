@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                             _              */
 /*                                                 __   ___.--'_\`.           */
-/*   Printer.h                                    ( _\`.' -   'o\` )          */
+/*   Formatter.h                                  ( _\`.' -   'o\` )          */
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 15:15:39 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 15:15:55 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 15:47:15 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-namespace Printer {
+namespace Formatter {
 
 struct ValueFormat;
 
@@ -25,7 +25,7 @@ template <void (*PUTC_LIKE)(char), typename Arg, typename... Args>
 static void print(const char *format, Arg arg, Args... args);
 
 template <void (*PUTC_LIKE)(char), typename... Args>
-static void println(const char *format, Args... args);
+static void println(const char *format = "", Args... args);
 
 template <void (*PUTC_LIKE)(char), typename T>
 static size_t print_argument(const char *format, T arg);
@@ -224,6 +224,11 @@ void print_pointer(void *ptr, const ValueFormat &format) {
 }
 
 template <void (*PUTC_LIKE)(char)>
+void print_value(bool value, const ValueFormat &format) {
+	print<PUTC_LIKE>(value ? "true" : "false");
+}
+
+template <void (*PUTC_LIKE)(char)>
 void print_value(short value, const ValueFormat &format) {
 	print_integer<PUTC_LIKE>(value, format);
 }
@@ -292,4 +297,4 @@ void print_value(const char *value, const ValueFormat &) {
 	print<PUTC_LIKE>(value);
 }
 
-} // namespace Printer
+} // namespace Formatter

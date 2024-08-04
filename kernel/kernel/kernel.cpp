@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 00:31:20 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 15:24:51 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 15:44:11 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,11 +38,13 @@ void on_key_press(Keyboard::Key key, uint8_t modifiers, bool pressed) {
 		if (key == Keyboard::Key::Escape) {
 			kprint("time since boot: {} ms\n", PIT::ms_since_boot());
 			return;
+		} else if (key == Keyboard::Key::Backspace) {
+			kprint("\b \b");
+		} else {
+			char ascii = Keyboard::key_to_ascii(key, modifiers);
+			if (ascii)
+				kprint("{}", ascii);
 		}
-
-		char ascii = Keyboard::key_to_ascii(key, modifiers);
-		if (ascii)
-			kprint("{}", ascii);
 	}
 }
 
@@ -52,8 +54,6 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	s_multiboot_info = mbi;
 
 	if (magic != 0x2BADB002)
-		return;
-	if (mbi->framebuffer.type != 2)
 		return;
 
 	TTY::initialize();
@@ -68,16 +68,9 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	Keyboard::initialize(on_key_press);
 
 	// printf("Hello from the kernel!\n");
-	kprintln("Hello from the kernel!");
-
-	dprintln("Hello emulator from kernel!");
-
-	int **lol = new int *[10];
-	for (int i = 0; i < 10; i++)
-		lol[i] = new int;
-
-	kprint("{.2}\n", -12.123f);
-	kprint("0x{.H}", 0xcafebabe);
+	kprintln("\e[32mHello from the kernel!\e[0m");
+	dprintln("\e[32mHello from the kernel!\e[0m");
+	
 
 	ENABLE_INTERRUPTS();
 
