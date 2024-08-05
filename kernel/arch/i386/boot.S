@@ -12,15 +12,16 @@
 	.long MB_MAGIC
 	.long MB_FLAGS
 	.long MB_CHECKSUM
-	.skip 4 
 	.skip 4
 	.skip 4
 	.skip 4
 	.skip 4
-	.long 1
-	.long 80
-	.long 25
+	.skip 4
+
 	.long 0
+	.long 800
+	.long 600
+	.long 32
 
  # Create stack
 .section .bss

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:14 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:51:30 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 12:36:59 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,6 @@
 #include <kernel/kprint.h>
 
 #include <kernel/KeyboardLayout/en_ca.h>
-
-#define KB_DEBUG_PRINT 1
 
 #define I8042_DATA_PORT 0x60
 #define I8042_STATUS_REGISTER 0x64
@@ -247,11 +245,6 @@ static void keyboard_new_key() {
 			break;
 		}
 	}
-
-#if KB_DEBUG_PRINT
-	if (key == Key::INVALID)
-		kprintln("{} {}", ch, extended ? 'E' : ' ');
-#endif
 
 	s_keyboard_state[static_cast<int>(key)] = pressed;
 

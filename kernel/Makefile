@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/05 01:34:45 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/05 01:44:01 by mathroy0310    `                          #
+#    Updated: 2024/08/05 12:06:14 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -72,7 +72,7 @@ $(ARCHDIR)/crtend.o		\
 $(ARCHDIR)/crtn.o		\
  
 .PHONY: all always clean install install-headers install-kernel
-.SUFFIXES: .o .cpp .S
+.SUFFIXES: .o .c .cpp .S
  
 all: frog-os.kernel
  
@@ -83,6 +83,9 @@ frog-os.kernel: always $(OBJS) $(ARCHDIR)/linker.ld
 $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $(BUILDDIR)/$@
  
+.c.o:
+	$(CC) -MD -c $< -o $(BUILDDIR)/$@ $(CFLAGS)
+
 .cpp.o:
 	$(CXX) -MD -c $< -o $(BUILDDIR)/$@ $(CFLAGS) $(CPPFLAGS)
  

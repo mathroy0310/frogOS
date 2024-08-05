@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:34:20 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 12:00:22 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,35 +14,43 @@
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
 #include <kernel/Keyboard.h>
-#include <kernel/kmalloc.h>
-#include <kernel/kprint.h>
-#include <kernel/multiboot.h>
-#include <kernel/panic.h>
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
 #include <kernel/RTC.h>
 #include <kernel/Serial.h>
 #include <kernel/Shell.h>
+#include <kernel/VESA.h>
+#include <kernel/kmalloc.h>
+#include <kernel/kprint.h>
+#include <kernel/multiboot.h>
+#include <kernel/panic.h>
 #include <kernel/tty.h>
 
 #define DISABLE_INTERRUPTS() asm volatile("cli")
 #define ENABLE_INTERRUPTS() asm volatile("sti")
 
-multiboot_info_t* s_multiboot_info;
+multiboot_info_t *s_multiboot_info;
 
-extern "C"
-void kernel_main(multiboot_info_t* mbi, uint32_t magic)
-{
+extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	DISABLE_INTERRUPTS();
+
+	Serial::initialize();
+	if (magic != 0x2BADB002) {
+		dprintln("Invalid multiboot magic number");
+		return;
+	}
 
 	s_multiboot_info = mbi;
 
-	if (magic != 0x2BADB002)
+	if (!VESA::Initialize()) {
+		dprintln("Could not initialize VESA");
 		return;
+	}
 
-	Serial::initialize();
 	TTY::initialize();
-	
+
+	dprintln("{}", mbi->framebuffer.type);
+
 	kmalloc_initialize();
 
 	PIC::initialize();
@@ -57,11 +65,10 @@ void kernel_main(multiboot_info_t* mbi, uint32_t magic)
 
 	ENABLE_INTERRUPTS();
 
-	auto& shell = Kernel::Shell::Get();
+	auto &shell = Kernel::Shell::Get();
 	shell.Run();
 
-	for (;;)
-	{
+	for (;;) {
 		asm("hlt");
 	}
 }
