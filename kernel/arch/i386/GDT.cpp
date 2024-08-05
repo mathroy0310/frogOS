@@ -5,8 +5,8 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 11:08:30 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 12:07:04 by mathroy0310    `                         */
+/*   Created: 2024/08/04 23:26:13 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/04 23:28:25 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,8 @@ struct GDTR {
 	void    *address;
 } __attribute__((packed));
 
-static GDTR               s_gdtr;
-static SegmentDescriptor *s_gdt;
+static GDTR              s_gdtr;
+static SegmentDesriptor *s_gdt;
 
 extern "C" void load_gdt(void *gdt_ptr);
 
@@ -29,18 +29,14 @@ void write_gdt_entry_raw(uint8_t segment, uint32_t low, uint32_t high) {
 	s_gdt[index].high = high;
 }
 
-void write_gdt_entry(uint8_t segment, SegmentDescriptor descriptor) {
+void write_gdt_entry(uint8_t segment, SegmentDesriptor descriptor) {
 	write_gdt_entry_raw(segment, descriptor.low, descriptor.high);
-}
-
-static void flush_gdt() {
-	asm volatile("lgdt %0" : : "m"(s_gdtr));
 }
 
 void gdt_initialize() {
 	constexpr uint8_t GDT_SIZE = 5;
 
-	s_gdt = new SegmentDescriptor[GDT_SIZE];
+	s_gdt = new SegmentDesriptor[GDT_SIZE];
 
 	s_gdtr.address = s_gdt;
 	s_gdtr.size = GDT_SIZE * 8 - 1;

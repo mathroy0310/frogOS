@@ -1,8 +1,21 @@
+/* ************************************************************************** */
+/*                                                             _              */
+/*                                                 __   ___.--'_\`.           */
+/*   Keyboard.h                                   ( _\`.' -   'o\` )          */
+/*                                                _\\.'_'      _.-'           */
+/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
+/*                                                \\_'-`---'\\__,             */
+/*   Created: 2024/08/04 23:24:59 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/04 23:25:46 by mathroy0310    `                         */
+/*                                                                            */
+/* ************************************************************************** */
+
 #pragma once
 
 #include <stdint.h>
 
 namespace Keyboard {
+
 enum class Key : uint8_t {
 	INVALID,
 	None,
@@ -42,6 +55,9 @@ enum class Key : uint8_t {
 	X,
 	Y,
 	Z,
+	A_Dot,
+	A_Dots,
+	O_Dots,
 
 	Comma,
 	Colon,
@@ -50,7 +66,7 @@ enum class Key : uint8_t {
 	Hyphen,
 	Underscore,
 	SingleQuote,
-	Asterisk,
+	Asterix,
 	Caret,
 	Tilde,
 	ExclamationMark,
@@ -101,9 +117,12 @@ enum class Key : uint8_t {
 	LeftShift,
 	RightShift,
 	CapsLock,
-	Ctrl,
-	Alt,
+	LeftCtrl,
+	RightCtrl,
+	LeftAlt,
+	RightAlt,
 	NumLock,
+	ScrollLock,
 	Escape,
 
 	Numpad0,
@@ -116,11 +135,21 @@ enum class Key : uint8_t {
 	Numpad7,
 	Numpad8,
 	Numpad9,
-	NumpadComma,
+	NumpadSep,
 	NumpadPlus,
 	NumpadMult,
 	NumpadDiv,
 	NumpadMinus,
+	NumpadEnter,
+
+	Mute,
+	VolumeDown,
+	VolumeUp,
+	Calculator,
+	PlayPause,
+	Stop,
+	PreviousTrack,
+	NextTrack,
 
 	F1,
 	F2,
@@ -138,8 +167,17 @@ enum class Key : uint8_t {
 	Count
 };
 
-void initialize(void (*callback)(Key, uint8_t, bool));
+struct KeyEvent {
+	Key     key;
+	uint8_t modifiers;
+	bool    pressed;
+};
 
-char key_to_ascii(Key, uint8_t);
+bool initialize(void (*callback)(KeyEvent));
+void update_keyboard();
+
+char key_event_to_ascii(KeyEvent);
+
+void led_disco();
 
 } // namespace Keyboard

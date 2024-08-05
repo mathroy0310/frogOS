@@ -5,8 +5,8 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 00:31:20 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 20:07:27 by mathroy0310    `                         */
+/*   Created: 2024/08/04 23:25:18 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/04 23:26:03 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,6 @@
 #include <kernel/panic.h>
 #include <kernel/tty.h>
 
-#include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -34,17 +32,43 @@
 
 multiboot_info_t *s_multiboot_info;
 
-void on_key_press(Keyboard::Key key, uint8_t modifiers, bool pressed) {
-	if (pressed) {
-		if (key == Keyboard::Key::Escape) {
+char        ascii_buffer[32]{};
+static bool has_command(const char *cmd) {
+	size_t len = strlen(cmd);
+	return memcmp(ascii_buffer + sizeof(ascii_buffer) - len - 1, cmd, len) == 0;
+}
+void on_key_press(Keyboard::KeyEvent event) {
+	if (event.pressed) {
+		char ascii = Keyboard::key_event_to_ascii(event);
+
+		if (ascii) {
+			memmove(ascii_buffer, ascii_buffer + 1, sizeof(ascii_buffer) - 1);
+			ascii_buffer[sizeof(ascii_buffer) - 1] = ascii;
+			kprint("{}", ascii);
+		}
+
+		if (event.key == Keyboard::Key::Escape) {
 			kprint("time since boot: {} ms\n", PIT::ms_since_boot());
 			return;
-		} else if (key == Keyboard::Key::Backspace) {
-			kprint("\b \b");
-		} else {
-			char ascii = Keyboard::key_to_ascii(key, modifiers);
-			if (ascii)
-				kprint("{}", ascii);
+		} else if (event.key == Keyboard::Key::Backspace) {
+			memmove(ascii_buffer + 2, ascii_buffer, sizeof(ascii_buffer) - 2);
+			kprint(" \b");
+		} else if (event.key == Keyboard::Key::Enter) {
+			if (has_command("clear")) {
+				TTY::clear();
+				TTY::set_cursor_pos(0, 0);
+			} else if (has_command("led_disco")) {
+				TTY::clear();
+				TTY::set_cursor_pos(0, 0);
+				kprintln("\e[32mLED DISCO\e[m");
+				Keyboard::led_disco();
+			} else if (has_command("reboot")) {
+				uint8_t good = 0x02;
+				while (good & 0x02)
+					good = IO::inb(0x64);
+				IO::outb(0x64, 0xFE);
+				asm volatile("cli; hlt");
+			}
 		}
 	}
 }
@@ -57,27 +81,31 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	if (magic != 0x2BADB002)
 		return;
 
-	TTY::initialize();
 	Serial::initialize();
+	TTY::initialize();
+
+	for (int i = 30; i <= 37; i++)
+		kprint("\e[{}m#", i);
+	kprint("\e[m\n");
 
 	kmalloc_initialize();
+
 	PIC::initialize();
 	gdt_initialize();
 	IDT::initialize();
 
 	PIT::initialize();
-	Keyboard::initialize(on_key_press);
-
-	// printf("Hello from the kernel!\n");
-	kprintln("\e[32mHello from the kernel!\e[0m");
-	dprintln("\e[32mHello from the kernel!\e[0m");
+	if (!Keyboard::initialize(on_key_press))
+		return;
 
 	auto time = RTC::GetCurrentTime();
 	kprintln("Today is {2}:{2}:{2} {2}.{2}.{4}", time.hour, time.minute, time.second, time.day, time.month, time.year);
 
+	kprintln("Hello from the kernel!");
+
 	ENABLE_INTERRUPTS();
 
 	for (;;) {
-		asm("hlt");
+		Keyboard::update_keyboard();
 	}
 }

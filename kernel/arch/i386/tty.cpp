@@ -5,8 +5,8 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 15:42:21 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 15:54:51 by mathroy0310    `                         */
+/*   Created: 2024/08/04 23:25:56 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/04 23:25:59 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,13 +36,11 @@ namespace TTY {
 static size_t    VGA_WIDTH;
 static size_t    VGA_HEIGHT;
 static uint16_t *VGA_MEMORY = nullptr;
-;
 
 static size_t    terminal_row;
 static size_t    terminal_col;
 static uint8_t   terminal_color;
 static uint16_t *terminal_buffer = nullptr;
-;
 
 static char s_ansi_escape_mode = '\0';
 static int  s_ansi_escape_index = 0;
@@ -75,6 +73,7 @@ void initialize() {
 		VGA_WIDTH = fb.width;
 		VGA_HEIGHT = fb.height;
 		VGA_MEMORY = (uint16_t *) fb.addr;
+
 		dprintln("width: {}, height: {}, bpp: {}, pitch: {}", fb.width, fb.height, fb.bpp, fb.pitch);
 	} else {
 		VGA_WIDTH = 80;
@@ -310,6 +309,7 @@ static void handle_ansi_escape(char c) {
 void putchar(char c) {
 	if (VGA_MEMORY == nullptr)
 		return;
+
 	if (s_ansi_escape_mode)
 		return handle_ansi_escape(c);
 

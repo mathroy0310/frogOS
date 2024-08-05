@@ -16,7 +16,7 @@ INCLUDEDIR?=$(PREFIX)/include
 CFLAGS:=$(CFLAGS) -D__is_kernel -Iinclude -fstack-protector -ffreestanding -Wall -Wextra -Wno-unused-function
 CPPFLAGS:=$(CPPFLAGS) -fno-rtti -fno-exceptions
 LDFLAGS:=$(LDFLAGS)
-LIBS:=$(LIBS) -nostdlib -lk -lgcc
+LIBS:=$(LIBS) -nostdlib -lk -lfrogk -lgcc
  
 ARCHDIR=arch/$(HOSTARCH)
  
@@ -39,7 +39,8 @@ kernel/RTC.o 			\
 kernel/Keyboard.o		\
 kernel/Serial.o			\
 kernel/SSP.o			\
- 
+icxxabi.o				\
+
 OBJS=					\
 $(ARCHDIR)/crti.o		\
 $(ARCHDIR)/crtbegin.o	\

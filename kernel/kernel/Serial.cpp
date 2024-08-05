@@ -1,6 +1,17 @@
+/* ************************************************************************** */
+/*                                                             _              */
+/*                                                 __   ___.--'_\`.           */
+/*   Serial.cpp                                   ( _\`.' -   'o\` )          */
+/*                                                _\\.'_'      _.-'           */
+/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
+/*                                                \\_'-`---'\\__,             */
+/*   Created: 2024/08/04 23:25:05 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/04 23:25:06 by mathroy0310    `                         */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <kernel/IO.h>
 #include <kernel/Serial.h>
-#include <kernel/kprint.h>
 
 #define COM1_PORT 0x3f8
 
@@ -20,10 +31,8 @@ void initialize() {
 	IO::outb(COM1_PORT + 0, 0xAE); // Test serial chip (send byte 0xAE and check if serial returns same byte)
 
 	// Check if serial is faulty (i.e: not same byte as sent)
-	if (IO::inb(COM1_PORT + 0) != 0xAE) {
-		kprint("Could not initialize COM1 serial port\n");
+	if (IO::inb(COM1_PORT + 0) != 0xAE)
 		return;
-	}
 
 	// If serial is not faulty set it in normal operation mode
 	// (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)

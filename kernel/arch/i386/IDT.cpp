@@ -5,8 +5,8 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 11:14:27 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 15:57:47 by mathroy0310    `                         */
+/*   Created: 2024/08/04 23:26:08 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/04 23:28:27 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ union GateDescriptor {
 struct IDTR {
 	uint16_t size;
 	void    *offset;
-} __attribute__((packed));
+} __attribute((packed));
 
 static IDTR            s_idtr;
 static GateDescriptor *s_idt;
@@ -81,6 +81,7 @@ INTERRUPT_HANDLER(0x10, "Coprocessor error")
 void handle_irq() {
 	uint16_t isr = PIC::get_isr();
 	if (!isr) {
+		// kprint("Spurious IRQ\n");
 		return;
 	}
 

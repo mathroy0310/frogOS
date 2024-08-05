@@ -5,8 +5,8 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 01:34:31 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 15:52:29 by mathroy0310    `                         */
+/*   Created: 2024/08/04 23:25:14 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/04 23:25:14 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,6 @@
 #include <kernel/panic.h>
 
 #include <stdint.h>
-#include <string.h>
 
 #define MB (1 << 20)
 
@@ -25,7 +24,6 @@ struct kmalloc_node {
 	size_t   size : sizeof(size_t) * 8 - 1;
 	size_t   free : 1;
 };
-
 static kmalloc_node *s_kmalloc_node_head = nullptr;
 static size_t        s_kmalloc_node_count;
 
@@ -81,10 +79,7 @@ void kmalloc_dump_nodes() {
 	dprintln("Using {}/{} nodes", s_kmalloc_node_count, s_kmalloc_max_nodes);
 	for (size_t i = 0; i < s_kmalloc_node_count; i++) {
 		kmalloc_node &node = s_kmalloc_node_head[i];
-		if (i < 10) {
-			dprint(" ");
-		}
-		dprintln(" ({}) {}, node at {}, free: {}, size: {}", i, (void *) &node,
+		dprintln(" ({3}) {}, node at {}, free: {}, size: {}", i, (void *) &node,
 		         (void *) node.addr, node.free, node.size);
 	}
 }
@@ -143,7 +138,9 @@ void *kmalloc(size_t size) {
 void kfree(void *addr) {
 	if (addr == nullptr)
 		return;
+
 	// TODO: use binary search etc.
+
 	size_t node_index = -1;
 	for (size_t i = 0; i < s_kmalloc_node_count; i++) {
 		if (s_kmalloc_node_head[i].addr == addr) {

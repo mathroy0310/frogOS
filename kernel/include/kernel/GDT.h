@@ -1,8 +1,20 @@
+/* ************************************************************************** */
+/*                                                             _              */
+/*                                                 __   ___.--'_\`.           */
+/*   GDT.h                                        ( _\`.' -   'o\` )          */
+/*                                                _\\.'_'      _.-'           */
+/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
+/*                                                \\_'-`---'\\__,             */
+/*   Created: 2024/08/04 23:24:52 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/04 23:24:53 by mathroy0310    `                         */
+/*                                                                            */
+/* ************************************************************************** */
+
 #pragma once
 
 #include <stdint.h>
 
-union SegmentDescriptor {
+union SegmentDesriptor {
 	struct {
 		uint16_t limit_lo;
 		uint16_t base_lo;
@@ -24,9 +36,9 @@ union SegmentDescriptor {
 		uint32_t high;
 	};
 
-	SegmentDescriptor() : low(0), high(0) {
+	SegmentDesriptor() : low(0), high(0) {
 	}
-	SegmentDescriptor(uint32_t base, uint32_t limit, uint8_t access, uint8_t _flags)
+	SegmentDesriptor(uint32_t base, uint32_t limit, uint8_t access, uint8_t _flags)
 	    : low(0), high(0) {
 		set_base(base);
 		set_limit(limit);

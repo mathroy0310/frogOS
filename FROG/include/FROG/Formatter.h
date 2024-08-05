@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 15:15:39 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 19:59:23 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 23:27:52 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ template <void (*PUTC_LIKE)(char), typename T>
 static size_t print_argument(const char *format, T arg);
 
 template <void (*PUTC_LIKE)(char), typename T>
-static void print_value(T value, const ValueFormat &format);
+static void print_argument_impl(T value, const ValueFormat &format);
 
 struct ValueFormat {
 	int  base = 10;
@@ -162,7 +162,7 @@ size_t print_argument(const char *format, Arg argument) {
 	if (format[i] != '}')
 		return size_t(-1);
 
-	print_value<PUTC_LIKE>(argument, value_format);
+	print_argument_impl<PUTC_LIKE>(argument, value_format);
 
 	return i + 1;
 }
@@ -245,77 +245,77 @@ void print_pointer(void *ptr, const ValueFormat &format) {
 }
 
 template <void (*PUTC_LIKE)(char)>
-void print_value(bool value, const ValueFormat &format) {
+void print_argument_impl(bool value, const ValueFormat &format) {
 	print<PUTC_LIKE>(value ? "true" : "false");
 }
 
 template <void (*PUTC_LIKE)(char)>
-void print_value(short value, const ValueFormat &format) {
+void print_argument_impl(short value, const ValueFormat &format) {
 	print_integer<PUTC_LIKE>(value, format);
 }
 template <void (*PUTC_LIKE)(char)>
-void print_value(int value, const ValueFormat &format) {
+void print_argument_impl(int value, const ValueFormat &format) {
 	print_integer<PUTC_LIKE>(value, format);
 }
 template <void (*PUTC_LIKE)(char)>
-void print_value(long value, const ValueFormat &format) {
+void print_argument_impl(long value, const ValueFormat &format) {
 	print_integer<PUTC_LIKE>(value, format);
 }
 template <void (*PUTC_LIKE)(char)>
-void print_value(long long value, const ValueFormat &format) {
-	print_integer<PUTC_LIKE>(value, format);
-}
-
-template <void (*PUTC_LIKE)(char)>
-void print_value(unsigned short value, const ValueFormat &format) {
-	print_integer<PUTC_LIKE>(value, format);
-}
-template <void (*PUTC_LIKE)(char)>
-void print_value(unsigned int value, const ValueFormat &format) {
-	print_integer<PUTC_LIKE>(value, format);
-}
-template <void (*PUTC_LIKE)(char)>
-void print_value(unsigned long value, const ValueFormat &format) {
-	print_integer<PUTC_LIKE>(value, format);
-}
-template <void (*PUTC_LIKE)(char)>
-void print_value(unsigned long long value, const ValueFormat &format) {
+void print_argument_impl(long long value, const ValueFormat &format) {
 	print_integer<PUTC_LIKE>(value, format);
 }
 
 template <void (*PUTC_LIKE)(char)>
-void print_value(float value, const ValueFormat &format) {
+void print_argument_impl(unsigned short value, const ValueFormat &format) {
+	print_integer<PUTC_LIKE>(value, format);
+}
+template <void (*PUTC_LIKE)(char)>
+void print_argument_impl(unsigned int value, const ValueFormat &format) {
+	print_integer<PUTC_LIKE>(value, format);
+}
+template <void (*PUTC_LIKE)(char)>
+void print_argument_impl(unsigned long value, const ValueFormat &format) {
+	print_integer<PUTC_LIKE>(value, format);
+}
+template <void (*PUTC_LIKE)(char)>
+void print_argument_impl(unsigned long long value, const ValueFormat &format) {
+	print_integer<PUTC_LIKE>(value, format);
+}
+
+template <void (*PUTC_LIKE)(char)>
+void print_argument_impl(float value, const ValueFormat &format) {
 	print_floating<PUTC_LIKE>(value, format);
 }
 template <void (*PUTC_LIKE)(char)>
-void print_value(double value, const ValueFormat &format) {
+void print_argument_impl(double value, const ValueFormat &format) {
 	print_floating<PUTC_LIKE>(value, format);
 }
 template <void (*PUTC_LIKE)(char)>
-void print_value(long double value, const ValueFormat &format) {
+void print_argument_impl(long double value, const ValueFormat &format) {
 	print_floating<PUTC_LIKE>(value, format);
 }
 
 template <void (*PUTC_LIKE)(char)>
-void print_value(char value, const ValueFormat &) {
+void print_argument_impl(char value, const ValueFormat &) {
 	PUTC_LIKE(value);
 }
 template <void (*PUTC_LIKE)(char)>
-void print_value(signed char value, const ValueFormat &format) {
+void print_argument_impl(signed char value, const ValueFormat &format) {
 	print_integer<PUTC_LIKE>(value, format);
 }
 template <void (*PUTC_LIKE)(char)>
-void print_value(unsigned char value, const ValueFormat &format) {
+void print_argument_impl(unsigned char value, const ValueFormat &format) {
 	print_integer<PUTC_LIKE>(value, format);
 }
 
 template <void (*PUTC_LIKE)(char), typename T>
-void print_value(T *value, const ValueFormat &format) {
+void print_argument_impl(T *value, const ValueFormat &format) {
 	print_pointer<PUTC_LIKE>((void *) value, format);
 }
 template <void (*PUTC_LIKE)(char)>
-void print_value(const char *value, const ValueFormat &) {
+void print_argument_impl(const char *value, const ValueFormat &) {
 	print<PUTC_LIKE>(value);
 }
 
-} // namespace Formatter
+} // namespace FROG::Formatter
