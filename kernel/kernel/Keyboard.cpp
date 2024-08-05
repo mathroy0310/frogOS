@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:14 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:34:14 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 01:51:30 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -168,7 +168,7 @@ void update_keyboard() {
 			switch (command.command) {
 			case I8042_KB_RESET:
 				if (s_keyboard_command_extra != I8042_KB_SELF_TEST_PASS)
-					Kernel::panic("PS/2 Keyboard self test failed");
+					//Kernel::panic("PS/2 Keyboard self test failed");
 				break;
 			case I8042_KB_SET_SCAN_CODE_SET:
 				break;

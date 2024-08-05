@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:17:04 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:17:05 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 01:48:26 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ template <typename T> class Vector {
 
   public:
 	Vector() = default;
+	Vector(const Vector<T> &);
 	~Vector();
 
 	ErrorOr<void> PushBack(const T &);
@@ -59,6 +60,13 @@ template <typename T> class Vector {
 	size_type m_capasity = 0;
 	size_type m_size = 0;
 };
+
+template <typename T> Vector<T>::Vector(const Vector<T> &other) {
+	MUST(EnsureCapasity(other.m_size));
+	for (size_type i = 0; i < other.m_size; i++)
+		m_data[i] = other[i];
+	m_size = other.m_size;
+}
 
 template <typename T> Vector<T>::~Vector() {
 	for (size_type i = 0; i < m_size; i++)

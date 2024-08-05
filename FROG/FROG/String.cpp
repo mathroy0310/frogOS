@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:29 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:16:30 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 01:47:15 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,7 +126,9 @@ bool String::operator==(StringView other) const {
 }
 
 bool String::operator==(const char *other) const {
-  return memcmp(m_data, other, m_size + 1) == 0;
+	if (m_size != strlen(other))
+		return false;
+	return memcmp(m_data, other, m_size) == 0;
 }
 
 ErrorOr<void> String::Resize(size_type size, char ch) {

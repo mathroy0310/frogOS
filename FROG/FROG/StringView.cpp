@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:32 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:16:33 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 01:47:23 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,9 @@ bool StringView::operator==(StringView other) const {
 }
 
 bool StringView::operator==(const char *other) const {
-  return memcmp(m_data, other, m_size + 1) == 0;
+	if (m_size != strlen(other))
+		return false;
+	return memcmp(m_data, other, m_size) == 0;
 }
 
 StringView StringView::Substring(size_type index, size_type len) const {
