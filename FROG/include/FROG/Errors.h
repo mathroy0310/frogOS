@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 20:15:14 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:27:20 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 23:39:08 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 		auto e = error;                        \
 		if (e.IsError())                       \
 			Kernel::panic("{}", e.GetError()); \
+		e.Value();                             \
 	})
 #else
 #error "NOT IMPLEMENTED"

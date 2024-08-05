@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 20:04:41 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:33:58 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 23:44:26 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,7 @@ static void get_time(FROG::Time &out) {
 	out.second = get_rtc_register(CMOS_REGISTER_SECOND);
 	out.minute = get_rtc_register(CMOS_REGISTER_MINUTE);
 	out.hour = get_rtc_register(CMOS_REGISTER_HOUR);
+	out.week_day = get_rtc_register(CMOS_REGISTER_WEEK_DAY);
 	out.day = get_rtc_register(CMOS_REGISTER_DAY);
 	out.month = get_rtc_register(CMOS_REGISTER_MONTH);
 	out.year = get_rtc_register(CMOS_REGISTER_YEAR);
@@ -73,6 +74,7 @@ FROG::Time GetCurrentTime() {
 		time.second = (time.second & 0x0F) + ((time.second / 16) * 10);
 		time.minute = (time.minute & 0x0F) + ((time.minute / 16) * 10);
 		time.hour = ((time.hour & 0x0F) + (((time.hour & 0x70) / 16) * 10)) | (time.hour & 0x80);
+		time.week_day = (time.week_day & 0x0F) + ((time.week_day / 16) * 10);
 		time.day = (time.day & 0x0F) + ((time.day / 16) * 10);
 		time.month = (time.month & 0x0F) + ((time.month / 16) * 10);
 		time.year = (time.year & 0x0F) + ((time.year / 16) * 10);
