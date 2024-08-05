@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 11:48:06 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 13:15:34 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ Shell::Shell() {
 }
 
 void Shell::PrintPrompt() {
-	kprint("\e[32muser\e[m# ");
+	kprint("\e[36muser\e[m# ");
 }
 
 void Shell::Run() {
