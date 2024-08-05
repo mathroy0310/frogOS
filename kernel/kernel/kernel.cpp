@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:18 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:26:03 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 23:34:20 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,8 +99,7 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 		return;
 
 	auto time = RTC::GetCurrentTime();
-	kprintln("Today is {2}:{2}:{2} {2}.{2}.{4}", time.hour, time.minute, time.second, time.day, time.month, time.year);
-
+	kprintln("Today is {}", time);
 	kprintln("Hello from the kernel!");
 
 	ENABLE_INTERRUPTS();

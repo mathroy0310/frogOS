@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 20:04:41 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 20:04:42 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 23:33:58 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ static uint8_t get_rtc_register(uint8_t reg) {
 	return IO::inb(CMOS_DATA);
 }
 
-static void get_time(Time &out) {
+static void get_time(FROG::Time &out) {
 	out.second = get_rtc_register(CMOS_REGISTER_SECOND);
 	out.minute = get_rtc_register(CMOS_REGISTER_MINUTE);
 	out.hour = get_rtc_register(CMOS_REGISTER_HOUR);
@@ -51,9 +51,9 @@ static void get_time(Time &out) {
 	out.year = get_rtc_register(CMOS_REGISTER_YEAR);
 }
 
-Time GetCurrentTime() {
-	Time last_time = {};
-	Time time = {};
+FROG::Time GetCurrentTime() {
+	FROG::Time last_time = {};
+	FROG::Time time = {};
 
 	while (get_update_in_progress())
 		continue;
@@ -61,7 +61,7 @@ Time GetCurrentTime() {
 	get_time(time);
 	last_time.second = time.second + 1;
 
-	while (memcmp(&last_time, &time, sizeof(Time))) {
+	while (memcmp(&last_time, &time, sizeof(FROG::Time))) {
 		last_time = time;
 		get_time(time);
 	}
