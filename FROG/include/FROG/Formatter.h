@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 15:15:39 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 16:07:19 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 19:59:23 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-namespace Formatter {
+namespace FROG::Formatter {
 
 struct ValueFormat;
 

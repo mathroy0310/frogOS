@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 00:31:20 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 15:56:37 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 20:07:27 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <kernel/Keyboard.h>
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
+#include <kernel/RTC.h>
 #include <kernel/Serial.h>
 #include <kernel/kmalloc.h>
 #include <kernel/kprint.h>
@@ -70,7 +71,10 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	// printf("Hello from the kernel!\n");
 	kprintln("\e[32mHello from the kernel!\e[0m");
 	dprintln("\e[32mHello from the kernel!\e[0m");
-	
+
+	auto time = RTC::GetCurrentTime();
+	kprintln("Today is {2}:{2}:{2} {2}.{2}.{4}", time.hour, time.minute, time.second, time.day, time.month, time.year);
+
 	ENABLE_INTERRUPTS();
 
 	for (;;) {

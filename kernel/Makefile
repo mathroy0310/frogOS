@@ -35,6 +35,7 @@ kernel/kernel.o			\
 kernel/kmalloc.o		\
 kernel/PIC.o			\
 kernel/PIT.o			\
+kernel/RTC.o 			\
 kernel/Keyboard.o		\
 kernel/Serial.o			\
 kernel/SSP.o			\

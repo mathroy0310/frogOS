@@ -6,12 +6,12 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/04 01:32:58 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/04 01:32:59 by mathroy0310    `                          #
+#    Updated: 2024/08/04 19:58:29 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
-SYSTEM_HEADER_PROJECTS="libc kernel"
-PROJECTS="libc kernel"
+SYSTEM_HEADER_PROJECTS="libc FROG kernel"
+PROJECTS="libc FROG kernel"
  
 export MAKE=${MAKE:-make}
 export HOST=${HOST:-$(./default-host.sh)}

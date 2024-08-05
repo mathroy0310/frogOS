@@ -1,9 +1,9 @@
 #pragma once
 
-#include <kernel/Formatter.h>
+#include <FROG/Formatter.h>
 
-#define dprint Formatter::print<Serial::serial_putc>
-#define dprintln Formatter::println<Serial::serial_putc>
+#define dprint FROG::Formatter::print<Serial::serial_putc>
+#define dprintln FROG::Formatter::println<Serial::serial_putc>
 
 namespace Serial {
 
