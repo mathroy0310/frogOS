@@ -5,8 +5,8 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 23:24:59 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:25:46 by mathroy0310    `                         */
+/*   Created: 2024/08/05 01:45:46 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/05 01:45:47 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -173,8 +173,10 @@ struct KeyEvent {
 	bool    pressed;
 };
 
-bool initialize(void (*callback)(KeyEvent));
+bool initialize();
 void update_keyboard();
+
+void register_key_event_callback(void (*callback)(KeyEvent));
 
 char key_event_to_ascii(KeyEvent);
 

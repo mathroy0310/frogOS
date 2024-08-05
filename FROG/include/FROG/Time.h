@@ -5,8 +5,8 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 23:32:21 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:43:07 by mathroy0310    `                         */
+/*   Created: 2024/08/05 01:17:07 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/05 01:17:07 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ void print_argument_impl(const Time &time, const ValueFormat &) {
 	constexpr const char *months[]{"",    "Jan", "Feb", "Mar", "Apr",
 	                               "May", "Jun", "Jul", "Aug", "Sep",
 	                               "Oct", "Nov", "Dec"};
-	print<PUTC_LIKE>("{} {} {} {}:{}:{} GMT+0 {}", week_days[time.week_day], months[time.month], time.day, time.hour, time.minute, time.second, time.year);
+	print<PUTC_LIKE>("{} {} {} {2}:{2}:{2} GMT+0 {4}", week_days[time.week_day], months[time.month], time.day, time.hour, time.minute, time.second, time.year);
 }
 
 } // namespace FROG::Formatter

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:23 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:25:23 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 01:41:47 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,10 @@
 #include <FROG/Formatter.h>
 #include <kernel/PIT.h>
 
-#define dprintln(...)                                                                                                       \
-	do {                                                                                                                    \
-		FROG::Formatter::print<Serial::serial_putc>("[{5.3}] {}({}):  ", (float) PIT::ms_since_boot(), __FILE__, __LINE__); \
-		FROG::Formatter::println<Serial::serial_putc>(__VA_ARGS__);                                                         \
+#define dprintln(...)                                                                                                                 \
+	do {                                                                                                                              \
+		FROG::Formatter::print<Serial::serial_putc>("[{5.3}] {}({}):  ", (float) PIT::ms_since_boot() / 1000.0f, __FILE__, __LINE__); \
+		FROG::Formatter::println<Serial::serial_putc>(__VA_ARGS__);                                                                   \
 	} while (false)
 
 #define dwarnln(...)                                           \

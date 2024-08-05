@@ -5,21 +5,21 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 23:45:22 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:45:25 by mathroy0310    `                         */
+/*   Created: 2024/08/05 01:17:04 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/05 01:17:05 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma
+#pragma once
 
-#include <BAN/Errors.h>
-#include <BAN/Memory.h>
+#include <FROG/Errors.h>
+#include <FROG/Memory.h>
 
 #include <assert.h>
 #include <string.h>
 #include <sys/param.h>
 
-namespace BAN {
+namespace FROG {
 
 template <typename T> class Vector {
   public:
@@ -38,6 +38,11 @@ template <typename T> class Vector {
 
 	const T &operator[](size_type) const;
 	T &operator[](size_type);
+
+	const T &Back() const;
+	T       &Back();
+	const T &Front() const;
+	T       &Front();
 
 	ErrorOr<void> Resize(size_type);
 	ErrorOr<void> Reserve(size_type);
@@ -58,7 +63,7 @@ template <typename T> class Vector {
 template <typename T> Vector<T>::~Vector() {
 	for (size_type i = 0; i < m_size; i++)
 		m_data[i].~T();
-	BAN::deallocator(m_data);
+	FROG::deallocator(m_data);
 }
 
 template <typename T> ErrorOr<void> Vector<T>::PushBack(const T &value) {
@@ -101,6 +106,25 @@ template <typename T> T &Vector<T>::operator[](size_type index) {
 	return m_data[index];
 }
 
+template <typename T> const T &Vector<T>::Back() const {
+	assert(m_size > 0);
+	return m_data[m_size - 1];
+}
+
+template <typename T> T &Vector<T>::Back() {
+	assert(m_size > 0);
+	return m_data[m_size - 1];
+}
+
+template <typename T> const T &Vector<T>::Front() const {
+	assert(m_size > 0);
+	return m_data[0];
+}
+template <typename T> T &Vector<T>::Front() {
+	assert(m_size > 0);
+	return m_data[0];
+}
+
 template <typename T> ErrorOr<void> Vector<T>::Resize(size_type size) {
 	if (size < m_size) {
 		for (size_type i = size; i < m_size; i++)
@@ -138,14 +162,14 @@ template <typename T> ErrorOr<void> Vector<T>::EnsureCapasity(size_type size) {
 	if (m_capasity >= size)
 		return {};
 	size_type new_cap = MAX(size, m_capasity * 1.5f);
-	void     *new_data = BAN::allocator(new_cap * sizeof(T));
+	void     *new_data = FROG::allocator(new_cap * sizeof(T));
 	if (new_data == nullptr)
 		return Error::FromString("Vector: Could not allocate memory");
 	memcpy(new_data, m_data, m_size * sizeof(T));
-	BAN::deallocator(m_data);
+	FROG::deallocator(m_data);
 	m_data = (T *) new_data;
 	m_capasity = new_cap;
 	return {};
 }
 
-} // namespace BAN
+} // namespace FROG

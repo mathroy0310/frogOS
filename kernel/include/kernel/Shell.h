@@ -1,35 +1,38 @@
 /* ************************************************************************** */
 /*                                                             _              */
 /*                                                 __   ___.--'_\`.           */
-/*   SSP.cpp                                      ( _\`.' -   'o\` )          */
+/*   Shell.h                                      ( _\`.' -   'o\` )          */
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 01:34:37 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:34:38 by mathroy0310    `                         */
+/*   Created: 2024/08/05 01:45:21 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/05 01:45:22 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <kernel/panic.h>
+#pragma once
 
-#include <stdint.h>
-#include <stdlib.h>
- 
-#if UINT32_MAX == UINTPTR_MAX
-#define STACK_CHK_GUARD 0xe2dee396
-#else
-#define STACK_CHK_GUARD 0x595e9fbd94fda766
-#endif
- 
-uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
+#include <FROG/String.h>
+#include <kernel/Keyboard.h>
 
-__BEGIN_DECLS
+namespace Kernel {
 
-__attribute__((noreturn))
-void __stack_chk_fail(void)
-{
-	Kernel::panic("Stack smashing detected");
-	abort();
-}
+class Shell {
+public:
+  Shell(const Shell &) = delete;
 
-__END_DECLS
+  static Shell &Get();
+
+  void Run();
+
+private:
+  Shell();
+  void PrintPrompt();
+  void ProcessCommand(FROG::StringView);
+  void KeyEventCallback(Keyboard::KeyEvent);
+
+private:
+  FROG::String m_buffer;
+};
+
+} // namespace Kernel

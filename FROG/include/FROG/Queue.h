@@ -5,8 +5,8 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 20:14:45 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:37:02 by mathroy0310    `                         */
+/*   Created: 2024/08/05 01:16:46 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/05 01:16:52 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,13 +14,6 @@
 
 #include <FROG/Errors.h>
 #include <FROG/Memory.h>
-#include <kernel/kmalloc.h>
-
-#if defined(__is_kernel)
-#include <kernel/kmalloc.h>
-#else
-#include <stdlib.h>
-#endif
 
 #include <assert.h>
 #include <stdint.h>
@@ -30,7 +23,6 @@
 namespace FROG {
 
 template <typename T> class Queue {
-
   public:
 	using size_type = uint32_t;
 	using value_type = T;

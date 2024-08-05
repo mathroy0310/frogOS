@@ -5,8 +5,8 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 23:25:16 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:25:16 by mathroy0310    `                         */
+/*   Created: 2024/08/05 01:34:14 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/05 01:34:14 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,7 @@ static uint8_t               s_keyboard_key_buffer_size = 0;
 static uint8_t s_led_states = 0b000;
 static uint8_t s_modifiers = 0x00;
 
-static void (*s_key_callback)(KeyEvent) = nullptr;
+static void (*s_key_event_callback)(KeyEvent) = nullptr;
 
 static char s_key_to_char[]{
     '\0', '\0', '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',
@@ -180,7 +180,8 @@ void update_keyboard() {
 	}
 
 	while (!s_key_event_queue.Empty()) {
-		s_key_callback(s_key_event_queue.Front());
+		if (s_key_event_callback)
+			s_key_event_callback(s_key_event_queue.Front());
 		s_key_event_queue.Pop();
 	}
 }
@@ -355,7 +356,7 @@ void keyboard_irq_handler() {
 	}
 }
 
-bool initialize(void (*callback)(KeyEvent)) {
+bool initialize() {
 	// https://wiki.osdev.org/%228042%22_PS/2_Controller
 
 	// TODO: support dual channel
@@ -422,11 +423,14 @@ bool initialize(void (*callback)(KeyEvent)) {
 	}));
 
 	// Register callback and IRQ
-	s_key_callback = callback;
 	IDT::register_irq_handler(KEYBOARD_IRQ, keyboard_irq_handler);
 	PIC::unmask(KEYBOARD_IRQ);
 
 	return true;
+}
+
+void register_key_event_callback(void (*callback)(KeyEvent)) {
+	s_key_event_callback = callback;
 }
 
 char key_event_to_ascii(KeyEvent event) {

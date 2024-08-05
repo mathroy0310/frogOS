@@ -1,3 +1,15 @@
+# **************************************************************************** #
+#                                                              _               #
+#                                                  __   ___.--'_\`.            #
+#    Makefile                                     ( _\`.' -   'o\` )           #
+#                                                 _\\.'_'      _.-'            #
+#    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
+#                                                 \\_'-`---'\\__,              #
+#    Created: 2024/08/05 01:34:45 by mathroy0310   \`        `-\\              #
+#    Updated: 2024/08/05 01:44:01 by mathroy0310    `                          #
+#                                                                              #
+# **************************************************************************** #
+
 DEFAULT_HOST!=../default-host.sh
 HOST?=DEFAULT_HOST
 HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
@@ -31,22 +43,24 @@ BUILDDIR=$(abspath build)
  
 KERNEL_OBJS=			\
 $(KERNEL_ARCH_OBJS)		\
+kernel/build_libc.o		\
 kernel/kernel.o			\
+kernel/Keyboard.o		\
 kernel/kmalloc.o		\
 kernel/PIC.o			\
 kernel/PIT.o			\
-kernel/RTC.o 			\
-kernel/Keyboard.o		\
+kernel/RTC.o			\
 kernel/Serial.o			\
+kernel/Shell.o			\
 kernel/SSP.o			\
 icxxabi.o				\
-
+ 
 OBJS=					\
 $(ARCHDIR)/crti.o		\
 $(ARCHDIR)/crtbegin.o	\
 $(KERNEL_OBJS)			\
 $(ARCHDIR)/crtend.o		\
-$(ARCHDIR)/crtn.o 		\
+$(ARCHDIR)/crtn.o		\
  
 LINK_LIST=				\
 $(LDFLAGS)				\
@@ -63,12 +77,12 @@ $(ARCHDIR)/crtn.o		\
 all: frog-os.kernel
  
 frog-os.kernel: always $(OBJS) $(ARCHDIR)/linker.ld
-	cd $(BUILDDIR) && $(CXX) -T ../$(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(CPPFLAGS) $(LINK_LIST)
+	cd $(BUILDDIR) && $(CXX) -T ../$(ARCHDIR)/linker.ld -o frog-os.kernel $(CFLAGS) $(CPPFLAGS) $(LINK_LIST)
 	cd $(BUILDDIR) && grub-file --is-x86-multiboot frog-os.kernel
  
 $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $(BUILDDIR)/$@
-
+ 
 .cpp.o:
 	$(CXX) -MD -c $< -o $(BUILDDIR)/$@ $(CFLAGS) $(CPPFLAGS)
  
