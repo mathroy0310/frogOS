@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:45:21 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:45:22 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 11:35:45 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ public:
 private:
   Shell();
   void PrintPrompt();
-  void ProcessCommand(FROG::StringView);
+  void ProcessCommand(const FROG::Vector<FROG::StringView> &arguments);
   void KeyEventCallback(Keyboard::KeyEvent);
 
 private:
