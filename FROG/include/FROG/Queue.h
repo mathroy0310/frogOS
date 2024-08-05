@@ -6,13 +6,14 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 20:14:45 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 20:44:36 by mathroy0310    `                         */
+/*   Updated: 2024/08/04 23:37:02 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <FROG/Errors.h>
+#include <FROG/Memory.h>
 #include <kernel/kmalloc.h>
 
 #if defined(__is_kernel)
@@ -29,14 +30,6 @@
 namespace FROG {
 
 template <typename T> class Queue {
-  private:
-#if defined(__is_kernel)
-	static constexpr auto &allocator = kmalloc;
-	static constexpr auto &deallocator = kfree;
-#else
-	static constexpr auto &allocator = malloc;
-	static constexpr auto &deallocator = free;
-#endif
 
   public:
 	using size_type = uint32_t;
@@ -65,7 +58,9 @@ template <typename T> class Queue {
 };
 
 template <typename T> Queue<T>::~Queue() {
-	Queue<T>::deallocator(m_data);
+	for (size_type i = 0; i < m_size; i++)
+		m_data[i].~T();
+	FROG::deallocator(m_data);
 }
 
 template <typename T> ErrorOr<void> Queue<T>::Push(const T &value) {
@@ -103,12 +98,12 @@ template <typename T> ErrorOr<void> Queue<T>::VerifyCapacity(size_type size) {
 		return {};
 
 	size_type new_cap = MAX(m_capacity * 1.5f, m_capacity + 1);
-	void     *new_data = Queue<T>::allocator(new_cap * sizeof(T));
+	void     *new_data = FROG::allocator(new_cap * sizeof(T));
 	if (new_data == nullptr)
-		return Error::FromString("Queue: out of memory");
+		return Error::FromString("Queue: Could not allocate memory");
 
 	memcpy(new_data, m_data, m_size * sizeof(T));
-	Queue<T>::deallocator(m_data);
+	FROG::deallocator(m_data);
 
 	m_data = (T *) new_data;
 	m_capacity = new_cap;
