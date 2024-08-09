@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 02:32:58 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:33:03 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 02:57:07 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,23 +19,28 @@ class TTY {
   public:
 	TTY();
 	void Clear();
-	void PutChar(char ch);
 	void Write(const char *data, size_t size);
 	void WriteString(const char *data);
-	void SetCursorPos(int x, int y);
+	void PutChar(char ch);
+	void SetCursorPosition(uint32_t x, uint32_t y);
 
 	static void PutCharCurrent(char ch);
 
   private:
-	void ResetAnsiEscape();
-	void HandleAnsiSGR();
-	void HandleAnsiEscape(uint16_t ch);
+	void        ResetAnsiEscape();
+	void        HandleAnsiSGR();
+	void        HandleAnsiEscape(uint16_t ch);
+	void        PutCharAt(uint16_t ch, size_t x, size_t y);
+	inline void RenderFromBuffer(size_t x, size_t y) {
+		const auto &cell = m_buffer[y * m_width + x];
+		VESA::PutCharAt(cell.character, x, y, cell.foreground, cell.background);
+	}
 
   private:
 	struct Cell {
 		VESA::Color foreground = VESA::Color::BRIGHT_WHITE;
 		VESA::Color background = VESA::Color::BLACK;
-		uint8_t     character = ' ';
+		uint16_t    character = ' ';
 	};
 
 	struct AnsiState {

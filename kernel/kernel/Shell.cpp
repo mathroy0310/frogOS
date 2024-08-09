@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:40:02 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 02:56:17 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,7 +142,7 @@ void Shell::ProcessCommand(const FROG::Vector<FROG::StringView> &arguments) {
 			return;
 		}
 		m_tty->Clear();
-		m_tty->SetCursorPos(0, 0);
+		m_tty->SetCursorPosition(0, 0);
 		return;
 	}
 
