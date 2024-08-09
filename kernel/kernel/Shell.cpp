@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:06:51 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 02:40:02 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 #include <kernel/PIT.h>
 #include <kernel/RTC.h>
 #include <kernel/Shell.h>
-#include <kernel/tty.h>
+#include <kernel/TTY.h>
 
 namespace Kernel {
 
@@ -38,6 +38,10 @@ Shell::Shell() {
 
 void Shell::PrintPrompt() {
 	kprint("\e[36muser\e[m► ");
+}
+
+void Shell::SetTTY(TTY *tty) {
+	m_tty = tty;
 }
 
 void Shell::Run() {
@@ -137,8 +141,8 @@ void Shell::ProcessCommand(const FROG::Vector<FROG::StringView> &arguments) {
 			kprintln("'clear' does not support command line arguments");
 			return;
 		}
-		TTY::clear();
-		TTY::set_cursor_pos(0, 0);
+		m_tty->Clear();
+		m_tty->SetCursorPos(0, 0);
 		return;
 	}
 

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:26:08 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 02:41:10 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,12 +22,12 @@
 #include <kernel/RTC.h>
 #include <kernel/Serial.h>
 #include <kernel/Shell.h>
+#include <kernel/TTY.h>
 #include <kernel/VESA.h>
 #include <kernel/kmalloc.h>
 #include <kernel/kprint.h>
 #include <kernel/multiboot.h>
 #include <kernel/panic.h>
-#include <kernel/tty.h>
 
 #define DISABLE_INTERRUPTS() asm volatile("cli")
 #define ENABLE_INTERRUPTS() asm volatile("sti")
@@ -61,18 +61,17 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 
 	s_multiboot_info = mbi;
 
-	if (!VESA::PreInitialize()) {
+	if (!VESA::Initialize()) {
 		dprintln("Could not preinitialize VESA");
 		return;
 	}
 
-	TTY::initialize();
-
 	dprintln("{}", mbi->framebuffer.type);
 
 	kmalloc_initialize();
-	
-	VESA::Initialize();
+
+	TTY *tty1 = new TTY;
+
 	ParsedCommandLine cmdline;
 	if (mbi->flags & 0x02)
 		cmdline = ParseCommandLine((const char *) mbi->cmdline);
@@ -86,7 +85,7 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 		return;
 
 	ENABLE_INTERRUPTS();
-	
+
 	kprintln("\e[32m");
 	kprintln("  .d888                             ");
 	kprintln(" d88P\"                              ");
@@ -107,6 +106,7 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	// kprintln("▐▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▌");
 
 	auto &shell = Kernel::Shell::Get();
+	shell.SetTTY(tty1);
 	shell.Run();
 
 	for (;;) {
