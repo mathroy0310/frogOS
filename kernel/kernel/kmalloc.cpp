@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:14 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:28:00 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 08:58:48 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,30 +18,30 @@
 #include <stdint.h>
 
 #define MB (1 << 20)
+#define ALIGN (alignof(max_align_t))
 
 struct kmalloc_node {
-	uint8_t *addr = nullptr;
-	size_t   size : sizeof(size_t) * 8 - 1;
-	size_t   free : 1;
+	uintptr_t addr;
+	size_t    size : sizeof(size_t) * 8 - 1;
+	size_t    free : 1;
 };
 static kmalloc_node *s_kmalloc_node_head = nullptr;
 static size_t        s_kmalloc_node_count;
 
-static uint8_t *const   s_kmalloc_node_base = (uint8_t *) 0x00200000;
-static constexpr size_t s_kmalloc_max_nodes = 1000;
+static constexpr uintptr_t s_kmalloc_node_base = 0x00200000;
+static constexpr size_t    s_kmalloc_max_nodes = 1000;
 
-static uint8_t *const s_kmalloc_base = s_kmalloc_node_base + s_kmalloc_max_nodes * sizeof(kmalloc_node);
-static constexpr size_t s_kmalloc_size = 1 * MB;
-static uint8_t *const   s_kmalloc_end = s_kmalloc_base + s_kmalloc_size;
+static constexpr uintptr_t s_kmalloc_base = s_kmalloc_node_base + s_kmalloc_max_nodes * sizeof(kmalloc_node);
+static constexpr size_t    s_kmalloc_size = 1 * MB;
+static constexpr uintptr_t s_kmalloc_end = s_kmalloc_base + s_kmalloc_size;
+static size_t              s_kmalloc_available = 0;
+static size_t              s_kmalloc_allocated = 0;
 
-static size_t s_kmalloc_available = 0;
-static size_t s_kmalloc_allocated = 0;
+static uintptr_t s_kmalloc_eternal_ptr = 0;
 
-static uint8_t *s_kmalloc_eternal_ptr = nullptr;
-
-static uint8_t *const   s_kmalloc_eternal_base = s_kmalloc_end;
-static constexpr size_t s_kmalloc_eternal_size = 2 * MB;
-static uint8_t *const s_kmalloc_eternal_end = s_kmalloc_eternal_base + s_kmalloc_eternal_size;
+static constexpr uintptr_t s_kmalloc_eternal_base = s_kmalloc_end;
+static constexpr size_t    s_kmalloc_eternal_size = 2 * MB;
+static constexpr uintptr_t s_kmalloc_eternal_end = s_kmalloc_eternal_base + s_kmalloc_eternal_size;
 
 void kmalloc_initialize() {
 	if (!(s_multiboot_info->flags & (1 << 6)))
@@ -54,7 +54,7 @@ void kmalloc_initialize() {
 		    (multiboot_memory_map_t *) (s_multiboot_info->mmap_addr + i);
 
 		if (mmmt->type == 1) {
-			if (mmmt->base_addr <= (uint64_t) s_kmalloc_base && (uint64_t) s_kmalloc_eternal_end <= mmmt->base_addr + mmmt->length) {
+			if (mmmt->base_addr <= s_kmalloc_base && s_kmalloc_eternal_end <= mmmt->base_addr + mmmt->length) {
 				dprintln("Total usable RAM: {} MB", (float) mmmt->length / MB);
 				valid = true;
 				break;
@@ -66,6 +66,8 @@ void kmalloc_initialize() {
 
 	if (!valid)
 		Kernel::panic("Kmalloc: Could not find {} MB of memory", (double) (s_kmalloc_eternal_end - s_kmalloc_base));
+
+	dprintln("Aligining everything to {} byte boundaries", ALIGN);
 
 	s_kmalloc_node_count = 1;
 	s_kmalloc_node_head = (kmalloc_node *) s_kmalloc_node_base;
@@ -93,6 +95,12 @@ void kmalloc_dump_nodes() {
 }
 
 void *kmalloc_eternal(size_t size) {
+	if (size % ALIGN)
+		size += ALIGN - (size % ALIGN);
+
+	if (s_kmalloc_eternal_ptr % ALIGN)
+		Kernel::panic("Unaligned ptr in kmalloc_eternal");
+
 	if (s_kmalloc_eternal_ptr + size > s_kmalloc_eternal_end) {
 		dprintln("\e[33mKmalloc eternal: Could not allocate {} bytes\e[0m", size);
 		return nullptr;
@@ -104,6 +112,9 @@ void *kmalloc_eternal(size_t size) {
 }
 
 void *kmalloc(size_t size) {
+	if (size % ALIGN)
+		size += ALIGN - (size % ALIGN);
+
 	// Search for node with free memory and big enough size
 	size_t valid_node_index = -1;
 	for (size_t i = 0; i < s_kmalloc_node_count; i++) {
@@ -125,7 +136,9 @@ void *kmalloc(size_t size) {
 	// just flip free bit and return the address
 	if (valid_node.size == size) {
 		valid_node.free = false;
-		return valid_node.addr;
+		if (valid_node.addr % ALIGN)
+			Kernel::panic("Unaligned ptr in kmalloc");
+		return (void *) valid_node.addr;
 	}
 
 	if (s_kmalloc_node_count == s_kmalloc_max_nodes) {
@@ -151,7 +164,9 @@ void *kmalloc(size_t size) {
 	s_kmalloc_allocated += size;
 	s_kmalloc_available -= size;
 
-	return valid_node.addr;
+	if (valid_node.addr % ALIGN)
+		Kernel::panic("Unaligned ptr in kmalloc");
+	return (void *) valid_node.addr;
 }
 
 void kfree(void *addr) {
@@ -162,7 +177,7 @@ void kfree(void *addr) {
 
 	size_t node_index = -1;
 	for (size_t i = 0; i < s_kmalloc_node_count; i++) {
-		if (s_kmalloc_node_head[i].addr == addr) {
+		if (s_kmalloc_node_head[i].addr == (uintptr_t) addr) {
 			node_index = i;
 			break;
 		}
