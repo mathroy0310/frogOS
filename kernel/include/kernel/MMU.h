@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 11:44:09 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:44:10 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:54:32 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,9 @@ class MMU {
 
 	void AllocatePage(uintptr_t);
 	void AllocateRange(uintptr_t, ptrdiff_t);
+
+	void UnAllocatePage(uintptr_t);
+	void UnAllocateRange(uintptr_t, ptrdiff_t);
 
   private:
 	MMU();

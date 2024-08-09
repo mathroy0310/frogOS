@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:41 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:42:29 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:54:04 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,8 +192,9 @@ static bool IsValidACPISDTHeader(ACPISDTHeader *header) {
 }
 
 static void ParseMADT(RSDPDescriptor *rsdp) {
-	RSDT *root = (RSDT *) (rsdp->revision == 2 ? ((RSDPDescriptor20 *) rsdp)->xsdt_address : rsdp->rsdt_address);
-	MMU::Get().AllocatePage((uint32_t) root);
+	RSDT *const root =
+	    (RSDT *) (rsdp->revision == 2 ? ((RSDPDescriptor20 *) rsdp)->xsdt_address : rsdp->rsdt_address);
+	MMU::Get().AllocatePage((uintptr_t) root);
 	uint32_t sdt_entry_count = (root->header.length - sizeof(root->header)) / (rsdp->revision == 2 ? 8 : 4);
 
 	for (uint32_t i = 0; i < sdt_entry_count; i++) {
@@ -273,6 +274,7 @@ static void ParseMADT(RSDPDescriptor *rsdp) {
 			}
 		}
 	}
+	MMU::Get().UnAllocatePage((uintptr_t) root);
 }
 
 static uint32_t ReadLocalAPIC(uint32_t offset) {
