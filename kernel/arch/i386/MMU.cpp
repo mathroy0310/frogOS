@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 11:42:54 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:54:16 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:56:00 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@
 #include <kernel/kmalloc.h>
 
 #include <string.h>
+
+#define MMU_DEBUG_PRINT 1
 
 #define PRESENT (1 << 0)
 #define READ_WRITE (1 << 1)
@@ -49,7 +51,7 @@ MMU::MMU() {
 	ASSERT(m_page_descriptor_pointer_table);
 	ASSERT(((uintptr_t) m_page_descriptor_pointer_table % 32) == 0);
 
-	// create and zero out all page directories
+	// allocate all page directories
 	for (int i = 0; i < 4; i++) {
 		uint64_t *page_directory = allocate_page_aligned_page();
 		m_page_descriptor_pointer_table[i] = (uint64_t) page_directory | PRESENT;
@@ -75,6 +77,10 @@ MMU::MMU() {
 }
 
 void MMU::AllocatePage(uintptr_t address) {
+#if MMU_DEBUG_PRINT
+	dprintln("AllocatePage(0x{8H})", address & PAGE_MASK);
+#endif
+
 	uint32_t pdpte = (address & 0xC0000000) >> 30;
 	uint32_t pde = (address & 0x3FE00000) >> 21;
 	uint32_t pte = (address & 0x001FF000) >> 12;
@@ -101,6 +107,9 @@ void MMU::AllocateRange(uintptr_t address, ptrdiff_t size) {
 }
 
 void MMU::UnAllocatePage(uintptr_t address) {
+#if MMU_DEBUG_PRINT
+	dprintln("UnAllocatePage(0x{8H})", address & PAGE_MASK);
+#endif
 	uint32_t pdpte = (address & 0xC0000000) >> 30;
 	uint32_t pde = (address & 0x3FE00000) >> 21;
 	uint32_t pte = (address & 0x001FF000) >> 12;

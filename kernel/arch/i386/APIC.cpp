@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:41 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:54:04 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 12:00:40 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define DEGUB_PRINT 1
+#define APIC_DEBUG_PRINT 1
 
 #define IA32_APIC_BASE 0x1B
 #define IA32_APIC_BASE_ENABLE (1 << 11)
@@ -212,19 +212,18 @@ static void ParseMADT(RSDPDescriptor *rsdp) {
 					s_processor_ids[s_lapic_count] = entry->entry0.acpi_processor_id;
 					s_lapic_ids[s_lapic_count] = entry->entry0.apic_id;
 					s_lapic_count++;
-#if DEBUG_PRINT
-					// kprintln("Entry0, processor id {}, apic id {}, flags
-					// 0b{32b}", 	entry->entry0.acpi_processor_id,
-					//	entry->entry0.apic_id,
-					//	entry->entry0.flags
-					//);
+#if APIC_DEBUG_PRINT >= 2
+					dprintln("Entry0, processor id {}, apic id {}, flags "
+					         "0b{32b}",
+					         entry->entry0.acpi_processor_id, entry->entry0.apic_id,
+					         entry->entry0.flags);
 #endif
 					break;
 				case 1:
 					if (s_io_apic == 0)
 						s_io_apic = entry->entry1.ioapic_address;
-#if DEBUG_PRINT
-					kprintln("Entry1, io apic id {}, io apic address 0x{4H}, "
+#if APIC_DEBUG_PRINT
+					dprintln("Entry1, io apic id {}, io apic address 0x{4H}, "
 					         "gsi base {}",
 					         entry->entry1.ioapic_id, entry->entry1.ioapic_address,
 					         entry->entry1.gsi_base);
@@ -232,23 +231,23 @@ static void ParseMADT(RSDPDescriptor *rsdp) {
 					break;
 				case 2:
 					s_overrides[entry->entry2.irq_source] = entry->entry2.gsi;
-#if DEBUG_PRINT
-					kprintln("Entry2, bus source {}, irq source {}, gsi {}, "
+#if APIC_DEBUG_PRINT
+					dprintln("Entry2, bus source {}, irq source {}, gsi {}, "
 					         "flags 0b{16b}",
 					         entry->entry2.bus_source, entry->entry2.irq_source,
 					         entry->entry2.gsi, entry->entry2.flags);
 #endif
 					break;
 				case 3:
-#if DEBUG_PRINT
-					kprintln("Entry3, nmi source {}, flags 0b{16b}, gsi {}",
+#if APIC_DEBUG_PRINT
+					dprintln("Entry3, nmi source {}, flags 0b{16b}, gsi {}",
 					         entry->entry3.nmi_source, entry->entry3.flags,
 					         entry->entry3.gsi);
 #endif
 					break;
 				case 4:
-#if DEBUG_PRINT
-					kprintln("Entry4, acpi processor id 0x{2H}, flags 0b{16b}, "
+#if APIC_DEBUG_PRINT
+					dprintln("Entry4, acpi processor id 0x{2H}, flags 0b{16b}, "
 					         "lint{}",
 					         entry->entry4.acpi_processor_id, entry->entry4.flags,
 					         entry->entry4.lint);
@@ -256,13 +255,13 @@ static void ParseMADT(RSDPDescriptor *rsdp) {
 					break;
 				case 5:
 					s_local_apic = entry->entry5.address;
-#if DEBUG_PRINT
-					kprintln("Entry5, address 0x{4H}", entry->entry5.address);
+#if APIC_DEBUG_PRINT
+					dprintln("Entry5, address 0x{4H}", entry->entry5.address);
 #endif
 					break;
 				case 9:
-#if DEBUG_PRINT
-					kprintln("Entry9, x2 acpi id {}, flags 0b{32b}, acpi id {}",
+#if APIC_DEBUG_PRINT
+					dprintln("Entry9, x2 acpi id {}, flags 0b{32b}, acpi id {}",
 					         entry->entry9.local_x2acpi_id, entry->entry9.flags,
 					         entry->entry9.acpi_id);
 #endif
@@ -308,17 +307,17 @@ static bool InitializeAPIC() {
 	uint32_t ecx, edx;
 	CPUID::GetFeatures(ecx, edx);
 	if (!(edx & CPUID::Features::EDX_APIC)) {
-		kprintln("Local APIC not available");
+		dprintln("Local APIC not available");
 		return false;
 	}
 	if (!(edx & CPUID::Features::EDX_MSR)) {
-		kprintln("MSR not available");
+		dprintln("MSR not available");
 		return false;
 	}
 
 	RSDPDescriptor *rsdp = LocateRSDP();
 	if (rsdp == nullptr) {
-		kprintln("Could not locate RSDP");
+		dprintln("Could not locate RSDP");
 		return false;
 	}
 
@@ -346,10 +345,10 @@ void Initialize(bool force_pic) {
 	PIC::Remap();
 
 	if (force_pic) {
-		kprintln("Using PIC instead of APIC");
+		dprintln("Using PIC instead of APIC");
 		s_using_fallback_pic = true;
 	} else if (!InitializeAPIC()) {
-		kprintln("Could not initialize APIC. Using PIC as fallback");
+		dprintln("Could not initialize APIC. Using PIC as fallback");
 		s_using_fallback_pic = true;
 	}
 }
