@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:26:13 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 01:57:50 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:13:06 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ struct GDTR {
 } __attribute__((packed));
 
 static GDTR              s_gdtr;
-static SegmentDesriptor *s_gdt;
+static SegmentDesriptor  s_gdt[5];
 
 extern "C" void load_gdt(void *gdt_ptr);
 asm(".global load_gdt;"
@@ -49,12 +49,8 @@ void write_gdt_entry(uint8_t segment, SegmentDesriptor descriptor) {
 }
 
 void gdt_initialize() {
-	constexpr uint8_t GDT_SIZE = 5;
-
-	s_gdt = new SegmentDesriptor[GDT_SIZE];
-
 	s_gdtr.address = s_gdt;
-	s_gdtr.size = GDT_SIZE * 8 - 1;
+	s_gdtr.size = sizeof(s_gdt) - 1;
 
 	write_gdt_entry(0x00, {0, 0x00000, 0x00, 0x0}); // null
 	write_gdt_entry(0x08, {0, 0xFFFFF, 0x9A, 0xC}); // kernel code

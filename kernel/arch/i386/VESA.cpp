@@ -6,16 +6,17 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 02:24:11 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:58:29 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:28:55 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <kernel/IO.h>
+#include <kernel/Paging.h>
 #include <kernel/Serial.h>
 #include <kernel/VESA.h>
 #include <kernel/kmalloc.h>
 #include <kernel/multiboot.h>
 #include <kernel/panic.h>
-#include <kernel/IO.h>
 
 #include "font.h"
 
@@ -30,12 +31,12 @@ extern const struct bitmap_font font;
 
 namespace VESA {
 
-static void    *s_addr = nullptr;
-static uint8_t  s_bpp = 0;
-static uint32_t s_pitch = 0;
-static uint32_t s_width = 0;
-static uint32_t s_height = 0;
-static uint8_t  s_mode = 0;
+static uintptr_t s_addr = 0;
+static uint8_t   s_bpp = 0;
+static uint32_t  s_pitch = 0;
+static uint32_t  s_width = 0;
+static uint32_t  s_height = 0;
+static uint8_t   s_mode = 0;
 
 static uint32_t s_terminal_width = 0;
 static uint32_t s_terminal_height = 0;
@@ -79,12 +80,14 @@ bool Initialize() {
 		return false;
 
 	auto &framebuffer = s_multiboot_info->framebuffer;
-	s_addr = (void *) framebuffer.addr;
+	s_addr = framebuffer.addr;
 	s_bpp = framebuffer.bpp;
 	s_pitch = framebuffer.pitch;
 	s_width = framebuffer.width;
 	s_height = framebuffer.height;
 	s_mode = framebuffer.type;
+
+	Paging::MapFramebuffer(framebuffer.addr & 0xFFC00000);
 
 	if (s_mode == MULTIBOOT_FRAMEBUFFER_TYPE_GRAPHICS) {
 		if (s_bpp != 24 && s_bpp != 32) {
@@ -92,12 +95,14 @@ bool Initialize() {
 			return false;
 		}
 
+		dprintln("Graphics Mode {}x{} ({} bpp)", s_width, s_height, s_bpp);
 		PutCharAtImpl = GraphicsPutCharAt;
 		ClearImpl = GraphicsClear;
 		SetCursorPositionImpl = GraphicsSetCursorPosition;
 		s_terminal_width = s_width / font.Width;
 		s_terminal_height = s_height / font.Height;
 	} else if (s_mode == MULTIBOOT_FRAMEBUFFER_TYPE_TEXT) {
+		dprintln("Text Mode {}x{}", s_width, s_height);
 		PutCharAtImpl = TextPutCharAt;
 		ClearImpl = TextClear;
 		SetCursorPositionImpl = TextSetCursorPosition;
@@ -121,7 +126,7 @@ static uint32_t s_graphics_colors[]{
 };
 
 static void GraphicsSetPixel(uint32_t offset, uint32_t color) {
-	uint32_t *address = (uint32_t *) ((uint32_t) s_addr + offset);
+	uint32_t *address = (uint32_t *) (s_addr + offset);
 	switch (s_bpp) {
 	case 24:
 		*address = (*address & 0xFF000000) | (color & 0x00FFFFFF);
@@ -213,20 +218,12 @@ static inline uint8_t TextColor(Color fg, Color bg) {
 	return (((uint8_t) bg & 0x0F) << 4) | ((uint8_t) fg & 0x0F);
 }
 
-static void TextSetCursorPosition(uint32_t x, uint32_t y, Color) {
-	uint16_t position = y * s_width + x;
-	IO::outb(0x3D4, 0x0F);
-	IO::outb(0x3D5, (uint8_t) (position & 0xFF));
-	IO::outb(0x3D4, 0x0E);
-	IO::outb(0x3D5, (uint8_t) ((position >> 8) & 0xFF));
-}
-
 static inline uint16_t TextEntry(uint8_t ch, uint8_t color) {
 	return ((uint16_t) color << 8) | ch;
 }
 
 static void TextPutCharAt(uint16_t ch, uint32_t x, uint32_t y, Color fg, Color bg) {
-	uint32_t index = y * s_width + x;
+	uint32_t index = y * s_pitch + x;
 	((uint16_t *) s_addr)[index] = TextEntry(ch, TextColor(fg, bg));
 }
 
@@ -234,6 +231,14 @@ static void TextClear(Color color) {
 	for (uint32_t y = 0; y < s_height; y++)
 		for (uint32_t x = 0; x < s_width; x++)
 			TextPutCharAt(' ', x, y, Color::BRIGHT_WHITE, color);
+}
+
+static void TextSetCursorPosition(uint32_t x, uint32_t y, Color) {
+	uint16_t position = y * s_width + x;
+	IO::outb(0x3D4, 0x0F);
+	IO::outb(0x3D5, (uint8_t) (position & 0xFF));
+	IO::outb(0x3D4, 0x0E);
+	IO::outb(0x3D5, (uint8_t) ((position >> 8) & 0xFF));
 }
 
 } // namespace VESA

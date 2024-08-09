@@ -6,13 +6,12 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:42:15 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:20:47 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <kernel/IDT.h>
 #include <kernel/Serial.h>
-#include <kernel/kmalloc.h>
 #include <kernel/kprint.h>
 #include <kernel/panic.h>
 #include <kernel/APIC.h>

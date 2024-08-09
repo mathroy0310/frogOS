@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:41 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:12:26 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:28:23 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
 #include <kernel/PIC.h>
+#include <kernel/Paging.h>
 #include <kernel/Serial.h>
 #include <kernel/kprint.h>
 #include <kernel/panic.h>
@@ -196,6 +197,7 @@ static bool IsValidACPISDTHeader(ACPISDTHeader *header) {
 
 static void ParseMADT(RSDPDescriptor *rsdp) {
 	RSDT *root = (RSDT *) (rsdp->revision == 2 ? ((RSDPDescriptor20 *) rsdp)->xsdt_address : rsdp->rsdt_address);
+	Paging::MapRSDP((uint32_t) root & 0xFFC00000);
 	uint32_t sdt_entry_count = (root->header.length - sizeof(root->header)) / (rsdp->revision == 2 ? 8 : 4);
 
 	for (uint32_t i = 0; i < sdt_entry_count; i++) {
@@ -333,11 +335,16 @@ static bool InitializeAPIC() {
 	if (s_local_apic == 0 || s_io_apic == 0)
 		return false;
 
+	if ((s_io_apic & 0xFFC00000) != (s_local_apic & 0xFFC00000))
+		Kernel::panic("lapic and ioapic are not in the same 4 MiB are");
+
+	Paging::MapAPIC(s_io_apic & 0xFFC00000);
+
 	// Enable Local APIC
 	SetMSR(IA32_APIC_BASE, (s_local_apic & 0xFFFFF000) | IA32_APIC_BASE_ENABLE, 0);
 
-	uint32_t sipi = ReadLocalAPIC(0xF0);
-	WriteIOAPIC(0xF0, sipi | 0x1FF);
+	uint32_t sivr = ReadLocalAPIC(0xF0);
+	WriteLocalAPIC(0xF0, sivr | 0x1FF);
 
 	return true;
 }

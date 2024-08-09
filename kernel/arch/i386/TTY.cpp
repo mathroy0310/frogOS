@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:58:57 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:53:06 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:14:07 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,9 +58,11 @@ void TTY::Clear() {
 }
 
 void TTY::SetCursorPosition(uint32_t x, uint32_t y) {
-	static uint32_t last_x = 0;
-	static uint32_t last_y = 0;
-	RenderFromBuffer(last_x, last_y);
+	static uint32_t last_x = -1;
+	static uint32_t last_y = -1;
+
+	if (last_x != uint32_t(-1) && last_y != uint32_t(-1))
+		RenderFromBuffer(last_x, last_y);
 	VESA::SetCursorPosition(x, y, VESA::Color::BRIGHT_WHITE);
 	last_x = m_column = x;
 	last_y = m_row = y;
@@ -372,10 +374,11 @@ void TTY::PutCharCurrent(char ch) {
 			break;
 		default:
 			VESA::PutCharAt(ch, x, y, VESA::Color::BRIGHT_WHITE, VESA::Color::BLACK);
+			x++;
 			break;
 		}
 
-		if (++x == VESA::GetTerminalWidth()) {
+		if (x == VESA::GetTerminalWidth()) {
 			x = 0;
 			y++;
 		}

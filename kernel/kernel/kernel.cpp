@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:41:10 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:31:06 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 #include <kernel/Keyboard.h>
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
+#include <kernel/Paging.h>
 #include <kernel/RTC.h>
 #include <kernel/Serial.h>
 #include <kernel/Shell.h>
@@ -41,12 +42,19 @@ struct ParsedCommandLine {
 };
 
 ParsedCommandLine ParseCommandLine(const char *command_line) {
-	auto args = MUST(StringView(command_line).Split([](char c) {
-		return c == ' ' || c == '\t';
-	}));
-
 	ParsedCommandLine result;
-	result.force_pic = args.Has("noapic");
+	const char       *start = command_line;
+	while (true) {
+		if (!*command_line || *command_line == ' ' || *command_line == '\t') {
+			if (command_line - start == 6 && memcmp(start, "noapic", 6) == 0)
+				result.force_pic = true;
+
+			if (!*command_line)
+				break;
+			start = command_line + 1;
+		}
+		command_line++;
+	}
 	return result;
 }
 
@@ -59,18 +67,14 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 		return;
 	}
 
+	Paging::Initialize();
+
 	s_multiboot_info = mbi;
 
 	if (!VESA::Initialize()) {
 		dprintln("Could not preinitialize VESA");
 		return;
 	}
-
-	dprintln("{}", mbi->framebuffer.type);
-
-	kmalloc_initialize();
-
-	TTY *tty1 = new TTY;
 
 	ParsedCommandLine cmdline;
 	if (mbi->flags & 0x02)
@@ -81,6 +85,11 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	IDT::initialize();
 
 	PIT::initialize();
+	kmalloc_initialize();
+
+	TTY *tty1 = new TTY;
+	tty1->SetCursorPosition(0, 2);
+
 	if (!Keyboard::initialize())
 		return;
 
