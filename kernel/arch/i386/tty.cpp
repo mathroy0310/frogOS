@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:58:57 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 13:37:19 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 02:25:51 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -352,8 +352,7 @@ void putchar(char _c) {
 	}
 
 	while (terminal_row >= terminal_height) {
-		for (size_t line = 1; line < terminal_height; line++)
-			VESA::ScrollLine(line);
+		VESA::Scroll();
 		clear_line(terminal_height - 1);
 
 		terminal_col = 0;

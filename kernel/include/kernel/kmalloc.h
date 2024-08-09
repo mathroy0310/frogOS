@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 01:34:12 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 15:07:55 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 02:24:55 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 void kmalloc_initialize();
 void kmalloc_dump_nodes();
 
+void *kmalloc_eternal(size_t);
 void *kmalloc(size_t);
 void  kfree(void *);
 

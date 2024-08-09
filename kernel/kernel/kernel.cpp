@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:13:54 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 02:26:08 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,8 +61,8 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 
 	s_multiboot_info = mbi;
 
-	if (!VESA::Initialize()) {
-		dprintln("Could not initialize VESA");
+	if (!VESA::PreInitialize()) {
+		dprintln("Could not preinitialize VESA");
 		return;
 	}
 
@@ -71,7 +71,8 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	dprintln("{}", mbi->framebuffer.type);
 
 	kmalloc_initialize();
-
+	
+	VESA::Initialize();
 	ParsedCommandLine cmdline;
 	if (mbi->flags & 0x02)
 		cmdline = ParseCommandLine((const char *) mbi->cmdline);
