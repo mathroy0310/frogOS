@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:14 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:30:59 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:52:17 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,8 +68,6 @@ void kmalloc_initialize() {
 
 	if (g_kernel_end > s_kmalloc_base)
 		Kernel::Panic("Kmalloc: Kernel end is over kmalloc base");
-
-	dprintln("initializing kmalloc");
 
 	dprintln("kmalloc         {} -> {}", (void *) s_kmalloc_base, (void *) s_kmalloc_end);
 	dprintln("kmalloc eternal {} -> {}", (void *) s_kmalloc_eternal_base, (void *) s_kmalloc_eternal_end);

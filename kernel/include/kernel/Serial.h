@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:23 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:29:39 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:49:52 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,8 @@
 		dprintln(__VA_ARGS__);                                 \
 		FROG::Formatter::print(Serial::serial_putc, "\e[m");   \
 	} while (false)
+
+#define BOCHS_BREAK() asm volatile("xchgw %bx, %bx")
 
 namespace Serial {
 

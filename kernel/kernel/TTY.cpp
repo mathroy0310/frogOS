@@ -6,10 +6,11 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:58:57 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 10:16:03 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:51:43 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <FROG/Errors.h>
 #include <kernel/IO.h>
 #include <kernel/Panic.h>
 #include <kernel/Serial.h>
@@ -29,12 +30,8 @@
 
 #define CSI '['
 
-template <typename T> inline constexpr T max(T a, T b) {
-	return a > b ? a : b;
-}
-template <typename T> inline constexpr T min(T a, T b) {
-	return a < b ? a : b;
-}
+template <typename T> inline constexpr T max(T a, T b) { return a > b ? a : b; }
+template <typename T> inline constexpr T min(T a, T b) { return a < b ? a : b; }
 template <typename T> inline constexpr T clamp(T x, T a, T b) {
 	return x < a ? a : x > b ? b : x;
 }
@@ -47,8 +44,7 @@ TTY::TTY() {
 
 	m_buffer = new Cell[m_width * m_height];
 
-	if (s_tty == nullptr)
-		s_tty = this;
+	if (s_tty == nullptr) s_tty = this;
 }
 
 void TTY::Clear() {
@@ -76,8 +72,7 @@ static uint16_t handle_unicode(uint8_t ch) {
 		if ((ch >> 6) == 0b10) {
 			codepoint = (codepoint << 6) | ch;
 			unicode_left--;
-			if (unicode_left > 0)
-				return 0xFFFF;
+			if (unicode_left > 0) return 0xFFFF;
 			return codepoint;
 		} else {
 			// invalid utf-8
@@ -202,47 +197,38 @@ void TTY::HandleAnsiEscape(uint16_t ch) {
 			m_ansi_state.index++;
 			return;
 		case 'A': // Cursor Up
-			if (m_ansi_state.nums[0] == -1)
-				m_ansi_state.nums[0] = 1;
+			if (m_ansi_state.nums[0] == -1) m_ansi_state.nums[0] = 1;
 			m_row = max<int32_t>(m_row - m_ansi_state.nums[0], 0);
 			return ResetAnsiEscape();
 		case 'B': // Curson Down
-			if (m_ansi_state.nums[0] == -1)
-				m_ansi_state.nums[0] = 1;
+			if (m_ansi_state.nums[0] == -1) m_ansi_state.nums[0] = 1;
 			m_row = min<int32_t>(m_row + m_ansi_state.nums[0], m_height - 1);
 			return ResetAnsiEscape();
 		case 'C': // Cursor Forward
-			if (m_ansi_state.nums[0] == -1)
-				m_ansi_state.nums[0] = 1;
+			if (m_ansi_state.nums[0] == -1) m_ansi_state.nums[0] = 1;
 			m_column = min<int32_t>(m_column + m_ansi_state.nums[0], m_width - 1);
 			return ResetAnsiEscape();
 		case 'D': // Cursor Back
-			if (m_ansi_state.nums[0] == -1)
-				m_ansi_state.nums[0] = 1;
+			if (m_ansi_state.nums[0] == -1) m_ansi_state.nums[0] = 1;
 			m_column = max<int32_t>(m_column - m_ansi_state.nums[0], 0);
 			return ResetAnsiEscape();
 		case 'E': // Cursor Next Line
-			if (m_ansi_state.nums[0] == -1)
-				m_ansi_state.nums[0] = 1;
+			if (m_ansi_state.nums[0] == -1) m_ansi_state.nums[0] = 1;
 			m_row = min<int32_t>(m_row + m_ansi_state.nums[0], m_height - 1);
 			m_column = 0;
 			return ResetAnsiEscape();
 		case 'F': // Cursor Previous Line
-			if (m_ansi_state.nums[0] == -1)
-				m_ansi_state.nums[0] = 1;
+			if (m_ansi_state.nums[0] == -1) m_ansi_state.nums[0] = 1;
 			m_row = max<int32_t>(m_row - m_ansi_state.nums[0], 0);
 			m_column = 0;
 			return ResetAnsiEscape();
 		case 'G': // Cursor Horizontal Absolute
-			if (m_ansi_state.nums[0] == -1)
-				m_ansi_state.nums[0] = 1;
+			if (m_ansi_state.nums[0] == -1) m_ansi_state.nums[0] = 1;
 			m_column = clamp<int32_t>(m_ansi_state.nums[0] - 1, 0, m_width - 1);
 			return ResetAnsiEscape();
 		case 'H': // Cursor Position
-			if (m_ansi_state.nums[0] == -1)
-				m_ansi_state.nums[0] = 1;
-			if (m_ansi_state.nums[1] == -1)
-				m_ansi_state.nums[1] = 1;
+			if (m_ansi_state.nums[0] == -1) m_ansi_state.nums[0] = 1;
+			if (m_ansi_state.nums[1] == -1) m_ansi_state.nums[1] = 1;
 			m_row = clamp<int32_t>(m_ansi_state.nums[0] - 1, 0, m_height - 1);
 			m_column = clamp<int32_t>(m_ansi_state.nums[1] - 1, 0, m_width - 1);
 			return ResetAnsiEscape();
@@ -277,13 +263,13 @@ void TTY::HandleAnsiEscape(uint16_t ch) {
 }
 
 void TTY::RenderFromBuffer(uint32_t x, uint32_t y) {
-	if (x >= m_width || y >= m_height)
-		Kernel::Panic("invalid render from buffer, {} {}", x, y);
+	ASSERT(x < m_width && y < m_height);
 	const auto &cell = m_buffer[y * m_width + x];
 	VESA::PutCharAt(cell.character, x, y, cell.foreground, cell.background);
 }
 
 void TTY::PutCharAt(uint16_t ch, uint32_t x, uint32_t y) {
+	ASSERT(x < m_width && y < m_height);
 	auto &cell = m_buffer[y * m_width + x];
 	cell.character = ch;
 	cell.foreground = m_foreground;
@@ -293,19 +279,16 @@ void TTY::PutCharAt(uint16_t ch, uint32_t x, uint32_t y) {
 
 void TTY::PutChar(char ch) {
 	uint16_t cp = handle_unicode(ch);
-	if (cp == 0xFFFF)
-		return;
+	if (cp == 0xFFFF) return;
 
-	if (m_ansi_state.mode != 0)
-		return HandleAnsiEscape(cp);
+	if (m_ansi_state.mode != 0) return HandleAnsiEscape(cp);
 
 	// https://en.wikipedia.org/wiki/ANSI_escape_code
 	switch (cp) {
 	case BEL: // TODO
 		break;
 	case BS:
-		if (m_column > 0)
-			m_column--;
+		if (m_column > 0) m_column--;
 		break;
 	case HT:
 		m_column++;
@@ -368,32 +351,6 @@ void TTY::WriteString(const char *data) {
 }
 
 void TTY::PutCharCurrent(char ch) {
-	if (s_tty) {
-		s_tty->PutChar(ch);
-	} else {
-		static uint32_t x = 0;
-		static uint32_t y = 0;
-
-		switch (ch) {
-		case '\n':
-			x = 0;
-			y++;
-			break;
-		default:
-			VESA::PutCharAt(ch, x, y, VESA::Color::BRIGHT_WHITE, VESA::Color::BLACK);
-			x++;
-			break;
-		}
-
-		if (x == VESA::GetTerminalWidth()) {
-			x = 0;
-			y++;
-		}
-
-		if (y == VESA::GetTerminalHeight()) {
-			x = 0;
-			y = 0;
-			VESA::Clear(VESA::Color::BLACK);
-		}
-	}
+	ASSERT(s_tty);
+	s_tty->PutChar(ch);
 }
