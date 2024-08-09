@@ -6,15 +6,15 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 13:38:25 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 13:43:36 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 01:52:50 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Queue.h>
+#include <kernel/APIC.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
 #include <kernel/Keyboard.h>
-#include <kernel/PIC.h>
 #include <kernel/PIT.h>
 #include <kernel/Serial.h>
 #include <kernel/kprint.h>
@@ -451,7 +451,7 @@ bool initialize() {
 
 	// Register callback and IRQ
 	IDT::register_irq_handler(KEYBOARD_IRQ, keyboard_irq_handler);
-	PIC::unmask(KEYBOARD_IRQ);
+	APIC::EnableIRQ(KEYBOARD_IRQ);
 
 	return true;
 }

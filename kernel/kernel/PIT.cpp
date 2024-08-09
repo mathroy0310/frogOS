@@ -6,13 +6,13 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:10 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:25:11 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 01:51:36 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <kernel/APIC.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
-#include <kernel/PIC.h>
 #include <kernel/kprint.h>
 
 #define IRQ_TIMER 0
@@ -38,7 +38,7 @@ namespace PIT {
 static uint64_t s_system_time = 0;
 
 void clock_handle() {
-	PIT::s_system_time++;
+	s_system_time++;
 }
 
 uint64_t ms_since_boot() {
@@ -55,7 +55,7 @@ void initialize() {
 
 	IDT::register_irq_handler(IRQ_TIMER, clock_handle);
 
-	PIC::unmask(IRQ_TIMER);
+	APIC::EnableIRQ(IRQ_TIMER);
 }
 
 } // namespace PIT

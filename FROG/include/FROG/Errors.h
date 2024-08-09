@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:16:35 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 02:04:35 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,9 @@ public:
   }
   ErrorOr(const Error &error) : m_has_error(true) {
     m_data = (void *)new Error(error);
+  }
+  template <typename S>
+  ErrorOr(const ErrorOr<S> &other) : ErrorOr(other.GetError()) {
   }
   ~ErrorOr() {
     IsError() ? (delete reinterpret_cast<Error *>(m_data))

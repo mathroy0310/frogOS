@@ -5,13 +5,14 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 23:26:08 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:28:27 by mathroy0310    `                         */
+/*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/09 01:58:26 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <kernel/APIC.h>
 #include <kernel/IDT.h>
-#include <kernel/PIC.h>
+#include <kernel/Serial.h>
 #include <kernel/kmalloc.h>
 #include <kernel/kprint.h>
 #include <kernel/panic.h>
@@ -40,13 +41,10 @@ struct IDTR {
 	void    *offset;
 } __attribute((packed));
 
-static IDTR            s_idtr;
-static GateDescriptor *s_idt;
+static IDTR           s_idtr;
+static GateDescriptor s_idt[0x100];
 
-static void (*s_irq_handlers[16])();
-
-extern "C" void handle_irq();
-extern "C" void handle_irq_common();
+static void (*s_irq_handlers[0xFF])(){nullptr};
 
 #define INTERRUPT_HANDLER(i, msg)                                               \
 	static void interrupt##i() {                                                \
@@ -58,50 +56,84 @@ extern "C" void handle_irq_common();
 		Kernel::panic(msg ", CR0={} CR2={} CR3={} CR4={}", cr0, cr2, cr3, cr4); \
 	}
 
-INTERRUPT_HANDLER(0x00, "Divide error")
-INTERRUPT_HANDLER(0x01, "Debug exception")
-INTERRUPT_HANDLER(0x02, "Unknown error")
+INTERRUPT_HANDLER(0x00, "Division Error")
+INTERRUPT_HANDLER(0x01, "Debug")
+INTERRUPT_HANDLER(0x02, "Non-maskable Interrupt")
 INTERRUPT_HANDLER(0x03, "Breakpoint")
 INTERRUPT_HANDLER(0x04, "Overflow")
-INTERRUPT_HANDLER(0x05, "Bounds check")
-INTERRUPT_HANDLER(0x06, "Invalid opcode")
-INTERRUPT_HANDLER(0x07, "Coprocessor not available")
-INTERRUPT_HANDLER(0x08, "Double fault")
-INTERRUPT_HANDLER(0x09, "Coprocessor segment overrun")
-INTERRUPT_HANDLER(0x0a, "Invalid TSS")
-INTERRUPT_HANDLER(0x0b, "Segment not present")
-INTERRUPT_HANDLER(0x0c, "Stack exception")
-INTERRUPT_HANDLER(0x0d, "General protection fault")
-INTERRUPT_HANDLER(0x0e, "Page fault")
-INTERRUPT_HANDLER(0x0f, "Unknown error")
-INTERRUPT_HANDLER(0x10, "Coprocessor error")
+INTERRUPT_HANDLER(0x05, "Bound Range Exception")
+INTERRUPT_HANDLER(0x06, "Invalid Opcode")
+INTERRUPT_HANDLER(0x07, "Device Not Available")
+INTERRUPT_HANDLER(0x08, "Double Fault")
+INTERRUPT_HANDLER(0x09, "Coprocessor Segment Overrun")
+INTERRUPT_HANDLER(0x0A, "Invalid TSS")
+INTERRUPT_HANDLER(0x0B, "Segment Not Present")
+INTERRUPT_HANDLER(0x0C, "Stack-Segment Fault")
+INTERRUPT_HANDLER(0x0D, "Stack-Segment Fault")
+INTERRUPT_HANDLER(0x0E, "Page Fault")
+INTERRUPT_HANDLER(0x0F, "Unknown Exception 0x0F")
+INTERRUPT_HANDLER(0x10, "x87 Floating-Point Exception")
+INTERRUPT_HANDLER(0x11, "Alignment Check")
+INTERRUPT_HANDLER(0x12, "Machine Check")
+INTERRUPT_HANDLER(0x13, "SIMD Floating-Point Exception")
+INTERRUPT_HANDLER(0x14, "Virtualization Exception")
+INTERRUPT_HANDLER(0x15, "Control Protection Exception")
+INTERRUPT_HANDLER(0x16, "Unknown Exception 0x16")
+INTERRUPT_HANDLER(0x17, "Unknown Exception 0x17")
+INTERRUPT_HANDLER(0x18, "Unknown Exception 0x18")
+INTERRUPT_HANDLER(0x19, "Unknown Exception 0x19")
+INTERRUPT_HANDLER(0x1A, "Unknown Exception 0x1A")
+INTERRUPT_HANDLER(0x1B, "Unknown Exception 0x1B")
+INTERRUPT_HANDLER(0x1C, "Hypervisor Injection Exception")
+INTERRUPT_HANDLER(0x1D, "VMM Communication Exception")
+INTERRUPT_HANDLER(0x1E, "Security Exception")
+INTERRUPT_HANDLER(0x1F, "Unkown Exception 0x1F")
 
 #define REGISTER_HANDLER(i) register_interrupt_handler(i, interrupt##i)
 
-void handle_irq() {
-	uint16_t isr = PIC::get_isr();
-	if (!isr) {
-		// kprint("Spurious IRQ\n");
-		return;
-	}
+extern "C" void handle_irq() {
+	uint32_t isr[8];
+	APIC::GetISR(isr);
 
 	uint8_t irq = 0;
-	for (uint8_t i = 0; i < 16; ++i) {
-		if (i == 2)
-			continue;
-		if (isr & (1 << i)) {
-			irq = i;
-			break;
+	for (uint8_t i = 0; i < 8; i++) {
+		for (uint8_t j = 0; j < 32; j++) {
+			if (isr[i] & ((uint32_t) 1 << j)) {
+				irq = 32 * i + j;
+				goto found;
+			}
 		}
+	}
+
+found:
+	if (irq == 0) {
+		dprintln("Spurious irq");
+		return;
 	}
 
 	if (s_irq_handlers[irq])
 		s_irq_handlers[irq]();
 	else
-		kprint("no handler for irq {}\n", irq);
+		Kernel::panic("no handler for irq 0x{2H}\n", irq);
 
-	PIC::eoi(irq);
+	APIC::EOI();
 }
+
+extern "C" void handle_irq_common();
+asm(".globl handle_irq_common;"
+    "handle_irq_common:"
+    "pusha;"
+    "pushw %ds;"
+    "pushw %es;"
+    "pushw %ss;"
+    "pushw %ss;"
+    "popw %ds;"
+    "popw %es;"
+    "call handle_irq;"
+    "popw %es;"
+    "popw %ds;"
+    "popa;"
+    "iret;");
 
 namespace IDT {
 
@@ -120,20 +152,16 @@ static void register_interrupt_handler(uint8_t index, void (*f)()) {
 }
 
 void register_irq_handler(uint8_t irq, void (*f)()) {
-	s_irq_handlers[irq] = f;
+	s_irq_handlers[IRQ_VECTOR_BASE + irq] = f;
 	register_interrupt_handler(IRQ_VECTOR_BASE + irq, handle_irq_common);
 }
 
 void initialize() {
-	constexpr size_t idt_size = 256;
-
-	s_idt = new GateDescriptor[idt_size];
-
 	s_idtr.offset = s_idt;
-	s_idtr.size = idt_size * 8;
+	s_idtr.size = sizeof(s_idt);
 
-	for (uint8_t i = 0xff; i > 0x10; i--)
-		register_interrupt_handler(i, unimplemented_trap);
+	for (uint8_t i = 0xFF; i > IRQ_VECTOR_BASE; i--)
+		register_irq_handler(i, nullptr);
 
 	REGISTER_HANDLER(0x00);
 	REGISTER_HANDLER(0x01);
@@ -145,16 +173,28 @@ void initialize() {
 	REGISTER_HANDLER(0x07);
 	REGISTER_HANDLER(0x08);
 	REGISTER_HANDLER(0x09);
-	REGISTER_HANDLER(0x0a);
-	REGISTER_HANDLER(0x0b);
-	REGISTER_HANDLER(0x0c);
-	REGISTER_HANDLER(0x0d);
-	REGISTER_HANDLER(0x0e);
-	REGISTER_HANDLER(0x0f);
+	REGISTER_HANDLER(0x0A);
+	REGISTER_HANDLER(0x0B);
+	REGISTER_HANDLER(0x0C);
+	REGISTER_HANDLER(0x0D);
+	REGISTER_HANDLER(0x0E);
+	REGISTER_HANDLER(0x0F);
 	REGISTER_HANDLER(0x10);
-
-	for (uint8_t i = 0; i < 16; i++)
-		register_irq_handler(i, nullptr);
+	REGISTER_HANDLER(0x11);
+	REGISTER_HANDLER(0x12);
+	REGISTER_HANDLER(0x13);
+	REGISTER_HANDLER(0x14);
+	REGISTER_HANDLER(0x15);
+	REGISTER_HANDLER(0x16);
+	REGISTER_HANDLER(0x17);
+	REGISTER_HANDLER(0x18);
+	REGISTER_HANDLER(0x19);
+	REGISTER_HANDLER(0x1A);
+	REGISTER_HANDLER(0x1B);
+	REGISTER_HANDLER(0x1C);
+	REGISTER_HANDLER(0x1D);
+	REGISTER_HANDLER(0x1E);
+	REGISTER_HANDLER(0x1F);
 
 	flush_idt();
 }

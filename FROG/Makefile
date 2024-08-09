@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/05 01:17:18 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/05 01:17:19 by mathroy0310    `                          #
+#    Updated: 2024/08/09 02:09:42 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,7 +28,7 @@ LIBDIR?=$(EXEC_PREFIX)/lib
 CFLAGS:=$(CFLAGS) -Iinclude -ffreestanding -Wall -Wextra
 CPPFLAGS:=$(CPPFLAGS)
 LIBFROGK_CFLAGS:=$(CFLAGS) -D__is_kernel -Iinclude -ffreestanding -Wall -Wextra
-LIBFROGK_CPPFLAGS:=$(CPPFLAGS) -fno-rtti -fno-exceptions
+LIBFROGK_CPPFLAGS:=$(CPPFLAGS) -fno-rtti -fno-exceptions -fno-threadsafe-statics
  
 ARCHDIR=arch/$(HOSTARCH)
  

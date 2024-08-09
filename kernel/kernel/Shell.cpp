@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 14:11:23 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 02:06:51 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,36 +158,29 @@ void Shell::ProcessCommand(const FROG::Vector<FROG::StringView> &arguments) {
 	kprintln("unrecognized command '{}'", arguments.Front());
 }
 
-static uint8_t GetLastLength(const FROG::String &string) {
-	if (string.Empty())
-		return 0;
+static bool IsSingleUnicode(FROG::StringView sv) {
+	if (sv.Size() == 2 && ((uint8_t) sv[0] >> 5) != 0b110)
+		return false;
+	if (sv.Size() == 3 && ((uint8_t) sv[0] >> 4) != 0b1110)
+		return false;
+	if (sv.Size() == 4 && ((uint8_t) sv[0] >> 3) != 0b11110)
+		return false;
+	for (uint32_t i = 1; i < sv.Size(); i++)
+		if (((uint8_t) sv[i] >> 6) != 0b10)
+			return false;
+	return true;
+}
 
-	if (!(string[string.Size() - 1] & 0x80))
-		return 1;
+static uint32_t GetLastLength(FROG::StringView sv) {
+	if (sv.Size() < 2)
+		return sv.Size();
 
-	if (string.Size() < 2)
-		return 1;
+	for (uint32_t len = 2; len <= 4; len++) {
+		if (sv.Size() < len)
+			return 1;
 
-	if (((uint8_t) string[string.Size() - 2] >> 5) == 0b110 &&
-	    ((uint8_t) string[string.Size() - 1] >> 6) == 0b10) {
-		return 2;
-	}
-
-	if (string.Size() < 3)
-		return 1;
-
-	if (((uint8_t) string[string.Size() - 3] >> 4) == 0b1110 &&
-	    ((uint8_t) string[string.Size() - 2] >> 6) == 0b10 &&
-	    ((uint8_t) string[string.Size() - 1] >> 6) == 0b10) {
-		return 3;
-	}
-
-	if (string.Size() < 4)
-		return 1;
-
-	if ((string[string.Size() - 4] >> 3) == 0b11110 && (string[string.Size() - 3] >> 6) == 0b10 &&
-	    (string[string.Size() - 2] >> 6) == 0b10 && (string[string.Size() - 1] >> 6) == 0b10) {
-		return 3;
+		if (IsSingleUnicode(sv.Substring(sv.Size() - len)))
+			return len;
 	}
 
 	return 1;
@@ -201,8 +194,8 @@ void Shell::KeyEventCallback(Keyboard::KeyEvent event) {
 	case Keyboard::Key::Backspace: {
 		if (!m_buffer.Empty()) {
 			kprint("\b \b", 3);
-			uint8_t last_len = GetLastLength(m_buffer);
-			for (uint8_t i = 0; i < last_len; i++)
+			uint32_t last_len = GetLastLength(m_buffer);
+			for (uint32_t i = 0; i < last_len; i++)
 				m_buffer.PopBack();
 		}
 		break;
@@ -211,11 +204,15 @@ void Shell::KeyEventCallback(Keyboard::KeyEvent event) {
 	case Keyboard::Key::Enter:
 	case Keyboard::Key::NumpadEnter: {
 		kprint("\n");
-		ProcessCommand(m_buffer.SV().Split(' '));
+		ProcessCommand(MUST(m_buffer.SV().Split(' ')));
 		m_buffer.Clear();
 		PrintPrompt();
 		break;
 	}
+
+	case Keyboard::Key::Escape:
+		kprintln("time since boot {} ms", PIT::ms_since_boot());
+		break;
 
 	case Keyboard::Key::Tab:
 		event.key = Keyboard::Key::Space;

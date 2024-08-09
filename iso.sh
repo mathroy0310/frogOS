@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/04 01:33:04 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/04 01:33:05 by mathroy0310    `                          #
+#    Updated: 2024/08/09 02:11:48 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,6 +26,9 @@ set color_highlight=light-green/green
 
 menuentry "frog-os" {
 	multiboot /boot/frog-os.kernel
+}
+menuentry "frog-os (no apic)" {
+	multiboot /boot/frog-os.kernel noapic
 }
 menuentry "Reboot" {
 	echo "Rebooting..."

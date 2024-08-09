@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                             _              */
 /*                                                 __   ___.--'_\`.           */
-/*   PIC.h                                        ( _\`.' -   'o\` )          */
+/*   APIC.h                                       ( _\`.' -   'o\` )          */
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 11:54:36 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 01:53:12 by mathroy0310    `                         */
+/*   Created: 2024/08/09 01:53:35 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/09 02:12:52 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,11 @@
 
 #include <stdint.h>
 
-namespace PIC {
+namespace APIC {
 
-void Remap();
-void MaskAll();
-void EOI(uint8_t);
-void Unmask(uint8_t);
-void Mask(uint8_t);
+void Initialize(bool force_pic = false);
+void EOI();
+void GetISR(uint32_t[8]);
+void EnableIRQ(uint8_t irq);
 
-uint16_t GetISR();
-
-} // namespace PIC
+} // namespace APIC

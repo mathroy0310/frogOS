@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:17:09 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:17:10 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 02:09:53 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,9 @@ class StringView {
 
 	StringView Substring(size_type, size_type = -1) const;
 
-	Vector<StringView> Split(char, bool = false);
-
+	ErrorOr<Vector<StringView>> Split(char, bool = false);
+	ErrorOr<Vector<StringView>> Split(bool (*comp)(char), bool = false);
+	
 	size_type Count(char) const;
 
 	bool      Empty() const;

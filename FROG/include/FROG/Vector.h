@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:17:04 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:48:26 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 02:08:55 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@ template <typename T> class Vector {
 
 	void PopBack();
 	void Remove(size_type);
+	bool Has(const T &) const;
 
 	const T &operator[](size_type) const;
 	T &operator[](size_type);
@@ -102,6 +103,13 @@ template <typename T> void Vector<T>::Remove(size_type index) {
 	m_data[index].~T();
 	memmove(m_data + index, m_data + index + 1, (m_size - index - 1) * sizeof(T));
 	m_size--;
+}
+
+template <typename T> bool Vector<T>::Has(const T &other) const {
+	for (size_type i = 0; i < m_size; i++)
+		if (m_data[i] == other)
+			return true;
+	return false;
 }
 
 template <typename T> const T &Vector<T>::operator[](size_type index) const {

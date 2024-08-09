@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:26:13 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:28:25 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 01:57:50 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,21 @@ static GDTR              s_gdtr;
 static SegmentDesriptor *s_gdt;
 
 extern "C" void load_gdt(void *gdt_ptr);
+asm(".global load_gdt;"
+    "load_gdt:"
+    "movl 4(%esp),%eax;"
+    "lgdt (%eax);"
+
+    "movw $0x10, %ax;"
+    "movw %ax, %ds;"
+    "movw %ax, %es;"
+    "movw %ax, %fs;"
+    "movw %ax, %gs;"
+    "movw %ax, %ss;"
+    "jmp  $0x08,$flush;"
+
+    "flush:"
+    "ret;");
 
 void write_gdt_entry_raw(uint8_t segment, uint32_t low, uint32_t high) {
 	uint8_t index = segment >> 3;

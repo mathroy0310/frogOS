@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 11:06:06 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 11:53:51 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 01:53:25 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 #include <stdint.h>
 
-constexpr uint8_t IRQ_VECTOR_BASE = 0x50;
+constexpr uint8_t IRQ_VECTOR_BASE = 0x20;
 
 namespace IDT {
 void initialize();

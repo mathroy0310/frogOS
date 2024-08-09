@@ -6,10 +6,13 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 14:11:06 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 02:13:54 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <FROG/StringView.h>
+#include <FROG/Vector.h>
+#include <kernel/APIC.h>
 #include <kernel/GDT.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
@@ -30,6 +33,22 @@
 #define ENABLE_INTERRUPTS() asm volatile("sti")
 
 multiboot_info_t *s_multiboot_info;
+
+using namespace FROG;
+
+struct ParsedCommandLine {
+	bool force_pic = false;
+};
+
+ParsedCommandLine ParseCommandLine(const char *command_line) {
+	auto args = MUST(StringView(command_line).Split([](char c) {
+		return c == ' ' || c == '\t';
+	}));
+
+	ParsedCommandLine result;
+	result.force_pic = args.Has("noapic");
+	return result;
+}
 
 extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	DISABLE_INTERRUPTS();
@@ -53,7 +72,11 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 
 	kmalloc_initialize();
 
-	PIC::initialize();
+	ParsedCommandLine cmdline;
+	if (mbi->flags & 0x02)
+		cmdline = ParseCommandLine((const char *) mbi->cmdline);
+
+	APIC::Initialize(cmdline.force_pic);
 	gdt_initialize();
 	IDT::initialize();
 
@@ -61,6 +84,8 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	if (!Keyboard::initialize())
 		return;
 
+	ENABLE_INTERRUPTS();
+	
 	kprintln("\e[32m");
 	kprintln("  .d888                             ");
 	kprintln(" d88P\"                              ");
@@ -79,8 +104,6 @@ extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
 	// auto time = RTC::GetCurrentTime();
 	// kprintln("▐  {}  ▌", time);
 	// kprintln("▐▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▌");
-
-	ENABLE_INTERRUPTS();
 
 	auto &shell = Kernel::Shell::Get();
 	shell.Run();

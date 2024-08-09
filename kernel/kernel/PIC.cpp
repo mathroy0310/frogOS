@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:12 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:25:13 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 01:52:19 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,10 @@
 
 namespace PIC {
 
-void initialize() {
+void Remap() {
+	uint8_t a1 = IO::inb(PIC1_DATA);
+	uint8_t a2 = IO::inb(PIC2_DATA);
+
 	// Start the initialization sequence (in cascade mode)
 	IO::outb(PIC1_COMMAND, ICW1_INIT | ICW1_ICW4);
 	IO::io_wait();
@@ -62,18 +65,23 @@ void initialize() {
 	IO::outb(PIC2_DATA, ICW4_8086);
 	IO::io_wait();
 
-	// Mask everything
+	// Restore original masks
+	IO::outb(PIC1_DATA, a1);
+	IO::outb(PIC2_DATA, a2);
+}
+
+void MaskAll() {
 	IO::outb(PIC1_DATA, 0xff);
 	IO::outb(PIC2_DATA, 0xff);
 }
 
-void eoi(uint8_t irq) {
+void EOI(uint8_t irq) {
 	if (irq >= 8)
 		IO::outb(PIC2_COMMAND, PIC_EOI);
 	IO::outb(PIC1_COMMAND, PIC_EOI);
 }
 
-void mask(uint8_t irq) {
+void Mask(uint8_t irq) {
 	uint16_t port;
 	uint8_t  value;
 
@@ -87,7 +95,7 @@ void mask(uint8_t irq) {
 	IO::outb(port, value);
 }
 
-void unmask(uint8_t irq) {
+void Unmask(uint8_t irq) {
 	uint16_t port;
 	uint8_t  value;
 
@@ -101,7 +109,7 @@ void unmask(uint8_t irq) {
 	IO::outb(port, value);
 }
 
-uint16_t get_isr() {
+uint16_t GetISR() {
 	IO::outb(PIC1_COMMAND, 0x0b);
 	IO::outb(PIC2_COMMAND, 0x0b);
 	uint8_t isr0 = IO::inb(PIC1_COMMAND);
