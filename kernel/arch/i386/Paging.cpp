@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 09:28:37 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:28:37 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:34:45 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,40 +35,33 @@ void Initialize() {
 	             "movl %%eax, %%cr0;" ::"a"(s_page_directory));
 }
 
-void MapFramebuffer(uint32_t address) {
+static void MapPDE(uint32_t address, uint32_t *pt) {
+	if ((address & 0xffc00000) != address)
+		Kernel::panic("Trying to map non 4 MiB aligned address");
+
 	uint32_t pd_index = address >> 22;
 
 	if (!(s_page_directory[pd_index] & (1 << 0))) {
-		for (uint32_t i = 0; i < 1024; i++)
-			s_page_table_framebuffer[i] = address | (i << 12) | 0x03;
-		s_page_directory[pd_index] = (uint32_t) s_page_table_framebuffer | 0x03;
-		for (uint32_t i = 0; i < 1024; i++)
-			asm volatile("invlpg (%0)" ::"r"(address | (i << 12)) : "memory");
+		for (uint32_t i = 0; i < 1024; i++) {
+			pt[i] = address | (i << 12) | 0x03;
+			s_page_directory[pd_index] = (uint32_t) pt | 0x03;
+			for (uint32_t i = 0; i < 1024; i++)
+				asm volatile("invlpg (%0)" ::"r"(address | (i << 12))
+				             : "memory");
+		}
 	}
+}
+
+void MapFramebuffer(uint32_t address) {
+	MapPDE(address, s_page_table_framebuffer);
 }
 
 void MapRSDP(uint32_t address) {
-	uint32_t pd_index = address >> 22;
-
-	if (!(s_page_directory[pd_index] & (1 << 0))) {
-		for (uint32_t i = 0; i < 1024; i++)
-			s_page_table_rsdp[i] = address | (i << 12) | 0x03;
-		s_page_directory[pd_index] = (uint32_t) s_page_table_rsdp | 0x03;
-		for (uint32_t i = 0; i < 1024; i++)
-			asm volatile("invlpg (%0)" ::"r"(address | (i << 12)) : "memory");
-	}
+	MapPDE(address, s_page_table_rsdp);
 }
 
 void MapAPIC(uint32_t address) {
-	uint32_t pd_index = address >> 22;
-
-	if (!(s_page_directory[pd_index] & (1 << 0))) {
-		for (uint32_t i = 0; i < 1024; i++)
-			s_page_table_apic[i] = address | (i << 12) | 0x03;
-		s_page_directory[pd_index] = (uint32_t) s_page_table_apic | 0x03;
-		for (uint32_t i = 0; i < 1024; i++)
-			asm volatile("invlpg (%0)" ::"r"(address | (i << 12)) : "memory");
-	}
+	MapPDE(address, s_page_table_apic);
 }
 
 } // namespace Paging
