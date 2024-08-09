@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:17:09 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:09:53 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:04:53 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,10 +53,10 @@ class StringView {
 
 namespace FROG::Formatter {
 
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(const StringView &sv, const ValueFormat &) {
+template <typename F>
+void print_argument_impl(F putc, const StringView &sv, const ValueFormat &) {
 	for (StringView::size_type i = 0; i < sv.Size(); i++)
-		PUTC_LIKE(sv[i]);
+		putc(sv[i]);
 }
 
 } // namespace FROG::Formatter

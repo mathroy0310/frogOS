@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:56:17 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:11:12 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,11 @@
 #include <kernel/RTC.h>
 #include <kernel/Shell.h>
 #include <kernel/TTY.h>
+
+#define TTY_PRINT(...) \
+	FROG::Formatter::print([this](char c) { m_tty->PutChar(c); }, __VA_ARGS__)
+#define TTY_PRINTLN(...) \
+	FROG::Formatter::println([this](char c) { m_tty->PutChar(c); }, __VA_ARGS__)
 
 namespace Kernel {
 
@@ -37,7 +42,7 @@ Shell::Shell() {
 }
 
 void Shell::PrintPrompt() {
-	kprint("\e[36muser\e[m► ");
+	TTY_PRINT("\e[36muser\e[m► ");
 }
 
 void Shell::SetTTY(TTY *tty) {
@@ -62,16 +67,16 @@ void Shell::ProcessCommand(const FROG::Vector<FROG::StringView> &arguments) {
 		auto start = PIT::ms_since_boot();
 		ProcessCommand(new_args);
 		auto duration = PIT::ms_since_boot() - start;
-		kprintln("took {} ms", duration);
+		TTY_PRINTLN("took {} ms", duration);
 		return;
 	}
 	if (arguments.Front() == "cpuinfo") {
 		if (arguments.Size() != 1) {
-			kprintln("'cpuinfo' does not support command line arguments");
+			TTY_PRINTLN("'cpuinfo' does not support command line arguments");
 			return;
 		}
 		if (!CPUID::IsAvailable()) {
-			kprintln("'cpuid' instruction not available");
+			TTY_PRINTLN("'cpuid' instruction not available");
 			return;
 		}
 
@@ -79,66 +84,66 @@ void Shell::ProcessCommand(const FROG::Vector<FROG::StringView> &arguments) {
 		auto     vendor = CPUID::GetVendor();
 		CPUID::GetFeatures(ecx, edx);
 
-		kprintln("Vendor: '{}'", vendor);
+		TTY_PRINTLN("Vendor: '{}'", vendor);
 		bool first = true;
 		for (int i = 0; i < 32; i++)
 			if (ecx & ((uint32_t) 1 << i))
-				kprint("{}{}", first ? (first = false, "") : ", ", CPUID::FeatStringECX((uint32_t) 1 << i));
+				TTY_PRINT("{}{}", first ? (first = false, "") : ", ", CPUID::FeatStringECX((uint32_t) 1 << i));
 		for (int i = 0; i < 32; i++)
 			if (edx & ((uint32_t) 1 << i))
-				kprint("{}{}", first ? (first = false, "") : ", ", CPUID::FeatStringEDX((uint32_t) 1 << i));
+				TTY_PRINT("{}{}", first ? (first = false, "") : ", ", CPUID::FeatStringEDX((uint32_t) 1 << i));
 		if (!first)
-			kprintln();
+			TTY_PRINTLN("");
 
 		return;
 	}
 	if (arguments.Front() == "random") {
 		if (arguments.Size() != 1) {
-			kprintln("'random' does not support command line arguments");
+			TTY_PRINTLN("'random' does not support command line arguments");
 			return;
 		}
 		if (!CPUID::IsAvailable()) {
-			kprintln("'cpuid' instruction not available");
+			TTY_PRINTLN("'cpuid' instruction not available");
 			return;
 		}
 		uint32_t ecx, edx;
 		CPUID::GetFeatures(ecx, edx);
 		if (!(ecx & CPUID::Features::ECX_RDRND)) {
-			kprintln("cpu does not support RDRAND instruction");
+			TTY_PRINTLN("cpu does not support RDRAND instruction");
 			return;
 		}
 
 		for (int i = 0; i < 10; i++) {
 			uint32_t random;
 			asm volatile("rdrand %0" : "=r"(random));
-			kprintln("  0x{8H}", random);
+			TTY_PRINTLN("  0x{8H}", random);
 		}
 
 		return;
 	}
 	if (arguments.Front() == "date") {
 		if (arguments.Size() != 1) {
-			kprintln("'date' does not support command line arguments");
+			TTY_PRINTLN("'date' does not support command line arguments");
 			return;
 		}
 		auto time = RTC::GetCurrentTime();
-		kprintln("{}", time);
+		TTY_PRINTLN("{}", time);
 		return;
 	}
 
 	if (arguments.Front() == "echo") {
 		if (arguments.Size() > 1) {
-			kprint("{}", arguments[1]);
+			TTY_PRINT("{}", arguments[1]);
 			for (size_t i = 2; i < arguments.Size(); i++)
-				kprint(" {}", arguments[i]);
+				TTY_PRINT(" {}", arguments[i]);
 		}
-		kprintln();
+		TTY_PRINTLN("");
 		return;
 	}
 
 	if (arguments.Front() == "clear") {
 		if (arguments.Size() != 1) {
-			kprintln("'clear' does not support command line arguments");
+			TTY_PRINTLN("'clear' does not support command line arguments");
 			return;
 		}
 		m_tty->Clear();
@@ -148,7 +153,7 @@ void Shell::ProcessCommand(const FROG::Vector<FROG::StringView> &arguments) {
 
 	if (arguments.Front() == "reboot") {
 		if (arguments.Size() != 1) {
-			kprintln("'reboot' does not support command line arguments");
+			TTY_PRINTLN("'reboot' does not support command line arguments");
 			return;
 		}
 		uint8_t good = 0x02;
@@ -159,7 +164,7 @@ void Shell::ProcessCommand(const FROG::Vector<FROG::StringView> &arguments) {
 		return;
 	}
 
-	kprintln("unrecognized command '{}'", arguments.Front());
+	TTY_PRINTLN("unrecognized command '{}'", arguments.Front());
 }
 
 static bool IsSingleUnicode(FROG::StringView sv) {
@@ -197,7 +202,7 @@ void Shell::KeyEventCallback(Keyboard::KeyEvent event) {
 	switch (event.key) {
 	case Keyboard::Key::Backspace: {
 		if (!m_buffer.Empty()) {
-			kprint("\b \b", 3);
+			TTY_PRINT("\b \b", 3);
 			uint32_t last_len = GetLastLength(m_buffer);
 			for (uint32_t i = 0; i < last_len; i++)
 				m_buffer.PopBack();
@@ -207,7 +212,7 @@ void Shell::KeyEventCallback(Keyboard::KeyEvent event) {
 
 	case Keyboard::Key::Enter:
 	case Keyboard::Key::NumpadEnter: {
-		kprint("\n");
+		TTY_PRINTLN("");
 		ProcessCommand(MUST(m_buffer.SV().Split(' ')));
 		m_buffer.Clear();
 		PrintPrompt();
@@ -215,7 +220,7 @@ void Shell::KeyEventCallback(Keyboard::KeyEvent event) {
 	}
 
 	case Keyboard::Key::Escape:
-		kprintln("time since boot {} ms", PIT::ms_since_boot());
+		TTY_PRINTLN("time since boot {} ms", PIT::ms_since_boot());
 		break;
 
 	case Keyboard::Key::Tab:
@@ -225,7 +230,7 @@ void Shell::KeyEventCallback(Keyboard::KeyEvent event) {
 	default: {
 		const char *utf8 = Keyboard::key_event_to_utf8(event);
 		if (utf8) {
-			kprint("{}", utf8);
+			TTY_PRINT("{}", utf8);
 			m_buffer.Append(utf8);
 		}
 		break;

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:04:35 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:00:42 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,11 +95,11 @@ private:
 };
 
 namespace FROG::Formatter {
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(const Error &error, const ValueFormat &) {
-  if (error.GetErrorCode() == 0xFF)
-    print<PUTC_LIKE>(error.GetMessage());
-  else
-    print<PUTC_LIKE>("{} ({})", error.GetMessage(), error.GetErrorCode());
+template <typename F>
+void print_argument_impl(F putc, const Error &error, const ValueFormat &) {
+	if (error.GetErrorCode() == 0xFF)
+		print(putc, error.GetMessage());
+	else
+		print(putc, "{} ({})", error.GetMessage(), error.GetErrorCode());
 }
 } // namespace FROG::Formatter

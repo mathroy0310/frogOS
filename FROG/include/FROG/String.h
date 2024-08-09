@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:49 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:18:48 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:09:16 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,9 @@ class String {
 	String(const StringView &);
 	String(const char *, size_type = -1);
 	~String();
+
+	template <typename... Args>
+	static String Formatted(const char *format, const Args &...args);
 
 	String &operator=(const String &);
 	String &operator=(String &&);
@@ -73,14 +76,21 @@ class String {
 	size_type m_size = 0;
 };
 
+template <typename... Args>
+String String::Formatted(const char *format, const Args &...args) {
+	String result;
+	FROG::Formatter::print([&](char c) { result.PushBack(c); }, format, args...);
+	return result;
+}
+
 } // namespace FROG
 
 namespace FROG::Formatter {
 
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(const String &string, const ValueFormat &) {
+template <typename F>
+void print_argument_impl(F putc, const String &string, const ValueFormat &) {
 	for (String::size_type i = 0; i < string.Size(); i++)
-		PUTC_LIKE(string[i]);
+		putc(string[i]);
 }
 
 } // namespace FROG::Formatter

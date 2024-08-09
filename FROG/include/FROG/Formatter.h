@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:36 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:16:37 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:04:21 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,19 +19,19 @@ namespace FROG::Formatter {
 
 struct ValueFormat;
 
-template <void (*PUTC_LIKE)(char)> static void print(const char *format);
+template <typename F> static void print(F putc, const char *format);
 
-template <void (*PUTC_LIKE)(char), typename Arg, typename... Args>
-static void print(const char *format, const Arg &arg, const Args &...args);
+template <typename F, typename Arg, typename... Args>
+static void print(F putc, const char *format, const Arg &arg, const Args &...args);
 
-template <void (*PUTC_LIKE)(char), typename... Args>
-static void println(const char *format = "", const Args &...args);
+template <typename F, typename... Args>
+static void println(F putc, const char *format = "", const Args &...args);
 
-template <void (*PUTC_LIKE)(char), typename T>
-static size_t print_argument(const char *format, const T &arg);
+template <typename F, typename T>
+static size_t print_argument(F putc, const char *format, const T &arg);
 
-template <void (*PUTC_LIKE)(char), typename T>
-static void print_argument_impl(T value, const ValueFormat &format);
+template <typename F, typename T>
+static void print_argument_impl(F putc, T value, const ValueFormat &format);
 
 /*
 
@@ -40,205 +40,203 @@ static void print_argument_impl(T value, const ValueFormat &format);
 */
 
 struct ValueFormat {
-  int base = 10;
-  int percision = 3;
-  int fill = 0;
-  bool upper = false;
+	int  base = 10;
+	int  percision = 3;
+	int  fill = 0;
+	bool upper = false;
 };
 
-template <void (*PUTC_LIKE)(char)> void print(const char *format) {
-  while (*format) {
-    PUTC_LIKE(*format);
-    format++;
-  }
+template <typename F> void print(F putc, const char *format) {
+	while (*format) {
+		putc(*format);
+		format++;
+	}
 }
 
-template <void (*PUTC_LIKE)(char), typename Arg, typename... Args>
-void print(const char *format, const Arg &arg, const Args &...args) {
-  while (*format && *format != '{') {
-    PUTC_LIKE(*format);
-    format++;
-  }
+template <typename F, typename Arg, typename... Args>
+void print(F putc, const char *format, const Arg &arg, const Args &...args) {
+	while (*format && *format != '{') {
+		putc(*format);
+		format++;
+	}
 
-  if (*format == '{') {
-    size_t arg_len = print_argument<PUTC_LIKE>(format, arg);
-    if (arg_len == size_t(-1))
-      return print<PUTC_LIKE>(format);
-    print<PUTC_LIKE>(format + arg_len, args...);
-  }
+	if (*format == '{') {
+		size_t arg_len = print_argument(putc, format, arg);
+		if (arg_len == size_t(-1))
+			return print(putc, format);
+		print(putc, format + arg_len, args...);
+	}
 }
 
-template <void (*PUTC_LIKE)(char), typename... Args>
-void println(const char *format, const Args &...args) {
-  print<PUTC_LIKE>(format, args...);
-  PUTC_LIKE('\n');
+template <typename F, typename... Args>
+void println(F putc, const char *format, const Args &...args) {
+	print(putc, format, args...);
+	putc('\n');
 }
 
-template <void (*PUTC_LIKE)(char), typename Arg>
-size_t print_argument(const char *format, const Arg &argument) {
-  ValueFormat value_format;
+template <typename F, typename Arg>
+size_t print_argument(F putc, const char *format, const Arg &argument) {
+	ValueFormat value_format;
 
-  if (format[0] != '{')
-    return size_t(-1);
+	if (format[0] != '{')
+		return size_t(-1);
 
-  size_t i = 1;
-  do {
-    if (!format[i] || format[i] == '}')
-      break;
+	size_t i = 1;
+	do {
+		if (!format[i] || format[i] == '}')
+			break;
 
-    if ('0' <= format[i] && format[i] <= '9') {
-      int fill = 0;
-      while ('0' <= format[i] && format[i] <= '9') {
-        fill = (fill * 10) + (format[i] - '0');
-        i++;
-      }
-      value_format.fill = fill;
-    }
+		if ('0' <= format[i] && format[i] <= '9') {
+			int fill = 0;
+			while ('0' <= format[i] && format[i] <= '9') {
+				fill = (fill * 10) + (format[i] - '0');
+				i++;
+			}
+			value_format.fill = fill;
+		}
 
-    switch (format[i]) {
-    case 'b':
-      value_format.base = 2;
-      value_format.upper = false;
-      i++;
-      break;
-    case 'B':
-      value_format.base = 2;
-      value_format.upper = true;
-      i++;
-      break;
-    case 'o':
-      value_format.base = 8;
-      value_format.upper = false;
-      i++;
-      break;
-    case 'O':
-      value_format.base = 8;
-      value_format.upper = true;
-      i++;
-      break;
-    case 'd':
-      value_format.base = 10;
-      value_format.upper = false;
-      i++;
-      break;
-    case 'D':
-      value_format.base = 10;
-      value_format.upper = true;
-      i++;
-      break;
-    case 'h':
-      value_format.base = 16;
-      value_format.upper = false;
-      i++;
-      break;
-    case 'H':
-      value_format.base = 16;
-      value_format.upper = true;
-      i++;
-      break;
-    default:
-      break;
-    }
+		switch (format[i]) {
+		case 'b':
+			value_format.base = 2;
+			value_format.upper = false;
+			i++;
+			break;
+		case 'B':
+			value_format.base = 2;
+			value_format.upper = true;
+			i++;
+			break;
+		case 'o':
+			value_format.base = 8;
+			value_format.upper = false;
+			i++;
+			break;
+		case 'O':
+			value_format.base = 8;
+			value_format.upper = true;
+			i++;
+			break;
+		case 'd':
+			value_format.base = 10;
+			value_format.upper = false;
+			i++;
+			break;
+		case 'D':
+			value_format.base = 10;
+			value_format.upper = true;
+			i++;
+			break;
+		case 'h':
+			value_format.base = 16;
+			value_format.upper = false;
+			i++;
+			break;
+		case 'H':
+			value_format.base = 16;
+			value_format.upper = true;
+			i++;
+			break;
+		default:
+			break;
+		}
 
-    if (!format[i] || format[i] == '}')
-      break;
+		if (!format[i] || format[i] == '}')
+			break;
 
-    if (format[i] == '.') {
-      i++;
-      int percision = 0;
-      while ('0' <= format[i] && format[i] <= '9') {
-        percision = (percision * 10) + (format[i] - '0');
-        i++;
-      }
-      value_format.percision = percision;
-    }
+		if (format[i] == '.') {
+			i++;
+			int percision = 0;
+			while ('0' <= format[i] && format[i] <= '9') {
+				percision = (percision * 10) + (format[i] - '0');
+				i++;
+			}
+			value_format.percision = percision;
+		}
 
-  } while (false);
+	} while (false);
 
-  if (format[i] != '}')
-    return size_t(-1);
+	if (format[i] != '}')
+		return size_t(-1);
 
-  print_argument_impl<PUTC_LIKE>(argument, value_format);
-
-  return i + 1;
+	print_argument_impl(putc, argument, value_format);
+	return i + 1;
 }
 
 static char value_to_base_char(uint8_t value, int base, bool upper) {
-  if (base <= 10)
-    return value + '0';
-  if (base <= 36) {
-    if (value < 10)
-      return value + '0';
-    return value + (upper ? 'A' : 'a') - 10;
-  }
-  return '?';
+	if (base <= 10)
+		return value + '0';
+	if (base <= 36) {
+		if (value < 10)
+			return value + '0';
+		return value + (upper ? 'A' : 'a') - 10;
+	}
+	return '?';
 }
 
-template <void (*PUTC_LIKE)(char), typename T>
-void print_integer(T value, const ValueFormat &format) {
-  if (value == 0) {
-    for (int i = 0; i < format.fill || i < 1; i++)
-      PUTC_LIKE('0');
-    return;
-  }
+template <typename F, typename T>
+void print_integer(F putc, T value, const ValueFormat &format) {
+	if (value == 0) {
+		for (int i = 0; i < format.fill || i < 1; i++)
+			putc('0');
+		return;
+	}
 
-  bool sign = false;
+	bool sign = false;
 
-  // Fits signed 64-bit binary number and null
-  char buffer[66];
-  char *ptr = buffer + sizeof(buffer);
-  *(--ptr) = '\0';
+	// Fits signed 64-bit binary number and null
+	char  buffer[66];
+	char *ptr = buffer + sizeof(buffer);
+	*(--ptr) = '\0';
 
-  if (value < 0) {
-    sign = true;
-    T digit = (format.base - (value % format.base)) % format.base;
-    *(--ptr) = value_to_base_char(digit, format.base, format.upper);
-    value = -(value / format.base);
-  }
+	if (value < 0) {
+		sign = true;
+		T digit = (format.base - (value % format.base)) % format.base;
+		*(--ptr) = value_to_base_char(digit, format.base, format.upper);
+		value = -(value / format.base);
+	}
 
-  while (value) {
-    *(--ptr) =
-        value_to_base_char(value % format.base, format.base, format.upper);
-    value /= format.base;
-  }
+	while (value) {
+		*(--ptr) = value_to_base_char(value % format.base, format.base, format.upper);
+		value /= format.base;
+	}
 
-  while (ptr >= buffer + sizeof(buffer) - format.fill)
-    *(--ptr) = '0';
+	while (ptr >= buffer + sizeof(buffer) - format.fill)
+		*(--ptr) = '0';
 
-  if (sign)
-    *(--ptr) = '-';
+	if (sign)
+		*(--ptr) = '-';
 
-  print<PUTC_LIKE>(ptr);
+	print(putc, ptr);
 }
 
-template <void (*PUTC_LIKE)(char), typename T>
-void print_floating(T value, const ValueFormat &format) {
-  int64_t int_part = (int64_t)value;
-  T frac_part = value - (T)int_part;
-  if (frac_part < 0)
-    frac_part = -frac_part;
+template <typename F, typename T>
+void print_floating(F putc, T value, const ValueFormat &format) {
+	int64_t int_part = (int64_t) value;
+	T       frac_part = value - (T) int_part;
+	if (frac_part < 0)
+		frac_part = -frac_part;
 
-  print_integer<PUTC_LIKE>(int_part, format);
+	print_integer(putc, int_part, format);
 
-  if (format.percision > 0)
-    PUTC_LIKE('.');
+	if (format.percision > 0)
+		putc('.');
 
-  for (int i = 0; i < format.percision; i++) {
-    frac_part *= format.base;
-    if (i == format.percision - 1)
-      frac_part += 0.5;
+	for (int i = 0; i < format.percision; i++) {
+		frac_part *= format.base;
+		if (i == format.percision - 1)
+			frac_part += 0.5;
 
-    PUTC_LIKE(value_to_base_char((uint8_t)frac_part % format.base, format.base,
-                                 format.upper));
-  }
+		putc(value_to_base_char((uint8_t) frac_part % format.base, format.base,
+		                        format.upper));
+	}
 }
 
-template <void (*PUTC_LIKE)(char)>
-void print_pointer(void *ptr, const ValueFormat &format) {
-  uintptr_t value = (uintptr_t)ptr;
-  print<PUTC_LIKE>("0x");
-  for (int i = sizeof(void *) * 8 - 4; i >= 0; i -= 4)
-    PUTC_LIKE(value_to_base_char((value >> i) & 0xF, 16, format.upper));
+template <typename F>
+void print_pointer(F putc, void *ptr, const ValueFormat &format) {
+	uintptr_t value = (uintptr_t) ptr;
+	print(putc, "0x");
+	for (int i = sizeof(void *) * 8 - 4; i >= 0; i -= 4)
+		putc(value_to_base_char((value >> i) & 0xF, 16, format.upper));
 }
 
 /*
@@ -246,79 +244,78 @@ void print_pointer(void *ptr, const ValueFormat &format) {
         TEMPLATE SPECIALIZATIONS
 
 */
-
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(short value, const ValueFormat &format) {
-  print_integer<PUTC_LIKE>(value, format);
+template <typename F>
+void print_argument_impl(F putc, short value, const ValueFormat &format) {
+	print_integer(putc, value, format);
 }
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(int value, const ValueFormat &format) {
-  print_integer<PUTC_LIKE>(value, format);
+template <typename F>
+void print_argument_impl(F putc, int value, const ValueFormat &format) {
+	print_integer(putc, value, format);
 }
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(long value, const ValueFormat &format) {
-  print_integer<PUTC_LIKE>(value, format);
+template <typename F>
+void print_argument_impl(F putc, long value, const ValueFormat &format) {
+	print_integer(putc, value, format);
 }
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(long long value, const ValueFormat &format) {
-  print_integer<PUTC_LIKE>(value, format);
-}
-
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(unsigned short value, const ValueFormat &format) {
-  print_integer<PUTC_LIKE>(value, format);
-}
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(unsigned int value, const ValueFormat &format) {
-  print_integer<PUTC_LIKE>(value, format);
-}
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(unsigned long value, const ValueFormat &format) {
-  print_integer<PUTC_LIKE>(value, format);
-}
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(unsigned long long value, const ValueFormat &format) {
-  print_integer<PUTC_LIKE>(value, format);
+template <typename F>
+void print_argument_impl(F putc, long long value, const ValueFormat &format) {
+	print_integer(putc, value, format);
 }
 
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(float value, const ValueFormat &format) {
-  print_floating<PUTC_LIKE>(value, format);
+template <typename F>
+void print_argument_impl(F putc, unsigned short value, const ValueFormat &format) {
+	print_integer(putc, value, format);
 }
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(double value, const ValueFormat &format) {
-  print_floating<PUTC_LIKE>(value, format);
+template <typename F>
+void print_argument_impl(F putc, unsigned int value, const ValueFormat &format) {
+	print_integer(putc, value, format);
 }
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(long double value, const ValueFormat &format) {
-  print_floating<PUTC_LIKE>(value, format);
+template <typename F>
+void print_argument_impl(F putc, unsigned long value, const ValueFormat &format) {
+	print_integer(putc, value, format);
 }
-
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(char value, const ValueFormat &) {
-  PUTC_LIKE(value);
-}
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(signed char value, const ValueFormat &format) {
-  print_integer<PUTC_LIKE>(value, format);
-}
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(unsigned char value, const ValueFormat &format) {
-  print_integer<PUTC_LIKE>(value, format);
+template <typename F>
+void print_argument_impl(F putc, unsigned long long value, const ValueFormat &format) {
+	print_integer(putc, value, format);
 }
 
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(bool value, const ValueFormat &format) {
-  print<PUTC_LIKE>(value ? "true" : "false");
+template <typename F>
+void print_argument_impl(F putc, float value, const ValueFormat &format) {
+	print_floating(putc, value, format);
+}
+template <typename F>
+void print_argument_impl(F putc, double value, const ValueFormat &format) {
+	print_floating(putc, value, format);
+}
+template <typename F>
+void print_argument_impl(F putc, long double value, const ValueFormat &format) {
+	print_floating(putc, value, format);
 }
 
-template <void (*PUTC_LIKE)(char), typename T>
-void print_argument_impl(T *value, const ValueFormat &format) {
-  print_pointer<PUTC_LIKE>((void *)value, format);
+template <typename F>
+void print_argument_impl(F putc, char value, const ValueFormat &) {
+	putc(value);
 }
-template <void (*PUTC_LIKE)(char)>
-void print_argument_impl(const char *value, const ValueFormat &) {
-  print<PUTC_LIKE>(value);
+template <typename F>
+void print_argument_impl(F putc, signed char value, const ValueFormat &format) {
+	print_integer(putc, value, format);
+}
+template <typename F>
+void print_argument_impl(F putc, unsigned char value, const ValueFormat &format) {
+	print_integer(putc, value, format);
+}
+
+template <typename F>
+void print_argument_impl(F putc, bool value, const ValueFormat &format) {
+	print(putc, value ? "true" : "false");
+}
+
+template <typename F, typename T>
+void print_argument_impl(F putc, T *value, const ValueFormat &format) {
+	print_pointer(putc, (void *) value, format);
+}
+template <typename F>
+void print_argument_impl(F putc, const char *value, const ValueFormat &) {
+	print(putc, value);
 }
 
 } // namespace FROG::Formatter
