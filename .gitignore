@@ -3,3 +3,6 @@ isodir
 sysroot
 .vscode/
 build/
+fonts/
+bochsrc
+bx_enh_dbg.ini

@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/05 01:34:45 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/05 12:06:14 by mathroy0310    `                          #
+#    Updated: 2024/08/09 10:14:52 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,8 +44,9 @@ BUILDDIR=$(abspath build)
 KERNEL_OBJS=			\
 $(KERNEL_ARCH_OBJS)		\
 kernel/build_libc.o		\
+kernel/font.o           \
+kernel/Input.o          \
 kernel/kernel.o			\
-kernel/Keyboard.o		\
 kernel/kmalloc.o		\
 kernel/PIC.o			\
 kernel/PIT.o			\
@@ -53,6 +54,7 @@ kernel/RTC.o			\
 kernel/Serial.o			\
 kernel/Shell.o			\
 kernel/SSP.o			\
+kernel/TTY.o            \
 icxxabi.o				\
  
 OBJS=					\
@@ -93,7 +95,7 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	$(CC) -MD -c $< -o $(BUILDDIR)/$@ $(CFLAGS)
  
 always:
-	mkdir -p $(BUILDDIR)/arch/i386
+	mkdir -p $(BUILDDIR)/$(ARCHDIR)
 	mkdir -p $(BUILDDIR)/kernel
 
 clean:

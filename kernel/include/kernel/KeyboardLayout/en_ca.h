@@ -6,15 +6,15 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:45:17 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:54:30 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:40:38 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include <kernel/Keyboard.h>
+#include <kernel/Input.h>
 
-namespace Keyboard {
+namespace Input {
 constexpr Key scan_code_to_key_extended[0xFF]{
     Key::INVALID,    Key::INVALID,       Key::INVALID,
     Key::INVALID,    Key::INVALID,       Key::INVALID,
@@ -96,7 +96,7 @@ constexpr Key scan_code_to_key_shift[0xFF]{
     Key::INVALID,    Key::Escape,      Key::ExclamationMark,
     Key::At,         Key::Hashtag,     Key::Dollar,
     Key::Percent,    Key::Caret,       Key::Ampersand,
-    Key::Asterix,   Key::OpenParen,   Key::CloseParen,
+    Key::Asterix,    Key::OpenParen,   Key::CloseParen,
     Key::Underscore, Key::Plus,        Key::Backspace,
     Key::Tab,        Key::Q,           Key::W,
     Key::E,          Key::R,           Key::T,
@@ -151,4 +151,4 @@ constexpr Key scan_code_to_key_normal[0xFF]{
     Key::F12,
 };
 
-} // namespace Keyboard
+} // namespace Input

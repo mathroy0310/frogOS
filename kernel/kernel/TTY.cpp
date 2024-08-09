@@ -6,16 +6,16 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:58:57 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:14:07 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 10:16:03 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <kernel/IO.h>
+#include <kernel/Panic.h>
 #include <kernel/Serial.h>
 #include <kernel/TTY.h>
 #include <kernel/VESA.h>
 #include <kernel/kmalloc.h>
-#include <kernel/panic.h>
 
 #include <string.h>
 
@@ -52,7 +52,7 @@ TTY::TTY() {
 }
 
 void TTY::Clear() {
-	for (size_t i = 0; i < m_width * m_height; i++)
+	for (uint32_t i = 0; i < m_width * m_height; i++)
 		m_buffer[i] = {.foreground = m_foreground, .background = m_background, .character = ' '};
 	VESA::Clear(m_background);
 }
@@ -276,7 +276,14 @@ void TTY::HandleAnsiEscape(uint16_t ch) {
 	}
 }
 
-void TTY::PutCharAt(uint16_t ch, size_t x, size_t y) {
+void TTY::RenderFromBuffer(uint32_t x, uint32_t y) {
+	if (x >= m_width || y >= m_height)
+		Kernel::Panic("invalid render from buffer, {} {}", x, y);
+	const auto &cell = m_buffer[y * m_width + x];
+	VESA::PutCharAt(cell.character, x, y, cell.foreground, cell.background);
+}
+
+void TTY::PutCharAt(uint16_t ch, uint32_t x, uint32_t y) {
 	auto &cell = m_buffer[y * m_width + x];
 	cell.character = ch;
 	cell.foreground = m_foreground;
@@ -333,12 +340,12 @@ void TTY::PutChar(char ch) {
 		// Shift buffer one line up
 		memmove(m_buffer, m_buffer + m_width, m_width * (m_height - 1) * sizeof(Cell));
 		// Clear last line in buffer
-		for (size_t x = 0; x < m_width; x++)
+		for (uint32_t x = 0; x < m_width; x++)
 			m_buffer[(m_height - 1) * m_width + x] = {.foreground = m_foreground, .background = m_background, .character = ' '};
 
 		// Render the whole buffer to the screen
-		for (size_t y = 0; y < m_height; y++)
-			for (size_t x = 0; x < m_width; x++)
+		for (uint32_t y = 0; y < m_height; y++)
+			for (uint32_t x = 0; x < m_width; x++)
 				RenderFromBuffer(x, y);
 
 		m_column = 0;
@@ -364,8 +371,8 @@ void TTY::PutCharCurrent(char ch) {
 	if (s_tty) {
 		s_tty->PutChar(ch);
 	} else {
-		static size_t x = 0;
-		static size_t y = 0;
+		static uint32_t x = 0;
+		static uint32_t y = 0;
 
 		switch (ch) {
 		case '\n':

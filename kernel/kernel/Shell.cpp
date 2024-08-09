@@ -6,28 +6,38 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:36:42 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:32:38 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <FROG/Math.h>
 #include <FROG/StringView.h>
 #include <FROG/Vector.h>
 #include <kernel/CPUID.h>
 #include <kernel/IO.h>
-#include <kernel/Keyboard.h>
+#include <kernel/Input.h>
 #include <kernel/PIT.h>
 #include <kernel/RTC.h>
+#include <kernel/Serial.h>
 #include <kernel/Shell.h>
 #include <kernel/TTY.h>
+#include <kernel/font.h>
 
 #define TTY_PRINT(...) \
-	FROG::Formatter::print([this](char c) { m_tty->PutChar(c); }, __VA_ARGS__)
+	Formatter::print([this](char c) { m_tty->PutChar(c); }, __VA_ARGS__)
 #define TTY_PRINTLN(...) \
-	FROG::Formatter::println([this](char c) { m_tty->PutChar(c); }, __VA_ARGS__)
+	Formatter::println([this](char c) { m_tty->PutChar(c); }, __VA_ARGS__)
 
 namespace Kernel {
+using namespace FROG;
 
 static Shell *s_instance = nullptr;
+
+static uint8_t s_pointer[]{
+    ________, ________, ________, ________, ________, X_______,
+    XX______, XXX_____, XXXX____, XXXXX___, XXXXXX__, XXXXXXX_,
+    XXXXXXXX, XXX_____, XX______, X_______,
+};
 
 Shell &Shell::Get() {
 	if (!s_instance)
@@ -36,13 +46,16 @@ Shell &Shell::Get() {
 }
 
 Shell::Shell() {
-	Keyboard::register_key_event_callback(
-	    [](Keyboard::KeyEvent event) { Shell::Get().KeyEventCallback(event); });
+	Input::register_key_event_callback(
+	    [](Input::KeyEvent event) { Shell::Get().KeyEventCallback(event); });
+	Input::register_mouse_move_event_callback([](Input::MouseMoveEvent event) {
+		Shell::Get().MouseMoveEventCallback(event);
+	});
 	m_buffer.Reserve(128);
 }
 
 void Shell::PrintPrompt() {
-	TTY_PRINT("\e[36muser\e[m► ");
+	TTY_PRINT("\e[32muser\e[m# ");
 }
 
 void Shell::SetTTY(TTY *tty) {
@@ -53,30 +66,43 @@ void Shell::Run() {
 	PrintPrompt();
 	for (;;) {
 		asm volatile("hlt");
-		Keyboard::update_keyboard();
+		Input::update();
 	}
 }
 
-void Shell::ProcessCommand(const FROG::Vector<FROG::StringView> &arguments) {
-	if (arguments.Empty())
-		return;
-
-	if (arguments.Front() == "time") {
+void Shell::ProcessCommand(const Vector<StringView> &arguments) {
+	if (arguments.Empty()) {
+	} else if (arguments.Front() == "date") {
+		if (arguments.Size() != 1) {
+			TTY_PRINTLN("'date' does not support command line arguments");
+			return;
+		}
+		auto time = RTC::GetCurrentTime();
+		TTY_PRINTLN("{}", time);
+	} else if (arguments.Front() == "echo") {
+		if (arguments.Size() > 1) {
+			TTY_PRINT("{}", arguments[1]);
+			for (size_t i = 2; i < arguments.Size(); i++)
+				TTY_PRINT(" {}", arguments[i]);
+		}
+		TTY_PRINTLN("");
+	} else if (arguments.Front() == "clear") {
+		if (arguments.Size() != 1) {
+			TTY_PRINTLN("'clear' does not support command line arguments");
+			return;
+		}
+		m_tty->Clear();
+		m_tty->SetCursorPosition(0, 0);
+	} else if (arguments.Front() == "time") {
 		auto new_args = arguments;
 		new_args.Remove(0);
 		auto start = PIT::ms_since_boot();
 		ProcessCommand(new_args);
 		auto duration = PIT::ms_since_boot() - start;
 		TTY_PRINTLN("took {} ms", duration);
-		return;
-	}
-	if (arguments.Front() == "cpuinfo") {
+	} else if (arguments.Front() == "cpuinfo") {
 		if (arguments.Size() != 1) {
 			TTY_PRINTLN("'cpuinfo' does not support command line arguments");
-			return;
-		}
-		if (!CPUID::IsAvailable()) {
-			TTY_PRINTLN("'cpuid' instruction not available");
 			return;
 		}
 
@@ -95,16 +121,9 @@ void Shell::ProcessCommand(const FROG::Vector<FROG::StringView> &arguments) {
 				TTY_PRINT("{}{}", first ? (first = false, "") : ", ", CPUID::FeatStringEDX((uint32_t) 1 << i));
 		if (!first)
 			TTY_PRINTLN("");
-
-		return;
-	}
-	if (arguments.Front() == "random") {
+	} else if (arguments.Front() == "random") {
 		if (arguments.Size() != 1) {
 			TTY_PRINTLN("'random' does not support command line arguments");
-			return;
-		}
-		if (!CPUID::IsAvailable()) {
-			TTY_PRINTLN("'cpuid' instruction not available");
 			return;
 		}
 		uint32_t ecx, edx;
@@ -119,40 +138,7 @@ void Shell::ProcessCommand(const FROG::Vector<FROG::StringView> &arguments) {
 			asm volatile("rdrand %0" : "=r"(random));
 			TTY_PRINTLN("  0x{8H}", random);
 		}
-
-		return;
-	}
-	if (arguments.Front() == "date") {
-		if (arguments.Size() != 1) {
-			TTY_PRINTLN("'date' does not support command line arguments");
-			return;
-		}
-		auto time = RTC::GetCurrentTime();
-		TTY_PRINTLN("{}", time);
-		return;
-	}
-
-	if (arguments.Front() == "echo") {
-		if (arguments.Size() > 1) {
-			TTY_PRINT("{}", arguments[1]);
-			for (size_t i = 2; i < arguments.Size(); i++)
-				TTY_PRINT(" {}", arguments[i]);
-		}
-		TTY_PRINTLN("");
-		return;
-	}
-
-	if (arguments.Front() == "clear") {
-		if (arguments.Size() != 1) {
-			TTY_PRINTLN("'clear' does not support command line arguments");
-			return;
-		}
-		m_tty->Clear();
-		m_tty->SetCursorPosition(0, 0);
-		return;
-	}
-
-	if (arguments.Front() == "reboot") {
+	} else if (arguments.Front() == "reboot") {
 		if (arguments.Size() != 1) {
 			TTY_PRINTLN("'reboot' does not support command line arguments");
 			return;
@@ -162,13 +148,12 @@ void Shell::ProcessCommand(const FROG::Vector<FROG::StringView> &arguments) {
 			good = IO::inb(0x64);
 		IO::outb(0x64, 0xFE);
 		asm volatile("cli; hlt");
-		return;
+	} else {
+		TTY_PRINTLN("unrecognized command '{}'", arguments.Front());
 	}
-
-	TTY_PRINTLN("unrecognized command '{}'", arguments.Front());
 }
 
-static bool IsSingleUnicode(FROG::StringView sv) {
+static bool IsSingleUnicode(StringView sv) {
 	if (sv.Size() == 2 && ((uint8_t) sv[0] >> 5) != 0b110)
 		return false;
 	if (sv.Size() == 3 && ((uint8_t) sv[0] >> 4) != 0b1110)
@@ -181,7 +166,7 @@ static bool IsSingleUnicode(FROG::StringView sv) {
 	return true;
 }
 
-static uint32_t GetLastLength(FROG::StringView sv) {
+static uint32_t GetLastLength(StringView sv) {
 	if (sv.Size() < 2)
 		return sv.Size();
 
@@ -196,14 +181,15 @@ static uint32_t GetLastLength(FROG::StringView sv) {
 	return 1;
 }
 
-void Shell::KeyEventCallback(Keyboard::KeyEvent event) {
+void Shell::KeyEventCallback(Input::KeyEvent event) {
 	if (!event.pressed)
 		return;
 
 	switch (event.key) {
-	case Keyboard::Key::Backspace: {
+	case Input::Key::Backspace: {
 		if (!m_buffer.Empty()) {
 			TTY_PRINT("\b \b", 3);
+
 			uint32_t last_len = GetLastLength(m_buffer);
 			for (uint32_t i = 0; i < last_len; i++)
 				m_buffer.PopBack();
@@ -211,25 +197,24 @@ void Shell::KeyEventCallback(Keyboard::KeyEvent event) {
 		break;
 	}
 
-	case Keyboard::Key::Enter:
-	case Keyboard::Key::NumpadEnter: {
-		TTY_PRINTLN("");
+	case Input::Key::Enter:
+	case Input::Key::NumpadEnter: {
+		TTY_PRINT("\n");
 		ProcessCommand(MUST(m_buffer.SV().Split(' ')));
 		m_buffer.Clear();
 		PrintPrompt();
 		break;
 	}
 
-	case Keyboard::Key::Escape:
+	case Input::Key::Escape:
 		TTY_PRINTLN("time since boot {} ms", PIT::ms_since_boot());
 		break;
 
-	case Keyboard::Key::Tab:
-		event.key = Keyboard::Key::Space;
-		// fall through
+	case Input::Key::Tab:
+		break;
 
 	default: {
-		const char *utf8 = Keyboard::key_event_to_utf8(event);
+		const char *utf8 = Input::key_event_to_utf8(event);
 		if (utf8) {
 			TTY_PRINT("{}", utf8);
 			m_buffer.Append(utf8);
@@ -237,6 +222,17 @@ void Shell::KeyEventCallback(Keyboard::KeyEvent event) {
 		break;
 	}
 	}
+
+	if (m_mouse_pos.exists)
+		VESA::PutBitmapAt(s_pointer, m_mouse_pos.x, m_mouse_pos.y, VESA::Color::BRIGHT_WHITE);
+}
+
+void Shell::MouseMoveEventCallback(Input::MouseMoveEvent event) {
+	m_mouse_pos.exists = true;
+	m_tty->RenderFromBuffer(m_mouse_pos.x, m_mouse_pos.y);
+	m_mouse_pos.x = Math::clamp<int32_t>(m_mouse_pos.x + event.dx, 0, m_tty->Width() - 1);
+	m_mouse_pos.y = Math::clamp<int32_t>(m_mouse_pos.y - event.dy, 0, m_tty->Height() - 1);
+	VESA::PutBitmapAt(s_pointer, m_mouse_pos.x, m_mouse_pos.y, VESA::Color::BRIGHT_WHITE);
 }
 
 } // namespace Kernel

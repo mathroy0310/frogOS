@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:23:53 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:36:31 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:32:11 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -217,7 +217,6 @@ static const char *FeatStringEDX(uint32_t feat) {
 	}
 }
 
-bool        IsAvailable();
 const char *GetVendor();
 void        GetFeatures(uint32_t &ecx, uint32_t &edx);
 bool        Is64Bit();

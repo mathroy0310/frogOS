@@ -6,16 +6,15 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:46 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:16:52 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:27:00 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
+#include <FROG/Math.h>
 #include <FROG/Errors.h>
 #include <FROG/Memory.h>
-
-#include <assert.h>
 #include <stdint.h>
 #include <string.h>
 #include <sys/param.h>
@@ -62,7 +61,7 @@ template <typename T> ErrorOr<void> Queue<T>::Push(const T &value) {
 }
 
 template <typename T> void Queue<T>::Pop() {
-	assert(m_size > 0);
+	ASSERT(m_size > 0);
 	m_data->~T();
 	memmove(m_data, m_data + 1, sizeof(T) * (--m_size));
 }
@@ -76,12 +75,12 @@ template <typename T> typename Queue<T>::size_type Queue<T>::Size() const {
 }
 
 template <typename T> const T &Queue<T>::Front() const {
-	assert(m_size > 0);
+	ASSERT(m_size > 0);
 	return *m_data;
 }
 
 template <typename T> T &Queue<T>::Front() {
-	assert(m_size > 0);
+	ASSERT(m_size > 0);
 	return *m_data;
 }
 
@@ -89,7 +88,7 @@ template <typename T> ErrorOr<void> Queue<T>::VerifyCapacity(size_type size) {
 	if (m_capacity > size)
 		return {};
 
-	size_type new_cap = MAX(m_capacity * 1.5f, m_capacity + 1);
+	size_type new_cap = FROG::Math::max<size_type>(m_capacity * 1.5f, m_capacity + 1);
 	void     *new_data = FROG::allocator(new_cap * sizeof(T));
 	if (new_data == nullptr)
 		return Error::FromString("Queue: Could not allocate memory");

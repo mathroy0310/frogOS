@@ -6,19 +6,18 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 02:24:11 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:28:55 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:47:18 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <kernel/IO.h>
-#include <kernel/Paging.h>
+#include <kernel/MMU.h>
+#include <kernel/Panic.h>
 #include <kernel/Serial.h>
 #include <kernel/VESA.h>
+#include <kernel/font.h>
 #include <kernel/kmalloc.h>
 #include <kernel/multiboot.h>
-#include <kernel/panic.h>
-
-#include "font.h"
 
 #include <string.h>
 
@@ -37,6 +36,7 @@ static uint32_t  s_pitch = 0;
 static uint32_t  s_width = 0;
 static uint32_t  s_height = 0;
 static uint8_t   s_mode = 0;
+static bool      s_initialized = false;
 
 static uint32_t s_terminal_width = 0;
 static uint32_t s_terminal_height = 0;
@@ -45,6 +45,8 @@ static void (*PutCharAtImpl)(uint16_t, uint32_t, uint32_t, Color, Color) = nullp
 static void (*ClearImpl)(Color) = nullptr;
 static void (*SetCursorPositionImpl)(uint32_t, uint32_t, Color) = nullptr;
 
+static void GraphicsPutBitmapAt(const uint8_t *bitmap, uint32_t x, uint32_t y, Color fg);
+static void GraphicsPutBitmapAt(const uint8_t *bitmap, uint32_t x, uint32_t y, Color fg, Color bg);
 static void GraphicsPutCharAt(uint16_t ch, uint32_t x, uint32_t y, Color fg, Color bg);
 static void GraphicsClear(Color color);
 static void GraphicsSetCursorPosition(uint32_t x, uint32_t y, Color fg);
@@ -52,6 +54,15 @@ static void GraphicsSetCursorPosition(uint32_t x, uint32_t y, Color fg);
 static void TextPutCharAt(uint16_t ch, uint32_t x, uint32_t y, Color fg, Color bg);
 static void TextClear(Color color);
 static void TextSetCursorPosition(uint32_t x, uint32_t y, Color fg);
+
+void PutBitmapAt(const uint8_t *bitmap, uint32_t x, uint32_t y, Color fg) {
+	if (s_mode == MULTIBOOT_FRAMEBUFFER_TYPE_GRAPHICS)
+		GraphicsPutBitmapAt(bitmap, x, y, fg);
+}
+void PutBitmapAt(const uint8_t *bitmap, uint32_t x, uint32_t y, Color fg, Color bg) {
+	if (s_mode == MULTIBOOT_FRAMEBUFFER_TYPE_GRAPHICS)
+		GraphicsPutBitmapAt(bitmap, x, y, fg, bg);
+}
 
 void PutCharAt(uint16_t ch, uint32_t x, uint32_t y, Color fg, Color bg) {
 	if (x >= s_width || y >= s_height)
@@ -75,11 +86,17 @@ uint32_t GetTerminalHeight() {
 	return s_terminal_height;
 }
 
-bool Initialize() {
-	if (!(s_multiboot_info->flags & MULTIBOOT_FLAGS_FRAMEBUFFER))
-		return false;
+bool IsInitialized() {
+	return s_initialized;
+}
 
-	auto &framebuffer = s_multiboot_info->framebuffer;
+bool Initialize() {
+	if (!(g_multiboot_info->flags & MULTIBOOT_FLAGS_FRAMEBUFFER)) {
+		derrorln("bootloader did not provide a memory map");
+		return false;
+	}
+
+	auto &framebuffer = g_multiboot_info->framebuffer;
 	s_addr = framebuffer.addr;
 	s_bpp = framebuffer.bpp;
 	s_pitch = framebuffer.pitch;
@@ -87,11 +104,11 @@ bool Initialize() {
 	s_height = framebuffer.height;
 	s_mode = framebuffer.type;
 
-	Paging::MapFramebuffer(framebuffer.addr & 0xFFC00000);
+	MMU::Get().AllocateRange(s_addr, s_pitch * s_height);
 
 	if (s_mode == MULTIBOOT_FRAMEBUFFER_TYPE_GRAPHICS) {
 		if (s_bpp != 24 && s_bpp != 32) {
-			dprintln("Unsupported bpp {}", s_bpp);
+			derrorln("Unsupported bpp {}", s_bpp);
 			return false;
 		}
 
@@ -109,12 +126,13 @@ bool Initialize() {
 		s_terminal_width = s_width;
 		s_terminal_height = s_height;
 	} else {
-		dprintln("Unsupported type for VESA framebuffer");
+		derrorln("Unsupported type for VESA framebuffer");
 		return false;
 	}
 
 	SetCursorPositionImpl(0, 0, Color::BRIGHT_WHITE);
 	ClearImpl(Color::BLACK);
+	s_initialized = true;
 	return true;
 }
 
@@ -137,18 +155,25 @@ static void GraphicsSetPixel(uint32_t offset, uint32_t color) {
 	}
 }
 
-static void GraphicsPutCharAt(uint16_t ch, uint32_t x, uint32_t y, Color fg, Color bg) {
-	// find correct bitmap
-	uint32_t index = 0;
-	for (uint32_t i = 0; i < font.Chars; i++) {
-		if (font.Index[i] == ch) {
-			index = i;
-			break;
+static void GraphicsPutBitmapAt(const uint8_t *bitmap, uint32_t x, uint32_t y, Color fg) {
+	uint32_t u32_fg = s_graphics_colors[(uint8_t) fg];
+
+	uint32_t fx = x * font.Width;
+	uint32_t fy = y * font.Height;
+
+	uint32_t row_offset = (fy * s_pitch) + (fx * (s_bpp / 8));
+	for (uint32_t gy = 0; gy < font.Height; gy++) {
+		uint32_t pixel_offset = row_offset;
+		for (uint32_t gx = 0; gx < font.Width; gx++) {
+			if (bitmap[gy] & (1 << (font.Width - gx - 1)))
+				GraphicsSetPixel(pixel_offset, u32_fg);
+			pixel_offset += s_bpp / 8;
 		}
+		row_offset += s_pitch;
 	}
+}
 
-	const unsigned char *glyph = font.Bitmap + index * font.Height;
-
+static void GraphicsPutBitmapAt(const uint8_t *bitmap, uint32_t x, uint32_t y, Color fg, Color bg) {
 	uint32_t u32_fg = s_graphics_colors[(uint8_t) fg];
 	uint32_t u32_bg = s_graphics_colors[(uint8_t) bg];
 
@@ -159,11 +184,26 @@ static void GraphicsPutCharAt(uint16_t ch, uint32_t x, uint32_t y, Color fg, Col
 	for (uint32_t gy = 0; gy < font.Height; gy++) {
 		uint32_t pixel_offset = row_offset;
 		for (uint32_t gx = 0; gx < font.Width; gx++) {
-			GraphicsSetPixel(pixel_offset, (glyph[gy] & (1 << (font.Width - gx - 1))) ? u32_fg : u32_bg);
+			GraphicsSetPixel(pixel_offset, (bitmap[gy] & (1 << (font.Width - gx - 1))) ? u32_fg : u32_bg);
 			pixel_offset += s_bpp / 8;
 		}
 		row_offset += s_pitch;
 	}
+}
+
+static void GraphicsPutCharAt(uint16_t ch, uint32_t x, uint32_t y, Color fg, Color bg) {
+	// find correct bitmap
+	uint32_t index = 0;
+	for (uint32_t i = 0; i < font.Chars; i++) {
+		if (font.Index[i] == ch) {
+			index = i;
+			break;
+		}
+	}
+
+	const uint8_t *glyph = font.Bitmap + index * font.Height;
+
+	GraphicsPutBitmapAt(glyph, x, y, fg, bg);
 }
 
 static void GraphicsClear(Color color) {
@@ -196,21 +236,7 @@ static void GraphicsSetCursorPosition(uint32_t x, uint32_t y, Color fg) {
 		    ________, XXXXXXXX, XXXXXXXX, ________,
 		};
 
-		uint32_t u32_fg = s_graphics_colors[(uint8_t) fg];
-
-		uint32_t fx = x * font.Width;
-		uint32_t fy = y * font.Height;
-
-		uint32_t row_offset = (fy * s_pitch) + (fx * (s_bpp / 8));
-		for (uint32_t gy = 0; gy < font.Height; gy++) {
-			uint32_t pixel_offset = row_offset;
-			for (uint32_t gx = 0; gx < font.Width; gx++) {
-				if (cursor[gy] & (1 << (font.Width - gx - 1)))
-					GraphicsSetPixel(pixel_offset, u32_fg);
-				pixel_offset += s_bpp / 8;
-			}
-			row_offset += s_pitch;
-		}
+		GraphicsPutBitmapAt(cursor, x, y, fg);
 	}
 }
 
@@ -223,7 +249,7 @@ static inline uint16_t TextEntry(uint8_t ch, uint8_t color) {
 }
 
 static void TextPutCharAt(uint16_t ch, uint32_t x, uint32_t y, Color fg, Color bg) {
-	uint32_t index = y * s_pitch + x;
+	uint32_t index = y * s_width + x;
 	((uint16_t *) s_addr)[index] = TextEntry(ch, TextColor(fg, bg));
 }
 

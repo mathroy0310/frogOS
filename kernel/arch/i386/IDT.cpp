@@ -6,15 +6,15 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:20:47 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 10:15:31 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <kernel/APIC.h>
 #include <kernel/IDT.h>
+#include <kernel/Panic.h>
 #include <kernel/Serial.h>
 #include <kernel/kprint.h>
-#include <kernel/panic.h>
-#include <kernel/APIC.h>
 
 union GateDescriptor {
 	struct {
@@ -61,7 +61,7 @@ static void (*s_irq_handlers[0xFF])(){nullptr};
 		kprintln("eax={8H}, ebx={8H}, ecx={8H}, edx={8H}", eax, ebx, ecx, edx); \
 		kprintln("esp={8H}, ebp={8H}", esp, ebp);                               \
 		kprintln("CR0={8H} CR2={8H} CR3={8H} CR4={8H}", cr0, cr2, cr3, cr4);    \
-		Kernel::panic(msg);                                                     \
+		Kernel::Panic(msg);                                                     \
 	}
 
 #define INTERRUPT_HANDLER_ERR(i, msg)                                           \
@@ -82,7 +82,7 @@ static void (*s_irq_handlers[0xFF])(){nullptr};
 		kprintln("eax={8H}, ebx={8H}, ecx={8H}, edx={8H}", eax, ebx, ecx, edx); \
 		kprintln("esp={8H}, ebp={8H}", esp, ebp);                               \
 		kprintln("CR0={8H} CR2={8H} CR3={8H} CR4={8H}", cr0, cr2, cr3, cr4);    \
-		Kernel::panic(msg " (error: {})", error_code);                          \
+		Kernel::Panic(msg " (error: {})", error_code);                          \
 	}
 
 INTERRUPT_HANDLER____(0x00, "Division Error")
@@ -143,9 +143,9 @@ found:
 	if (s_irq_handlers[irq])
 		s_irq_handlers[irq]();
 	else
-		Kernel::panic("no handler for irq 0x{2H}\n", irq);
+		Kernel::Panic("no handler for irq 0x{2H}\n", irq);
 
-	APIC::EOI();
+	APIC::EOI(irq);
 }
 
 extern "C" void handle_irq_common();
@@ -171,7 +171,7 @@ static void flush_idt() {
 }
 
 static void unimplemented_trap() {
-	Kernel::panic("Unhandeled IRQ");
+	Kernel::Panic("Unhandeled IRQ");
 }
 
 static void register_interrupt_handler(uint8_t index, void (*f)()) {

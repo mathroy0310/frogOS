@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:32 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:20:00 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:13:32 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ StringView::StringView(const char *string, size_type len) {
 }
 
 char StringView::operator[](size_type index) const {
-	assert(index < m_size);
+	ASSERT(index < m_size);
 	return m_data[index];
 }
 
@@ -56,10 +56,10 @@ bool StringView::operator==(const char *other) const {
 }
 
 StringView StringView::Substring(size_type index, size_type len) const {
-	assert(index <= m_size);
+	ASSERT(index <= m_size);
 	if (len == size_type(-1))
 		len = m_size - index;
-	assert(len <= m_size - index); // weird order to avoid overflow
+	ASSERT(len <= m_size - index); // weird order to avoid overflow
 	StringView result;
 	result.m_data = m_data + index;
 	result.m_size = len;

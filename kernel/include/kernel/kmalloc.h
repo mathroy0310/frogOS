@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 01:34:12 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:24:55 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:30:10 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,24 +19,5 @@ void kmalloc_dump_nodes();
 
 void *kmalloc_eternal(size_t);
 void *kmalloc(size_t);
+void *kmalloc(size_t, size_t);
 void  kfree(void *);
-
-inline void *operator new(size_t size) {
-	return kmalloc(size);
-}
-inline void *operator new[](size_t size) {
-	return kmalloc(size);
-}
-
-inline void operator delete(void *addr) {
-	kfree(addr);
-}
-inline void operator delete[](void *addr) {
-	kfree(addr);
-}
-inline void operator delete(void *addr, size_t) {
-	kfree(addr);
-}
-inline void operator delete[](void *addr, size_t) {
-	kfree(addr);
-}

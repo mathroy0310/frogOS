@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:41 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:28:23 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:42:29 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,11 @@
 #include <kernel/CPUID.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
+#include <kernel/MMU.h>
 #include <kernel/PIC.h>
 #include <kernel/Paging.h>
 #include <kernel/Serial.h>
 #include <kernel/kprint.h>
-#include <kernel/panic.h>
 
 #include <stdint.h>
 #include <string.h>
@@ -156,15 +156,13 @@ static void     WriteIOAPIC(uint8_t reg, uint32_t value);
 static void     SetMSR(uint32_t msr, uint32_t lo, uint32_t hi);
 
 static bool IsRSDP(RSDPDescriptor *rsdp) {
-	if (memcmp(rsdp->signature, "RSD PTR ", 8) != 0)
-		return false;
+	if (memcmp(rsdp->signature, "RSD PTR ", 8) != 0) return false;
 
 	{
 		uint8_t checksum = 0;
 		for (uint32_t i = 0; i < sizeof(RSDPDescriptor); i++)
 			checksum += ((uint8_t *) rsdp)[i];
-		if (checksum != 0)
-			return false;
+		if (checksum != 0) return false;
 	}
 
 	if (rsdp->revision == 2) {
@@ -172,8 +170,7 @@ static bool IsRSDP(RSDPDescriptor *rsdp) {
 		uint8_t           checksum = 0;
 		for (uint32_t i = 0; i < sizeof(RSDPDescriptor20); i++)
 			checksum += ((uint8_t *) rsdp20)[i];
-		if (checksum != 0)
-			return false;
+		if (checksum != 0) return false;
 	}
 
 	return true;
@@ -182,8 +179,7 @@ static bool IsRSDP(RSDPDescriptor *rsdp) {
 static RSDPDescriptor *LocateRSDP() {
 	// Look in main BIOS area below 1 MB
 	for (uint32_t addr = 0x000E0000; addr < 0x000FFFFF; addr += 16)
-		if (IsRSDP((RSDPDescriptor *) addr))
-			return (RSDPDescriptor *) addr;
+		if (IsRSDP((RSDPDescriptor *) addr)) return (RSDPDescriptor *) addr;
 
 	return nullptr;
 }
@@ -197,14 +193,13 @@ static bool IsValidACPISDTHeader(ACPISDTHeader *header) {
 
 static void ParseMADT(RSDPDescriptor *rsdp) {
 	RSDT *root = (RSDT *) (rsdp->revision == 2 ? ((RSDPDescriptor20 *) rsdp)->xsdt_address : rsdp->rsdt_address);
-	Paging::MapRSDP((uint32_t) root & 0xFFC00000);
+	MMU::Get().AllocatePage((uint32_t) root);
 	uint32_t sdt_entry_count = (root->header.length - sizeof(root->header)) / (rsdp->revision == 2 ? 8 : 4);
 
 	for (uint32_t i = 0; i < sdt_entry_count; i++) {
 		ACPISDTHeader *header =
 		    (ACPISDTHeader *) (rsdp->revision == 2 ? ((uint64_t *) root->sdt_pointer)[i] : root->sdt_pointer[i]);
-		if (!IsValidACPISDTHeader(header))
-			continue;
+		if (!IsValidACPISDTHeader(header)) continue;
 		if (memcmp(header->signature, "APIC", 4) == 0) {
 			MADT *madt = (MADT *) header;
 			s_local_apic = madt->local_apic;
@@ -308,11 +303,6 @@ static void SetMSR(uint32_t msr, uint32_t lo, uint32_t hi) {
 }
 
 static bool InitializeAPIC() {
-	if (!CPUID::IsAvailable()) {
-		kprintln("CPUID not available");
-		return false;
-	}
-
 	uint32_t ecx, edx;
 	CPUID::GetFeatures(ecx, edx);
 	if (!(edx & CPUID::Features::EDX_APIC)) {
@@ -332,13 +322,10 @@ static bool InitializeAPIC() {
 
 	ParseMADT(rsdp);
 
-	if (s_local_apic == 0 || s_io_apic == 0)
-		return false;
+	if (s_local_apic == 0 || s_io_apic == 0) return false;
 
-	if ((s_io_apic & 0xFFC00000) != (s_local_apic & 0xFFC00000))
-		Kernel::panic("lapic and ioapic are not in the same 4 MiB are");
-
-	Paging::MapAPIC(s_io_apic & 0xFFC00000);
+	MMU::Get().AllocatePage(s_io_apic);
+	MMU::Get().AllocatePage(s_local_apic);
 
 	// Enable Local APIC
 	SetMSR(IA32_APIC_BASE, (s_local_apic & 0xFFFFF000) | IA32_APIC_BASE_ENABLE, 0);
@@ -365,9 +352,8 @@ void Initialize(bool force_pic) {
 	}
 }
 
-void EOI() {
-	if (s_using_fallback_pic)
-		return PIC::EOI(0);
+void EOI(uint8_t irq) {
+	if (s_using_fallback_pic) return PIC::EOI(irq);
 	WriteLocalAPIC(0xB0, 0);
 }
 
@@ -384,8 +370,7 @@ void GetISR(uint32_t out[8]) {
 }
 
 void EnableIRQ(uint8_t irq) {
-	if (s_using_fallback_pic)
-		return PIC::Unmask(irq);
+	if (s_using_fallback_pic) return PIC::Unmask(irq);
 
 	uint32_t gsi = s_overrides[irq];
 

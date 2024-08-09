@@ -5,7 +5,8 @@ AlignConsecutiveDeclarations: true
 AlignEscapedNewlinesLeft: true
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: false
-AllowShortFunctionsOnASingleLine: None
+AllowShortFunctionsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: true
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 BinPackArguments: true

@@ -6,16 +6,15 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:17:04 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:08:55 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:28:58 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <FROG/Errors.h>
+#include <FROG/Math.h>
 #include <FROG/Memory.h>
-
-#include <assert.h>
 #include <string.h>
 #include <sys/param.h>
 
@@ -84,7 +83,7 @@ template <typename T> ErrorOr<void> Vector<T>::PushBack(const T &value) {
 
 template <typename T>
 ErrorOr<void> Vector<T>::Insert(const T &value, size_type index) {
-	assert(index <= m_size);
+	ASSERT(index <= m_size);
 	TRY(EnsureCapasity(m_size + 1));
 	memmove(m_data + index + 1, m_data + index, (m_size - index) * sizeof(T));
 	m_data[index] = value;
@@ -93,13 +92,13 @@ ErrorOr<void> Vector<T>::Insert(const T &value, size_type index) {
 }
 
 template <typename T> void Vector<T>::PopBack() {
-	assert(m_size > 0);
+	ASSERT(m_size > 0);
 	m_data[m_size - 1].~T();
 	m_size--;
 }
 
 template <typename T> void Vector<T>::Remove(size_type index) {
-	assert(index < m_size);
+	ASSERT(index < m_size);
 	m_data[index].~T();
 	memmove(m_data + index, m_data + index + 1, (m_size - index - 1) * sizeof(T));
 	m_size--;
@@ -113,31 +112,31 @@ template <typename T> bool Vector<T>::Has(const T &other) const {
 }
 
 template <typename T> const T &Vector<T>::operator[](size_type index) const {
-	assert(index < m_size);
+	ASSERT(index < m_size);
 	return m_data[index];
 }
 
 template <typename T> T &Vector<T>::operator[](size_type index) {
-	assert(index < m_size);
+	ASSERT(index < m_size);
 	return m_data[index];
 }
 
 template <typename T> const T &Vector<T>::Back() const {
-	assert(m_size > 0);
+	ASSERT(m_size > 0);
 	return m_data[m_size - 1];
 }
 
 template <typename T> T &Vector<T>::Back() {
-	assert(m_size > 0);
+	ASSERT(m_size > 0);
 	return m_data[m_size - 1];
 }
 
 template <typename T> const T &Vector<T>::Front() const {
-	assert(m_size > 0);
+	ASSERT(m_size > 0);
 	return m_data[0];
 }
 template <typename T> T &Vector<T>::Front() {
-	assert(m_size > 0);
+	ASSERT(m_size > 0);
 	return m_data[0];
 }
 
@@ -177,7 +176,7 @@ typename Vector<T>::size_type Vector<T>::Capasity() const {
 template <typename T> ErrorOr<void> Vector<T>::EnsureCapasity(size_type size) {
 	if (m_capasity >= size)
 		return {};
-	size_type new_cap = MAX(size, m_capasity * 1.5f);
+	size_type new_cap = FROG::Math::max<size_type>(size, m_capasity * 1.5f);
 	void     *new_data = FROG::allocator(new_cap * sizeof(T));
 	if (new_data == nullptr)
 		return Error::FromString("Vector: Could not allocate memory");

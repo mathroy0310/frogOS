@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/05 01:17:18 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/09 02:09:42 by mathroy0310    `                          #
+#    Updated: 2024/08/09 11:34:10 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -45,6 +45,7 @@ FREEOBJS=			\
 $(ARCH_FREEOBJS)	\
 FROG/String.o		\
 FROG/StringView.o	\
+FROG/Memory.o \
  
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \

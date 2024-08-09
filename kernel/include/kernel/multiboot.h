@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 01:34:16 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 01:34:17 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:17:57 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,4 +57,5 @@ struct multiboot_info_t {
 	framebuffer_info_t framebuffer;
 } __attribute__((packed));
 
-extern multiboot_info_t *s_multiboot_info;
+extern "C" multiboot_info_t *g_multiboot_info;
+extern "C" uint32_t          g_multiboot_magic;

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:29 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 02:18:14 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:28:31 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include <FROG/Move.h>
 #include <FROG/String.h>
 #include <FROG/StringView.h>
+#include <FROG/Math.h>
 
 #include <assert.h>
 #include <string.h>
@@ -67,7 +68,7 @@ ErrorOr<void> String::PushBack(char ch) {
 }
 
 ErrorOr<void> String::Insert(char ch, size_type index) {
-	assert(index <= m_size);
+	ASSERT(index <= m_size);
 	TRY(EnsureCapasity(m_size + 2));
 	memmove(m_data + index + 1, m_data + index, m_size - index);
 	m_data[index] = ch;
@@ -91,13 +92,13 @@ ErrorOr<void> String::Append(const String &string) {
 }
 
 void String::PopBack() {
-	assert(m_size > 0);
+	ASSERT(m_size > 0);
 	m_data[m_size - 1] = '\0';
 	m_size--;
 }
 
 void String::Remove(size_type index) {
-	assert(index < m_size);
+	ASSERT(index < m_size);
 	memmove(m_data + index, m_data + index + 1, m_size - index - 1);
 	m_data[m_size - 1] = '\0';
 	m_size--;
@@ -109,12 +110,12 @@ void String::Clear() {
 }
 
 char String::operator[](size_type index) const {
-	assert(index < m_size);
+	ASSERT(index < m_size);
 	return m_data[index];
 }
 
 char &String::operator[](size_type index) {
-	assert(index < m_size);
+	ASSERT(index < m_size);
 	return m_data[index];
 }
 
@@ -179,7 +180,7 @@ const char *String::Data() const {
 ErrorOr<void> String::EnsureCapasity(size_type size) {
 	if (m_capasity >= size)
 		return {};
-	size_type new_cap = MAX(size, m_capasity * 1.5f);
+	size_type new_cap = FROG::Math::max<size_type>(size, m_capasity * 1.5f);
 	void     *new_data = FROG::allocator(new_cap);
 	if (new_data == nullptr)
 		return Error::FromString("String: Could not allocate memory");

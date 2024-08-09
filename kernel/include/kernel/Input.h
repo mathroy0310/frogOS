@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                             _              */
 /*                                                 __   ___.--'_\`.           */
-/*   Keyboard.h                                   ( _\`.' -   'o\` )          */
+/*   Input.h                                      ( _\`.' -   'o\` )          */
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:45:46 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 13:42:15 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 09:40:21 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 #include <stdint.h>
 
-namespace Keyboard {
+namespace Input {
 
 enum class Key : uint8_t {
 	INVALID,
@@ -170,13 +170,28 @@ struct KeyEvent {
 	bool    pressed;
 };
 
+enum class MouseButton {
+	Left,
+	Right,
+	Middle,
+};
+struct MouseButtonEvent {
+	MouseButton button;
+};
+
+struct MouseMoveEvent {
+	int16_t dx;
+	int16_t dy;
+};
+
 bool initialize();
-void update_keyboard();
+void update();
+bool is_key_down(Key);
 
 void register_key_event_callback(void (*callback)(KeyEvent));
+void register_mouse_button_event_callback(void (*callback)(MouseButtonEvent));
+void register_mouse_move_event_callback(void (*callback)(MouseMoveEvent));
 
 const char *key_event_to_utf8(KeyEvent);
 
-void led_disco();
-
-} // namespace Keyboard
+} // namespace Input

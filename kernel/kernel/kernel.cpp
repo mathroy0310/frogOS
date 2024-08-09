@@ -6,20 +6,21 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:31:06 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 11:46:36 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <FROG/Memory.h>
 #include <FROG/StringView.h>
 #include <FROG/Vector.h>
 #include <kernel/APIC.h>
 #include <kernel/GDT.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
-#include <kernel/Keyboard.h>
+#include <kernel/Input.h>
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
-#include <kernel/Paging.h>
+#include <kernel/MMU.h>
 #include <kernel/RTC.h>
 #include <kernel/Serial.h>
 #include <kernel/Shell.h>
@@ -28,12 +29,11 @@
 #include <kernel/kmalloc.h>
 #include <kernel/kprint.h>
 #include <kernel/multiboot.h>
-#include <kernel/panic.h>
 
 #define DISABLE_INTERRUPTS() asm volatile("cli")
 #define ENABLE_INTERRUPTS() asm volatile("sti")
 
-multiboot_info_t *s_multiboot_info;
+extern "C" const char g_kernel_cmdline[];
 
 using namespace FROG;
 
@@ -41,57 +41,57 @@ struct ParsedCommandLine {
 	bool force_pic = false;
 };
 
-ParsedCommandLine ParseCommandLine(const char *command_line) {
+ParsedCommandLine ParseCommandLine() {
 	ParsedCommandLine result;
-	const char       *start = command_line;
+
+	if (!(g_multiboot_info->flags & 0x02)) return result;
+
+	const char *start = g_kernel_cmdline;
+	const char *current = g_kernel_cmdline;
 	while (true) {
-		if (!*command_line || *command_line == ' ' || *command_line == '\t') {
-			if (command_line - start == 6 && memcmp(start, "noapic", 6) == 0)
+		if (!*current || *current == ' ' || *current == '\t') {
+			if (current - start == 6 && memcmp(start, "noapic", 6) == 0)
 				result.force_pic = true;
 
-			if (!*command_line)
-				break;
-			start = command_line + 1;
+			if (!*current) break;
+			start = current + 1;
 		}
-		command_line++;
+		current++;
 	}
+
 	return result;
 }
 
-extern "C" void kernel_main(multiboot_info_t *mbi, uint32_t magic) {
+extern "C" void kernel_main() {
 	DISABLE_INTERRUPTS();
 
 	Serial::initialize();
-	if (magic != 0x2BADB002) {
+	if (g_multiboot_magic != 0x2BADB002) {
 		dprintln("Invalid multiboot magic number");
 		return;
 	}
 
-	Paging::Initialize();
+	auto cmdline = ParseCommandLine();
 
-	s_multiboot_info = mbi;
+	kmalloc_initialize();
+	dprintln("kmalloc initialized");
 
-	if (!VESA::Initialize()) {
-		dprintln("Could not preinitialize VESA");
-		return;
-	}
-
-	ParsedCommandLine cmdline;
-	if (mbi->flags & 0x02)
-		cmdline = ParseCommandLine((const char *) mbi->cmdline);
+	MMU::Intialize();
+	dprintln("MMU initialized");
 
 	APIC::Initialize(cmdline.force_pic);
+	dprintln("APIX initialized");
 	gdt_initialize();
+	dprintln("GDT initialized");
 	IDT::initialize();
+	dprintln("IDT initialized");
+
+	if (!VESA::Initialize()) return;
+	TTY *tty1 = new TTY;
 
 	PIT::initialize();
-	kmalloc_initialize();
+	if (!Input::initialize()) return;
 
-	TTY *tty1 = new TTY;
-	tty1->SetCursorPosition(0, 2);
-
-	if (!Keyboard::initialize())
-		return;
 
 	ENABLE_INTERRUPTS();
 
