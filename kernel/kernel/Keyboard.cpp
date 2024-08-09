@@ -5,8 +5,8 @@
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 01:34:14 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 12:36:59 by mathroy0310    `                         */
+/*   Created: 2024/08/05 13:38:25 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/05 13:43:36 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,28 +93,61 @@ static uint8_t s_modifiers = 0x00;
 
 static void (*s_key_event_callback)(KeyEvent) = nullptr;
 
-static char s_key_to_char[]{
-    '\0', '\0', '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',
-    'A',  'B',  'C',  'D',  'E',  'F',  'G',  'H',  'I',  'J',  'K',  'L',
-    'M',  'N',  'O',  'P',  'Q',  'R',  'S',  'T',  'U',  'V',  'W',  'X',
-    'Y',  'Z',  'A',  'A',  'O',
+static const char *s_key_to_utf8_lower[]{
+    nullptr, nullptr, "0",     "1",     "2",     "3",     "4",     "5",
+    "6",     "7",     "8",     "9",     "a",     "b",     "c",     "d",
+    "e",     "f",     "g",     "h",     "i",     "j",     "k",     "l",
+    "m",     "n",     "o",     "p",     "q",     "r",     "s",     "t",
+    "u",     "v",     "w",     "x",     "y",     "z",
 
-    ',',  ':',  '.',  ';',  '-',  '_',  '\'', '*',  '^',  '~',  '!',  '?',
-    '"',  '#',  '%',  '&',  '/',  '\\', '+',  '=',  '(',  ')',  '[',  ']',
-    '{',  '}',  '$',  '\0', '\0', '\0', '\n', ' ',  '\t', '\b', '<',  '>',
-    '\0', '`',  '\0', '\0', '@',  '|',  '\0', '\0', '\0', '\0', '\0', '\0',
-    '\0', '\0', '\0', '\0', '\0', '\0',
+    ",",     ":",     ".",     ";",     "-",     "_",     "'",     "*",
+    "^",     "~",     "!",     "?",     "\"",    "#",     "%",     "&",
+    "/",     "\\",    "+",     "=",     "(",     ")",     "[",     "]",
+    "{",     "}",     "$",     "£",     "€",     "¤",     "\n",    " ",
+    "\t",    nullptr, "<",     ">",     "´",     "`",     "§",     "½",
+    "@",     "|",     nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr,
 
-    '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',  ',',  '+',
-    '*',  '/',  '-',  '\n',
+    "0",     "1",     "2",     "3",     "4",     "5",     "6",     "7",
+    "8",     "9",     ",",     "+",     "*",     "/",     "-",     "\n",
 
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 
-    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr,
 };
-static_assert(sizeof(s_key_to_char) == static_cast<int>(Key::Count));
+static_assert(sizeof(s_key_to_utf8_lower) == static_cast<int>(Key::Count) * sizeof(*s_key_to_utf8_lower));
+
+static const char *s_key_to_utf8_upper[]{
+    nullptr, nullptr, "0",     "1",     "2",     "3",     "4",     "5",
+    "6",     "7",     "8",     "9",     "A",     "B",     "C",     "D",
+    "E",     "F",     "G",     "H",     "I",     "J",     "K",     "L",
+    "M",     "N",     "O",     "P",     "Q",     "R",     "S",     "T",
+    "U",     "V",     "W",     "X",     "Y",     "Z",
+
+    ",",     ":",     ".",     ";",     "-",     "_",     "'",     "*",
+    "^",     "~",     "!",     "?",     "\"",    "#",     "%",     "&",
+    "/",     "\\",    "+",     "=",     "(",     ")",     "[",     "]",
+    "{",     "}",     "$",     "£",     "€",     "¤",     "\n",    " ",
+    "\t",    nullptr, "<",     ">",     "´",     "`",     "§",     "½",
+    "@",     "|",     nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr,
+
+    "0",     "1",     "2",     "3",     "4",     "5",     "6",     "7",
+    "8",     "9",     ",",     "+",     "*",     "/",     "-",     "\n",
+
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr,
+};
+static_assert(sizeof(s_key_to_utf8_upper) == static_cast<int>(Key::Count) * sizeof(*s_key_to_utf8_upper));
 
 static uint8_t wait_and_read() {
 	while ((IO::inb(I8042_STATUS_REGISTER) & I8042_STATUS_OUT_FULL) == 0)
@@ -164,10 +197,10 @@ void update_keyboard() {
 
 		if (command._done) {
 			switch (command.command) {
-			case I8042_KB_RESET:
-				if (s_keyboard_command_extra != I8042_KB_SELF_TEST_PASS)
-					//Kernel::panic("PS/2 Keyboard self test failed");
-				break;
+			// case I8042_KB_RESET:
+			// 	if (s_keyboard_command_extra != I8042_KB_SELF_TEST_PASS)
+			// 		Kernel::panic("PS/2 Keyboard self test failed");
+			// 	break;
 			case I8042_KB_SET_SCAN_CODE_SET:
 				break;
 			case I8042_KB_SET_LEDS:
@@ -245,6 +278,7 @@ static void keyboard_new_key() {
 			break;
 		}
 	}
+
 
 	s_keyboard_state[static_cast<int>(key)] = pressed;
 
@@ -426,14 +460,12 @@ void register_key_event_callback(void (*callback)(KeyEvent)) {
 	s_key_event_callback = callback;
 }
 
-char key_event_to_ascii(KeyEvent event) {
-	char res = s_key_to_char[static_cast<uint8_t>(event.key)];
-
-	if (!(event.modifiers & (MOD_SHIFT | MOD_CAPS)))
-		if (res >= 'A' && res <= 'Z')
-			res = res - 'A' + 'a';
-
-	return res;
+const char *key_event_to_utf8(KeyEvent event) {
+	bool shift = event.modifiers & MOD_SHIFT;
+	bool caps = event.modifiers & MOD_CAPS;
+	if (shift ^ caps)
+		return s_key_to_utf8_upper[static_cast<uint8_t>(event.key)];
+	return s_key_to_utf8_lower[static_cast<uint8_t>(event.key)];
 }
 
 void led_disco() {

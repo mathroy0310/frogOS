@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 13:15:34 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 14:11:23 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ Shell::Shell() {
 }
 
 void Shell::PrintPrompt() {
-	kprint("\e[36muser\e[m# ");
+	kprint("\e[36muser\e[m► ");
 }
 
 void Shell::Run() {
@@ -158,6 +158,41 @@ void Shell::ProcessCommand(const FROG::Vector<FROG::StringView> &arguments) {
 	kprintln("unrecognized command '{}'", arguments.Front());
 }
 
+static uint8_t GetLastLength(const FROG::String &string) {
+	if (string.Empty())
+		return 0;
+
+	if (!(string[string.Size() - 1] & 0x80))
+		return 1;
+
+	if (string.Size() < 2)
+		return 1;
+
+	if (((uint8_t) string[string.Size() - 2] >> 5) == 0b110 &&
+	    ((uint8_t) string[string.Size() - 1] >> 6) == 0b10) {
+		return 2;
+	}
+
+	if (string.Size() < 3)
+		return 1;
+
+	if (((uint8_t) string[string.Size() - 3] >> 4) == 0b1110 &&
+	    ((uint8_t) string[string.Size() - 2] >> 6) == 0b10 &&
+	    ((uint8_t) string[string.Size() - 1] >> 6) == 0b10) {
+		return 3;
+	}
+
+	if (string.Size() < 4)
+		return 1;
+
+	if ((string[string.Size() - 4] >> 3) == 0b11110 && (string[string.Size() - 3] >> 6) == 0b10 &&
+	    (string[string.Size() - 2] >> 6) == 0b10 && (string[string.Size() - 1] >> 6) == 0b10) {
+		return 3;
+	}
+
+	return 1;
+}
+
 void Shell::KeyEventCallback(Keyboard::KeyEvent event) {
 	if (!event.pressed)
 		return;
@@ -166,7 +201,9 @@ void Shell::KeyEventCallback(Keyboard::KeyEvent event) {
 	case Keyboard::Key::Backspace: {
 		if (!m_buffer.Empty()) {
 			kprint("\b \b", 3);
-			m_buffer.PopBack();
+			uint8_t last_len = GetLastLength(m_buffer);
+			for (uint8_t i = 0; i < last_len; i++)
+				m_buffer.PopBack();
 		}
 		break;
 	}
@@ -185,10 +222,10 @@ void Shell::KeyEventCallback(Keyboard::KeyEvent event) {
 		// fall through
 
 	default: {
-		char ascii = Keyboard::key_event_to_ascii(event);
-		if (ascii) {
-			kprint("{}", ascii);
-			m_buffer.PushBack(ascii);
+		const char *utf8 = Keyboard::key_event_to_utf8(event);
+		if (utf8) {
+			kprint("{}", utf8);
+			m_buffer.Append(utf8);
 		}
 		break;
 	}

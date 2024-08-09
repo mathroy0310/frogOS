@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:57:54 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 12:03:51 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 13:37:50 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ enum class Color : uint8_t {
 };
 
 bool     Initialize();
-void     PutEntryAt(uint8_t, uint32_t, uint32_t, Color, Color);
+void     PutEntryAt(uint16_t, uint32_t, uint32_t, Color, Color);
 void     Clear(Color);
 void     ScrollLine(uint32_t line);
 uint32_t GetTerminalWidth();

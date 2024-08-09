@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:45:46 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:45:47 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 13:42:15 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,9 +55,6 @@ enum class Key : uint8_t {
 	X,
 	Y,
 	Z,
-	A_Dot,
-	A_Dots,
-	O_Dots,
 
 	Comma,
 	Colon,
@@ -178,7 +175,7 @@ void update_keyboard();
 
 void register_key_event_callback(void (*callback)(KeyEvent));
 
-char key_event_to_ascii(KeyEvent);
+const char *key_event_to_utf8(KeyEvent);
 
 void led_disco();
 

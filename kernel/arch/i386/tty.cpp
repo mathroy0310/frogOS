@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:58:57 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 12:04:30 by mathroy0310    `                         */
+/*   Updated: 2024/08/05 13:37:19 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,43 @@ void set_cursor_pos(int x, int y) {
 	update_cursor();
 }
 
+static uint16_t handle_unicode(uint8_t ch) {
+	static uint8_t  unicode_left = 0;
+	static uint16_t codepoint = 0;
+
+	if (unicode_left) {
+		if ((ch >> 6) == 0b10) {
+			codepoint = (codepoint << 6) | ch;
+			unicode_left--;
+			if (unicode_left > 0)
+				return 0xFFFF;
+			return codepoint;
+		} else {
+			// invalid utf-8
+			unicode_left = 0;
+			return 0x00;
+		}
+	} else {
+		if ((ch >> 3) == 0b11110) {
+			unicode_left = 3;
+			codepoint = ch & 0b00000111;
+			return 0xFFFF;
+		}
+		if ((ch >> 4) == 0b1110) {
+			unicode_left = 2;
+			codepoint = ch & 0b00001111;
+			return 0xFFFF;
+		}
+		if ((ch >> 5) == 0b110) {
+			unicode_left = 1;
+			codepoint = ch & 0b00011111;
+			return 0xFFFF;
+		}
+	}
+
+	return ch & 0x7F;
+}
+
 static void reset_ansi_escape() {
 	s_ansi_escape_mode = '\0';
 	s_ansi_escape_index = 0;
@@ -151,7 +188,7 @@ static void handle_ansi_SGR() {
 	}
 }
 
-static void handle_ansi_escape(char c) {
+static void handle_ansi_escape(uint16_t c) {
 	switch (s_ansi_escape_mode) {
 	case '\1': {
 		if (c == CSI) {
@@ -269,12 +306,16 @@ static void handle_ansi_escape(char c) {
 	}
 }
 
-void putchar(char c) {
+void putchar(char _c) {
+	uint16_t cp = handle_unicode(_c);
+	if (cp == 0xFFFF)
+		return;
+		
 	if (s_ansi_escape_mode)
-		return handle_ansi_escape(c);
+		return handle_ansi_escape(cp);
 
 	// https://en.wikipedia.org/wiki/ANSI_escape_code
-	switch (c) {
+	switch (cp) {
 	case BEL: // TODO
 		break;
 	case BS:
@@ -300,7 +341,7 @@ void putchar(char c) {
 		s_ansi_escape_mode = '\1';
 		break;
 	default:
-		VESA::PutEntryAt(c, terminal_col, terminal_row, terminal_fg, terminal_bg);
+		VESA::PutEntryAt(cp, terminal_col, terminal_row, terminal_fg, terminal_bg);
 		terminal_col++;
 		break;
 	}
