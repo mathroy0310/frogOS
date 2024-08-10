@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 11:42:54 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:56:00 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 12:49:40 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@ MMU::MMU() {
 
 	// dont map first page (0 -> 4 KiB) so that nullptr dereference
 	// causes page fault :)
-	uint64_t *page_table1 = (uint64_t *) page_directory1[0];
+	uint64_t *page_table1 = (uint64_t *) (page_directory1[0] & PAGE_MASK);
 	page_table1[0] = 0;
 
 	// reload this new pdpt

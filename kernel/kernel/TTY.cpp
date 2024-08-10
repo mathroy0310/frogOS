@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:58:57 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:51:43 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 12:49:17 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -236,7 +236,11 @@ void TTY::HandleAnsiEscape(uint16_t ch) {
 			dprintln("Unsupported ANSI CSI character J");
 			return ResetAnsiEscape();
 		case 'K': // Erase in Line
-			dprintln("Unsupported ANSI CSI character K");
+			if (m_ansi_state.nums[0] == -1 || m_ansi_state.nums[0] == 0)
+				for (uint32_t i = m_column; i < m_width; i++)
+					PutCharAt(' ', i, m_row);
+			else
+				dprintln("Unsupported ANSI CSI character K");
 			return ResetAnsiEscape();
 		case 'S': // Scroll Up
 			dprintln("Unsupported ANSI CSI character S");
@@ -281,7 +285,11 @@ void TTY::PutChar(char ch) {
 	uint16_t cp = handle_unicode(ch);
 	if (cp == 0xFFFF) return;
 
-	if (m_ansi_state.mode != 0) return HandleAnsiEscape(cp);
+	if (m_ansi_state.mode != 0) {
+		HandleAnsiEscape(cp);
+		SetCursorPosition(m_column, m_row);
+		return;
+	}
 
 	// https://en.wikipedia.org/wiki/ANSI_escape_code
 	switch (cp) {
@@ -354,3 +362,5 @@ void TTY::PutCharCurrent(char ch) {
 	ASSERT(s_tty);
 	s_tty->PutChar(ch);
 }
+
+bool TTY::IsInitialized() { return s_tty != nullptr; }

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:39:22 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 14:41:49 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,9 +24,9 @@
 		if (e.IsError()) Kernel::Panic("{}", e.GetError()); \
 		e.Value();                                          \
 	})
-#define ASSERT(cond)                                   \
-	do {                                               \
-		if (!(cond)) Kernel::Panic("ASSERT() failed"); \
+#define ASSERT(cond)                                            \
+	do {                                                        \
+		if (!(cond)) Kernel::Panic("ASSERT(" #cond ") failed"); \
 	} while (false)
 #else
 #error "NOT IMPLEMENTED"
@@ -38,6 +38,8 @@
 		if (e.IsError()) return e; \
 		e.Value();                 \
 	})
+
+namespace FROG {
 
 class Error {
   public:
@@ -94,6 +96,8 @@ template <> class ErrorOr<void> {
 	Error m_error;
 	bool  m_has_error = false;
 };
+
+} // namespace FROG
 
 namespace FROG::Formatter {
 template <typename F>

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 02:32:58 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:51:48 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 12:48:43 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,22 +24,19 @@ class TTY {
 	void PutChar(char ch);
 	void SetCursorPosition(uint32_t x, uint32_t y);
 
-	uint32_t Height() const {
-		return m_height;
-	}
-	uint32_t Width() const {
-		return m_width;
-	}
+	uint32_t Height() const { return m_height; }
+	uint32_t Width() const { return m_width; }
 
 	void RenderFromBuffer(uint32_t x, uint32_t y);
 
 	static void PutCharCurrent(char ch);
+	static bool IsInitialized();
 
   private:
-	void        ResetAnsiEscape();
-	void        HandleAnsiSGR();
-	void        HandleAnsiEscape(uint16_t ch);
-	void        PutCharAt(uint16_t ch, uint32_t x, uint32_t y);
+	void ResetAnsiEscape();
+	void HandleAnsiSGR();
+	void HandleAnsiEscape(uint16_t ch);
+	void PutCharAt(uint16_t ch, uint32_t x, uint32_t y);
 
   private:
 	struct Cell {

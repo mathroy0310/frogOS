@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:46:36 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 13:34:01 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,9 +18,9 @@
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
 #include <kernel/Input.h>
+#include <kernel/MMU.h>
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
-#include <kernel/MMU.h>
 #include <kernel/RTC.h>
 #include <kernel/Serial.h>
 #include <kernel/Shell.h>
@@ -65,33 +65,36 @@ ParsedCommandLine ParseCommandLine() {
 extern "C" void kernel_main() {
 	DISABLE_INTERRUPTS();
 
-	Serial::initialize();
 	if (g_multiboot_magic != 0x2BADB002) {
 		dprintln("Invalid multiboot magic number");
 		return;
 	}
-
+	Serial::initialize();
+	dprintln("Serial output initialized");
 	auto cmdline = ParseCommandLine();
 
 	kmalloc_initialize();
 	dprintln("kmalloc initialized");
 
-	MMU::Intialize();
-	dprintln("MMU initialized");
-
-	APIC::Initialize(cmdline.force_pic);
-	dprintln("APIX initialized");
-	gdt_initialize();
+	GDT::initialize();
 	dprintln("GDT initialized");
 	IDT::initialize();
 	dprintln("IDT initialized");
 
+	MMU::Intialize();
+	dprintln("MMU initialized");
+
 	if (!VESA::Initialize()) return;
+	dprintln("VESA initialized");
 	TTY *tty1 = new TTY;
 
-	PIT::initialize();
-	if (!Input::initialize()) return;
+	APIC::Initialize(cmdline.force_pic);
+	dprintln("APIX initialized");
 
+	PIT::initialize();
+	dprintln("PIT initialized");
+	if (!Input::initialize()) return;
+	dprintln("8042 initialized");
 
 	ENABLE_INTERRUPTS();
 
@@ -114,8 +117,7 @@ extern "C" void kernel_main() {
 	// kprintln("▐  {}  ▌", time);
 	// kprintln("▐▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▌");
 
-	auto &shell = Kernel::Shell::Get();
-	shell.SetTTY(tty1);
+	Kernel::Shell shell(tty1);
 	shell.Run();
 
 	for (;;) {

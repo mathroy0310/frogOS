@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:49 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:09:16 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 12:26:11 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,7 @@ class String {
 	String();
 	String(const String &);
 	String(String &&);
-	String(const StringView &);
-	String(const char *, size_type = -1);
+	String(StringView);
 	~String();
 
 	template <typename... Args>
@@ -35,14 +34,17 @@ class String {
 
 	String &operator=(const String &);
 	String &operator=(String &&);
+	String &operator=(StringView);
 
-	ErrorOr<void> PushBack(char);
-	ErrorOr<void> Insert(char, size_type);
-	ErrorOr<void> Append(const char *);
-	ErrorOr<void> Append(const String &);
+	[[nodiscard]] ErrorOr<void> PushBack(char);
+	[[nodiscard]] ErrorOr<void> Insert(char, size_type);
+	[[nodiscard]] ErrorOr<void> Insert(StringView, size_type);
+	[[nodiscard]] ErrorOr<void> Append(StringView);
+	[[nodiscard]] ErrorOr<void> Append(const String &);
 
 	void PopBack();
 	void Remove(size_type);
+	void Erase(size_type, size_type);
 
 	void Clear();
 
@@ -53,8 +55,8 @@ class String {
 	bool operator==(StringView) const;
 	bool operator==(const char *) const;
 
-	ErrorOr<void> Resize(size_type, char = '\0');
-	ErrorOr<void> Reserve(size_type);
+	[[nodiscard]] ErrorOr<void> Resize(size_type, char = '\0');
+	[[nodiscard]] ErrorOr<void> Reserve(size_type);
 
 	StringView SV() const;
 
@@ -65,10 +67,10 @@ class String {
 	const char *Data() const;
 
   private:
-	ErrorOr<void> EnsureCapasity(size_type);
+	[[nodiscard]] ErrorOr<void> EnsureCapasity(size_type);
 
-	ErrorOr<void> copy_impl(const char *, size_type);
-	void          move_impl(String &&);
+	[[nodiscard]] ErrorOr<void> copy_impl(StringView);
+	void                        move_impl(String &&);
 
   private:
 	char     *m_data = nullptr;

@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/05 01:17:18 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/09 11:34:10 by mathroy0310    `                          #
+#    Updated: 2024/08/09 14:39:33 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,7 +27,7 @@ LIBDIR?=$(EXEC_PREFIX)/lib
  
 CFLAGS:=$(CFLAGS) -Iinclude -ffreestanding -Wall -Wextra
 CPPFLAGS:=$(CPPFLAGS)
-LIBFROGK_CFLAGS:=$(CFLAGS) -D__is_kernel -Iinclude -ffreestanding -Wall -Wextra
+LIBFROGK_CFLAGS:=$(CFLAGS) -D__is_kernel -Iinclude -ffreestanding -Wall -Wextra -Werror=return-type
 LIBFROGK_CPPFLAGS:=$(CPPFLAGS) -fno-rtti -fno-exceptions -fno-threadsafe-statics
  
 ARCHDIR=arch/$(HOSTARCH)
@@ -43,9 +43,9 @@ BUILDDIR=$(abspath build)
  
 FREEOBJS=			\
 $(ARCH_FREEOBJS)	\
+FROG/Memory.o		\
 FROG/String.o		\
 FROG/StringView.o	\
-FROG/Memory.o \
  
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \

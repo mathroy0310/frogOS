@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:57:54 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 10:13:11 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 12:48:51 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,6 @@ enum class Color : uint8_t {
 };
 
 bool     Initialize();
-bool     IsInitialized();
 void     PutBitmapAt(const uint8_t *, uint32_t, uint32_t, Color);
 void     PutBitmapAt(const uint8_t *, uint32_t, uint32_t, Color, Color);
 void     PutCharAt(uint16_t, uint32_t, uint32_t, Color, Color);

@@ -6,12 +6,14 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:17 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/05 01:34:17 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 12:54:27 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <string.h>
 
 void foo() {
-	strlen("");
+	strlen(nullptr);
+	strncpy(nullptr, nullptr, 0);
+	memcpy(nullptr, nullptr, 0);
 }

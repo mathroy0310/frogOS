@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 02:24:11 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:47:18 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 12:48:15 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,6 @@ static uint32_t  s_pitch = 0;
 static uint32_t  s_width = 0;
 static uint32_t  s_height = 0;
 static uint8_t   s_mode = 0;
-static bool      s_initialized = false;
 
 static uint32_t s_terminal_width = 0;
 static uint32_t s_terminal_height = 0;
@@ -86,10 +85,6 @@ uint32_t GetTerminalHeight() {
 	return s_terminal_height;
 }
 
-bool IsInitialized() {
-	return s_initialized;
-}
-
 bool Initialize() {
 	if (!(g_multiboot_info->flags & MULTIBOOT_FLAGS_FRAMEBUFFER)) {
 		derrorln("bootloader did not provide a memory map");
@@ -132,7 +127,6 @@ bool Initialize() {
 
 	SetCursorPositionImpl(0, 0, Color::BRIGHT_WHITE);
 	ClearImpl(Color::BLACK);
-	s_initialized = true;
 	return true;
 }
 

@@ -6,12 +6,13 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:45:46 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:40:21 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 13:04:40 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
+#include <FROG/Function.h>
 #include <stdint.h>
 
 namespace Input {
@@ -188,9 +189,9 @@ bool initialize();
 void update();
 bool is_key_down(Key);
 
-void register_key_event_callback(void (*callback)(KeyEvent));
-void register_mouse_button_event_callback(void (*callback)(MouseButtonEvent));
-void register_mouse_move_event_callback(void (*callback)(MouseMoveEvent));
+void register_key_event_callback(const FROG::Function<void(KeyEvent)> &);
+void register_mouse_button_event_callback(const FROG::Function<void(MouseButtonEvent)> &);
+void register_mouse_move_event_callback(const FROG::Function<void(MouseMoveEvent)> &);
 
 const char *key_event_to_utf8(KeyEvent);
 

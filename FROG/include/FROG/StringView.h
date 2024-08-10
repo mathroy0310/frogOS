@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:17:09 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:04:53 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 13:36:14 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,9 +34,12 @@ class StringView {
 
 	StringView Substring(size_type, size_type = -1) const;
 
-	ErrorOr<Vector<StringView>> Split(char, bool = false);
-	ErrorOr<Vector<StringView>> Split(bool (*comp)(char), bool = false);
-	
+	[[nodiscard]] ErrorOr<Vector<StringView>> Split(char, bool = false);
+	[[nodiscard]] ErrorOr<Vector<StringView>> Split(bool (*comp)(char), bool = false);
+
+	char Back() const;
+	char Front() const;
+
 	size_type Count(char) const;
 
 	bool      Empty() const;
@@ -50,6 +53,10 @@ class StringView {
 };
 
 } // namespace FROG
+
+inline FROG::StringView operator""_sv(const char *str, FROG::StringView::size_type len) {
+	return FROG::StringView(str, len);
+}
 
 namespace FROG::Formatter {
 

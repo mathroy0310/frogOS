@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 13:38:25 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 10:15:49 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 14:30:13 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,9 +116,9 @@ static uint8_t                       s_mouse_data_buffer_index = 0;
 static uint8_t s_led_states = 0b000;
 static uint8_t s_modifiers = 0x00;
 
-static void (*s_key_event_callback)(KeyEvent) = nullptr;
-static void (*s_mouse_button_event_callback)(MouseButtonEvent) = nullptr;
-static void (*s_mouse_move_event_callback)(MouseMoveEvent) = nullptr;
+static FROG::Function<void(KeyEvent)>         s_key_event_callback;
+static FROG::Function<void(MouseButtonEvent)> s_mouse_button_event_callback;
+static FROG::Function<void(MouseMoveEvent)>   s_mouse_move_event_callback;
 
 static const char *s_key_to_utf8_lower[]{
     nullptr, nullptr, "0",     "1",     "2",     "3",     "4",     "5",
@@ -196,8 +196,7 @@ static void i8042_controller_command(uint8_t command, uint8_t data) {
 }
 
 static bool i8042_command(uint8_t target, uint8_t command) {
-	if (target == TARGET_MOUSE)
-		IO::outb(I8042_COMMAND_REGISTER, 0xD4);
+	if (target == TARGET_MOUSE) IO::outb(I8042_COMMAND_REGISTER, 0xD4);
 
 	auto timeout = PIT::ms_since_boot() + I8042_TIMEOUT_MS;
 
@@ -249,8 +248,7 @@ static void i8042_handle_byte(uint8_t target, uint8_t raw) {
 			}
 		} else {
 			s_keyboard_key_buffer[s_keyboard_key_buffer_size++] = raw;
-			if (raw != 0xE0)
-				keyboard_new_key();
+			if (raw != 0xE0) keyboard_new_key();
 		}
 	} else if (target == TARGET_MOUSE) {
 		if (waiting_response) {
@@ -275,18 +273,18 @@ static void i8042_handle_byte(uint8_t target, uint8_t raw) {
 					bool middle = s_mouse_data_buffer[0] & (1 << 2);
 
 					if (left)
-						s_mouse_button_event_queue.Push({.button = MouseButton::Left});
+						MUST(s_mouse_button_event_queue.Push({.button = MouseButton::Left}));
 					if (right)
-						s_mouse_button_event_queue.Push({.button = MouseButton::Right});
+						MUST(s_mouse_button_event_queue.Push({.button = MouseButton::Right}));
 					if (middle)
-						s_mouse_button_event_queue.Push({.button = MouseButton::Middle});
+						MUST(s_mouse_button_event_queue.Push({.button = MouseButton::Middle}));
 				}
 
 				if (s_mouse_data_buffer[1] || s_mouse_data_buffer[2]) {
 					int16_t rel_x = (int16_t) s_mouse_data_buffer[1] - ((s_mouse_data_buffer[0] << 4) & 0x100);
 					int16_t rel_y = (int16_t) s_mouse_data_buffer[2] - ((s_mouse_data_buffer[0] << 3) & 0x100);
 
-					s_mouse_move_event_queue.Push({.dx = rel_x, .dy = rel_y});
+					MUST(s_mouse_move_event_queue.Push({.dx = rel_x, .dy = rel_y}));
 				}
 
 				s_mouse_data_buffer_index = 0;
@@ -381,15 +379,12 @@ void update() {
 	}
 }
 
-bool is_key_down(Key key) {
-	return s_keyboard_state[(int) key];
-}
+bool is_key_down(Key key) { return s_keyboard_state[(int) key]; }
 
 static void keyboard_new_key() {
 	uint8_t index = 0;
 	bool    extended = (s_keyboard_key_buffer[index] == 0xE0);
-	if (extended)
-		index++;
+	if (extended) index++;
 
 	bool    pressed = (s_keyboard_key_buffer[index] & 0x80) == 0;
 	uint8_t ch = s_keyboard_key_buffer[index] & ~0x80;
@@ -448,8 +443,7 @@ static void keyboard_new_key() {
 	}
 
 #if KEYBOARD_SHOW_UNKNOWN
-	if (key == Key::INVALID)
-		kprintln("{} {}", ch, extended ? 'E' : ' ');
+	if (key == Key::INVALID) kprintln("{} {}", ch, extended ? 'E' : ' ');
 #endif
 
 	s_keyboard_state[(int) key] = pressed;
@@ -458,30 +452,27 @@ static void keyboard_new_key() {
 	switch (key) {
 	case Key::ScrollLock:
 		update_leds = pressed;
-		if (update_leds)
-			s_led_states ^= I8042_KB_LED_SCROLL_LOCK;
+		if (update_leds) s_led_states ^= I8042_KB_LED_SCROLL_LOCK;
 		break;
 	case Key::NumLock:
 		update_leds = pressed;
-		if (update_leds)
-			s_led_states ^= I8042_KB_LED_NUM_LOCK;
+		if (update_leds) s_led_states ^= I8042_KB_LED_NUM_LOCK;
 		break;
 	case Key::CapsLock:
 		update_leds = pressed;
-		if (update_leds)
-			s_led_states ^= I8042_KB_LED_CAPS_LOCK;
+		if (update_leds) s_led_states ^= I8042_KB_LED_CAPS_LOCK;
 		break;
 	default:
 		break;
 	}
 
 	if (update_leds) {
-		s_command_queue.Push({
+		MUST(s_command_queue.Push({
 		    .target = TARGET_KEYBOARD,
 		    .command = I8042_KB_SET_LEDS,
 		    .data = s_led_states,
 		    .has_data = true,
-		});
+		}));
 	}
 
 	uint8_t modifiers = 0;
@@ -489,18 +480,14 @@ static void keyboard_new_key() {
 		modifiers |= MOD_SHIFT;
 	if (s_keyboard_state[(int) Key::LeftCtrl] || s_keyboard_state[(int) Key::RightCtrl])
 		modifiers |= MOD_CTRL;
-	if (s_keyboard_state[(int) Key::LeftAlt])
-		modifiers |= MOD_ALT;
-	if (s_keyboard_state[(int) Key::RightAlt])
-		modifiers |= MOD_ALTGR;
-	if (s_led_states & I8042_KB_LED_CAPS_LOCK)
-		modifiers |= MOD_CAPS;
+	if (s_keyboard_state[(int) Key::LeftAlt]) modifiers |= MOD_ALT;
+	if (s_keyboard_state[(int) Key::RightAlt]) modifiers |= MOD_ALTGR;
+	if (s_led_states & I8042_KB_LED_CAPS_LOCK) modifiers |= MOD_CAPS;
 	s_modifiers = modifiers;
 
 	if (key != Key::INVALID) {
 		auto error_or = s_key_event_queue.Push({.key = key, .modifiers = modifiers, .pressed = pressed});
-		if (error_or.IsError())
-			dwarnln("{}", error_or.GetError());
+		if (error_or.IsError()) dwarnln("{}", error_or.GetError());
 	}
 	s_keyboard_key_buffer_size -= index + 1;
 	memmove(s_keyboard_key_buffer, s_keyboard_key_buffer + index, s_keyboard_key_buffer_size);
@@ -628,35 +615,32 @@ bool initialize() {
 
 	// Step 9: Enable Devices
 	config |= I8042_CONFING_IRQ_FIRST;
-	if (dual_channel)
-		config |= I8042_CONFING_IRQ_SECOND;
+	if (dual_channel) config |= I8042_CONFING_IRQ_SECOND;
 	i8042_controller_command(I8042_WRITE_CONFIG, config);
 
 	// Step 10: Reset Devices
 	initialize_keyboard();
-	if (dual_channel)
-		initialize_mouse();
+	if (dual_channel) initialize_mouse();
 
 	return true;
 }
 
-void register_key_event_callback(void (*callback)(KeyEvent)) {
+void register_key_event_callback(const FROG::Function<void(KeyEvent)> &callback) {
 	s_key_event_callback = callback;
 }
 
-void register_mouse_button_event_callback(void (*callback)(MouseButtonEvent)) {
+void register_mouse_button_event_callback(const FROG::Function<void(MouseButtonEvent)> &callback) {
 	s_mouse_button_event_callback = callback;
 }
 
-void register_mouse_move_event_callback(void (*callback)(MouseMoveEvent)) {
+void register_mouse_move_event_callback(const FROG::Function<void(MouseMoveEvent)> &callback) {
 	s_mouse_move_event_callback = callback;
 }
 
 const char *key_event_to_utf8(KeyEvent event) {
 	bool shift = event.modifiers & MOD_SHIFT;
 	bool caps = event.modifiers & MOD_CAPS;
-	if (shift ^ caps)
-		return s_key_to_utf8_upper[(int) event.key];
+	if (shift ^ caps) return s_key_to_utf8_upper[(int) event.key];
 	return s_key_to_utf8_lower[(int) event.key];
 }
 

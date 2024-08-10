@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:32 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:13:32 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 13:35:40 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,6 +101,16 @@ ErrorOr<Vector<StringView>> StringView::Split(bool (*comp)(char), bool allow_emp
 	if (start != m_size)
 		result.PushBack(this->Substring(start));
 	return result;
+}
+
+char StringView::Back() const {
+	ASSERT(m_size > 0);
+	return m_data[m_size - 1];
+}
+
+char StringView::Front() const {
+	ASSERT(m_size > 0);
+	return m_data[0];
 }
 
 StringView::size_type StringView::Count(char ch) const {

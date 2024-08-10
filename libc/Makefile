@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/04 11:38:17 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/04 16:04:45 by mathroy0310    `                          #
+#    Updated: 2024/08/09 13:36:38 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,7 +25,7 @@ EXEC_PREFIX?=$(PREFIX)
 INCLUDEDIR?=$(PREFIX)/include
 LIBDIR?=$(EXEC_PREFIX)/lib
  
-CFLAGS:=$(CFLAGS) -D__is_libc -Iinclude -ffreestanding -Wall -Wextra
+CFLAGS:=$(CFLAGS) -D__is_libc -Iinclude -ffreestanding -Wall -Wextra -Werror=return-type
 CPPFLAGS:=$(CPPFLAGS)
 LIBK_CFLAGS:=$(CFLAGS) -D__is_libk
 LIBK_CPPFLAGS:=$(CPPFLAGS)
@@ -43,6 +43,7 @@ BUILDDIR=$(abspath build)
  
 FREEOBJS=			\
 $(ARCH_FREEOBJS)	\
+ctype.o             \
 stdio/printf.o		\
 stdio/putchar.o		\
 stdio/puts.o		\

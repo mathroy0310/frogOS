@@ -6,13 +6,14 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:45:21 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:55:36 by mathroy0310    `                         */
+/*   Updated: 2024/08/09 13:45:37 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <FROG/String.h>
+#include <FROG/Vector.h>
 #include <kernel/Input.h>
 #include <kernel/TTY.h>
 
@@ -20,23 +21,30 @@ namespace Kernel {
 
 class Shell {
   public:
+	Shell(TTY *);
 	Shell(const Shell &) = delete;
-
-	static Shell &Get();
-	void          SetTTY(TTY *tty);
-
+	void SetPrompt(FROG::StringView);
 	void Run();
 
   private:
-	Shell();
-	void PrintPrompt();
-	void ProcessCommand(const FROG::Vector<FROG::StringView> &arguments);
-	void KeyEventCallback(Input::KeyEvent);
-	void MouseMoveEventCallback(Input::MouseMoveEvent);
+	void                     ReRenderBuffer() const;
+	FROG::Vector<FROG::String> ParseArguments(FROG::StringView) const;
+	void                     ProcessCommand(const FROG::Vector<FROG::String> &);
+	void                     KeyEventCallback(Input::KeyEvent);
+	void                     MouseMoveEventCallback(Input::MouseMoveEvent);
 
   private:
-	TTY         *m_tty;
-	FROG::String m_buffer;
+	TTY                     *m_tty;
+	FROG::Vector<FROG::String> m_old_buffer;
+	FROG::Vector<FROG::String> m_buffer;
+	FROG::String              m_prompt;
+	uint32_t                 m_prompt_length = 0;
+
+	struct {
+		uint32_t line = 0;
+		uint32_t col = 0;
+		uint32_t index = 0;
+	} m_cursor_pos;
 
 	struct {
 		bool    exists = false;

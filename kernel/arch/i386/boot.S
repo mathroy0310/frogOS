@@ -121,6 +121,7 @@ _start:
 	call _init
 
 	# call to the kernel itself
+	xorl %ebp, %ebp
 	call kernel_main
 
 system_halt:
