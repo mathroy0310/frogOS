@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:33:36 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:34:50 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,23 +45,24 @@ static GateDescriptor s_idt[0x100];
 
 static void (*s_irq_handlers[0x100])(){nullptr};
 
-#define INTERRUPT_HANDLER____(i, msg)                                         \
-	static void interrupt##i() {                                              \
-		uint32_t eax, ebx, ecx, edx;                                          \
-		uint32_t esp, ebp;                                                    \
-		uint32_t cr0, cr2, cr3, cr4;                                          \
-		asm volatile("" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx));        \
-		asm volatile("movl %%esp, %%eax" : "=a"(esp));                        \
-		asm volatile("movl %%ebp, %%eax" : "=a"(ebp));                        \
-		asm volatile("movl %%cr0, %%eax" : "=a"(cr0));                        \
-		asm volatile("movl %%cr2, %%eax" : "=a"(cr2));                        \
-		asm volatile("movl %%cr3, %%eax" : "=a"(cr3));                        \
-		asm volatile("movl %%cr4, %%eax" : "=a"(cr4));                        \
-		Kernel::Panic("Register dump\r\n"                                     \
-		              "eax=0x{8H}, ebx=0x{8H}, ecx=0x{8H}, edx=0x{8H}\r\n"    \
-		              "esp=0x{8H}, ebp=0x{8H}\r\n"                            \
-		              "CR0=0x{8H}, CR2=0x{8H}, CR3=0x{8H}, CR4=0x{8H}\r\n",   \
-		              msg, eax, ebx, ecx, edx, esp, ebp, cr0, cr2, cr3, cr4); \
+#define INTERRUPT_HANDLER____(i, msg)                                          \
+	static void interrupt##i() {                                               \
+		uint32_t eax, ebx, ecx, edx;                                           \
+		uint32_t esp, ebp;                                                     \
+		uint32_t cr0, cr2, cr3, cr4;                                           \
+		asm volatile("" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx));         \
+		asm volatile("movl %%esp, %%eax" : "=a"(esp));                         \
+		asm volatile("movl %%ebp, %%eax" : "=a"(ebp));                         \
+		asm volatile("movl %%cr0, %%eax" : "=a"(cr0));                         \
+		asm volatile("movl %%cr2, %%eax" : "=a"(cr2));                         \
+		asm volatile("movl %%cr3, %%eax" : "=a"(cr3));                         \
+		asm volatile("movl %%cr4, %%eax" : "=a"(cr4));                         \
+		Kernel::Panic(msg "\r\nRegister dump\r\n"                              \
+		                  "eax=0x{8H}, ebx=0x{8H}, ecx=0x{8H}, edx=0x{8H}\r\n" \
+		                  "esp=0x{8H}, ebp=0x{8H}\r\n"                         \
+		                  "CR0=0x{8H}, CR2=0x{8H}, CR3=0x{8H}, "               \
+		                  "CR4=0x{8H}\r\n",                                    \
+		              msg, eax, ebx, ecx, edx, esp, ebp, cr0, cr2, cr3, cr4);  \
 	}
 
 #define INTERRUPT_HANDLER_ERR(i, msg)                                           \
@@ -78,11 +79,11 @@ static void (*s_irq_handlers[0x100])(){nullptr};
 		asm volatile("movl %%cr3, %%eax" : "=a"(cr3));                          \
 		asm volatile("movl %%cr4, %%eax" : "=a"(cr4));                          \
 		asm volatile("popl %%eax" : "=a"(error_code));                          \
-		Kernel::Panic("Register dump\r\n"                                       \
-		              "eax=0x{8H}, ebx=0x{8H}, ecx=0x{8H}, edx=0x{8H}\r\n"      \
-		              "esp=0x{8H}, ebp=0x{8H}\r\n"                              \
-		              "CR0=0x{8H}, CR2=0x{8H}, CR3=0x{8H}, "                    \
-		              "CR4=0x{8H}\r\n" eax,                                     \
+		Kernel::Panic(msg " (error code: 0x{8H})\r\n"                           \
+		                  "eax=0x{8H}, ebx=0x{8H}, ecx=0x{8H}, edx=0x{8H}\r\n"  \
+		                  "esp=0x{8H}, ebp=0x{8H}\r\n"                          \
+		                  "CR0=0x{8H}, CR2=0x{8H}, CR3=0x{8H}, "                \
+		                  "CR4=0x{8H}\r\n",                                     \
 		              ebx, ecx, edx, esp, ebp, cr0, cr2, cr3, cr4, error_code); \
 	}
 
@@ -183,7 +184,7 @@ void register_irq_handler(uint8_t irq, void (*f)()) {
 void initialize() {
 	s_idtr.offset = s_idt;
 	s_idtr.size = sizeof(s_idt) - 1;
-	
+
 	for (uint8_t i = 0xFF; i > IRQ_VECTOR_BASE; i--)
 		register_irq_handler(i, nullptr);
 
