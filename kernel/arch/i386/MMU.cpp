@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 11:42:54 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:40:05 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:45:44 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,10 +115,10 @@ void MMU::UnAllocatePage(uintptr_t address) {
 	uint32_t pte = (address & 0x001FF000) >> 12;
 
 	uint64_t *page_directory = (uint64_t *) (m_highest_paging_struct[pdpte] & PAGE_MASK);
-	ASSERT(page_directory[pde] & PRESENT);
+	if (!(page_directory[pde] & PRESENT)) return;
 
 	uint64_t *page_table = (uint64_t *) (page_directory[pde] & PAGE_MASK);
-	ASSERT(page_table[pte] & PRESENT);
+	if (!(page_table[pte] & PRESENT)) return;
 
 	page_table[pte] = 0;
 
