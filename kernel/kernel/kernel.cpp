@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 13:34:01 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:28:09 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,8 +76,6 @@ extern "C" void kernel_main() {
 	kmalloc_initialize();
 	dprintln("kmalloc initialized");
 
-	GDT::initialize();
-	dprintln("GDT initialized");
 	IDT::initialize();
 	dprintln("IDT initialized");
 
