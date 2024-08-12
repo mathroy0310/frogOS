@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:14 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:23:50 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:49:36 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,13 +94,13 @@ void kmalloc_initialize() {
 }
 
 void kmalloc_dump_info() {
-	kprintln("kmalloc: {}->{}", (void *) s_kmalloc_base, (void *) s_kmalloc_end);
-	kprintln("  used: {}", s_kmalloc_used);
-	kprintln("  free: {}", s_kmalloc_free);
+	kprintln("kmalloc:         0x{8H}->0x{8H}", s_kmalloc_base, s_kmalloc_end);
+	kprintln("  used: 0x{8H}", s_kmalloc_used);
+	kprintln("  free: 0x{8H}", s_kmalloc_free);
 
-	kprintln("kmalloc eternal: {}->{}", (void *) s_kmalloc_eternal_base, (void *) s_kmalloc_eternal_end);
-	kprintln("  used: {}", s_kmalloc_eternal_used);
-	kprintln("  free: {}", s_kmalloc_eternal_free);
+	kprintln("kmalloc eternal: 0x{8H}->0x{8H}", s_kmalloc_eternal_base, s_kmalloc_eternal_end);
+	kprintln("  used: 0x{8H}", s_kmalloc_eternal_used);
+	kprintln("  free: 0x{8H}", s_kmalloc_eternal_free);
 }
 
 void *kmalloc_eternal(size_t size) {
@@ -109,6 +109,8 @@ void *kmalloc_eternal(size_t size) {
 	ASSERT(s_kmalloc_eternal_ptr + size < s_kmalloc_eternal_end);
 	void *result = (void *) s_kmalloc_eternal_ptr;
 	s_kmalloc_eternal_ptr += size;
+	s_kmalloc_eternal_used += size;
+	s_kmalloc_eternal_free -= size;
 	return result;
 }
 
