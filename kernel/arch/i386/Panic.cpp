@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 02:17:13 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:17:22 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:20:13 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,9 @@ void dump_stacktrace() {
 
 	stackframe *frame;
 	asm volatile("movl %%ebp, %0" : "=r"(frame));
-	FROG::Formatter::println(Serial::serial_putc, "\e[36mStack trace:");
+	FROG::Formatter::print(Serial::serial_putc, "\e[36mStack trace:\r\n");
 	while (frame) {
-		FROG::Formatter::println(Serial::serial_putc, "    {}", (void *) frame->eip);
+		FROG::Formatter::print(Serial::serial_putc, "    {}\r\n", (void *) frame->eip);
 		frame = frame->ebp;
 	}
 }
