@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/05 01:34:45 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/12 02:38:13 by mathroy0310    `                          #
+#    Updated: 2024/08/12 03:08:58 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -41,22 +41,24 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 
 BUILDDIR=$(abspath build)
  
-KERNEL_OBJS=			\
-$(KERNEL_ARCH_OBJS)		\
-kernel/build_libc.o		\
-kernel/font.o           \
-kernel/Input.o          \
-kernel/kernel.o			\
-kernel/kmalloc.o		\
-kernel/Panic.o          \
-kernel/PIC.o			\
-kernel/PIT.o			\
-kernel/RTC.o			\
-kernel/Serial.o			\
-kernel/Shell.o			\
-kernel/SSP.o			\
-kernel/TTY.o            \
-icxxabi.o				\
+KERNEL_OBJS=				\
+$(KERNEL_ARCH_OBJS)			\
+kernel/build_libc.o			\
+kernel/CPUID.o          	\
+kernel/font.o           	\
+kernel/Input.o          	\
+kernel/kernel.o				\
+kernel/kmalloc.o			\
+kernel/Panic.o          	\
+kernel/PIC.o				\
+kernel/PIT.o				\
+kernel/RTC.o				\
+kernel/Serial.o				\
+kernel/Shell.o				\
+kernel/SSP.o				\
+kernel/TTY.o            	\
+kernel/VesaTerminalDriver.o \
+icxxabi.o					\
  
 OBJS=					\
 $(ARCHDIR)/crti.o		\
