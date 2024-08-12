@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 02:17:13 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:38:46 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:45:55 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ namespace Kernel {
 void dump_stacktrace() {
 	struct stackframe {
 		stackframe *ebp;
-		uint64_t    eip;
+		uintptr_t   eip;
 	};
 
 	stackframe *frame = (stackframe *) __builtin_frame_address(0);
