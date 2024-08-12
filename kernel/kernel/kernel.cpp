@@ -6,13 +6,14 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:24:12 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:28:38 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Memory.h>
 #include <FROG/StringView.h>
 #include <FROG/Vector.h>
+#include <kernel/Debug.h>
 #include <kernel/GDT.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
@@ -22,7 +23,7 @@
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
 #include <kernel/RTC.h>
-#include <kernel/Debug.h>
+#include <kernel/Serial.h>
 #include <kernel/Shell.h>
 #include <kernel/TTY.h>
 #include <kernel/VesaTerminalDriver.h>
@@ -39,6 +40,7 @@ using namespace FROG;
 
 struct ParsedCommandLine {
 	bool force_pic = false;
+	bool disable_serial = false;
 };
 
 ParsedCommandLine ParseCommandLine() {
@@ -52,7 +54,8 @@ ParsedCommandLine ParseCommandLine() {
 		if (!*current || *current == ' ' || *current == '\t') {
 			if (current - start == 6 && memcmp(start, "noapic", 6) == 0)
 				result.force_pic = true;
-
+			if (current - start == 8 && memcmp(start, "noserial", 8) == 0)
+				result.disable_serial = true;
 			if (!*current) break;
 			start = current + 1;
 		}
@@ -65,13 +68,13 @@ ParsedCommandLine ParseCommandLine() {
 extern "C" void kernel_main() {
 	DISABLE_INTERRUPTS();
 
+	auto cmdline = ParseCommandLine();
+	if (!cmdline.disable_serial) Serial::Initialize();
 	if (g_multiboot_magic != 0x2BADB002) {
 		dprintln("Invalid multiboot magic number");
 		return;
 	}
-	Serial::Initialize();
 	dprintln("Serial output initialized");
-	auto cmdline = ParseCommandLine();
 
 	kmalloc_initialize();
 	dprintln("kmalloc initialized");
@@ -81,7 +84,7 @@ extern "C" void kernel_main() {
 
 	MMU::Intialize();
 	dprintln("MMU initialized");
-	
+
 	TerminalDriver *terminal_driver = VesaTerminalDriver::Create();
 	ASSERT(terminal_driver);
 	dprintln("VESA initialized");
