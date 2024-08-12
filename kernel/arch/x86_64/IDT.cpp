@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:35:41 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:43:04 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,12 +81,12 @@ extern "C" void cpp_isr_handler(uint64_t isr, uint64_t error) {
 	uint64_t rax, rbx, rcx, rdx, rsp, rbp;
 	uint64_t cr0, cr2, cr3, cr4;
 	asm volatile("" : "=a"(rax), "=b"(rbx), "=c"(rcx), "=d"(rdx));
-	asm volatile("movq %%rsp, %%rax" : "=a"(rsp));
-	asm volatile("movq %%rbp, %%rax" : "=a"(rbp));
-	asm volatile("movq %%cr0, %%rax" : "=a"(cr0));
-	asm volatile("movq %%cr2, %%rax" : "=a"(cr2));
-	asm volatile("movq %%cr3, %%rax" : "=a"(cr3));
-	asm volatile("movq %%cr4, %%rax" : "=a"(cr4));
+	asm volatile("movq %%rsp, %0" : "=r"(rsp));
+	asm volatile("movq %%rbp, %0" : "=r"(rbp));
+	asm volatile("movq %%cr0, %0" : "=r"(cr0));
+	asm volatile("movq %%cr2, %0" : "=r"(cr2));
+	asm volatile("movq %%cr3, %0" : "=r"(cr3));
+	asm volatile("movq %%cr4, %0" : "=r"(cr4));
 
 	Kernel::Panic("{} (error code: 0x{16H})\r\n"
 	              "Register dump\r\n"
