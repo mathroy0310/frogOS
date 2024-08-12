@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 17:47:09 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:20:10 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:48:09 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,9 +15,8 @@
 #include <kernel/CPUID.h>
 #include <kernel/Debug.h>
 #include <kernel/IDT.h>
-#include <kernel/IO.h>
 #include <kernel/MMU.h>
-#include <kernel/Serial.h>
+
 #include <string.h>
 
 #define LAPIC_EIO_REG 0xB0
@@ -29,23 +28,22 @@
 
 // https://uefi.org/specs/ACPI/6.5/05_ACPI_Software_Programming_Model.html#multiple-apic-description-table-madt-format
 
-struct RSDPDescriptor {
+static constexpr uint32_t RSPD_SIZE = 20;
+static constexpr uint32_t RSPDv2_SIZE = 36;
+
+struct RSDP {
 	char     signature[8];
 	uint8_t  checksum;
 	char     OEMID[6];
 	uint8_t  revision;
 	uint32_t rsdt_address;
+	uint32_t v2_length;
+	uint64_t v2_xsdt_address;
+	uint8_t  v2_extended_checksum;
+	uint8_t  v2_reserved[3];
 } __attribute__((packed));
 
-struct RSDPDescriptor20 {
-	RSDPDescriptor first_part;
-	uint32_t       length;
-	uint64_t       xsdt_address;
-	uint8_t        extended_checksum;
-	uint8_t        reserved[3];
-} __attribute__((packed));
-
-struct ACPISDTHeader {
+struct SDTHeader {
 	char     signature[4];
 	uint32_t length;
 	uint8_t  revision;
@@ -57,20 +55,10 @@ struct ACPISDTHeader {
 	uint32_t creator_revision;
 } __attribute__((packed));
 
-struct RSDT {
-	ACPISDTHeader header;
-	uint32_t      sdt_pointer[0];
-};
-
-struct XSDT {
-	ACPISDTHeader header;
-	uint64_t      sdt_pointer[0];
-};
-
 struct MADT {
-	ACPISDTHeader header;
-	uint32_t      local_apic;
-	uint32_t      flags;
+	SDTHeader header;
+	uint32_t  local_apic;
+	uint32_t  flags;
 } __attribute__((packed));
 
 struct MADTEntry {
@@ -120,73 +108,85 @@ union RedirectionEntry {
 	};
 };
 
-static bool IsRSDP(const RSDPDescriptor *rsdp) {
+static bool IsRSDP(uintptr_t rsdp_addr) {
+	const RSDP *rsdp = (const RSDP *) rsdp_addr;
+
 	if (memcmp(rsdp->signature, "RSD PTR ", 8) != 0) return false;
 
 	{
 		uint8_t checksum = 0;
-		for (uint32_t i = 0; i < sizeof(RSDPDescriptor); i++)
+		for (uint32_t i = 0; i < RSPD_SIZE; i++)
 			checksum += ((uint8_t *) rsdp)[i];
 		if (checksum != 0) return false;
 	}
 
 	if (rsdp->revision == 2) {
-		RSDPDescriptor20 *rsdp20 = (RSDPDescriptor20 *) rsdp;
-		uint8_t           checksum = 0;
-		for (uint32_t i = 0; i < sizeof(RSDPDescriptor20); i++)
-			checksum += ((uint8_t *) rsdp20)[i];
+		uint8_t checksum = 0;
+		for (uint32_t i = 0; i < RSPDv2_SIZE; i++)
+			checksum += ((uint8_t *) rsdp)[i];
 		if (checksum != 0) return false;
 	}
 
 	return true;
 }
 
-static const RSDPDescriptor *LocateRSDP() {
+static uintptr_t LocateRSDP() {
 	// Look in main BIOS area below 1 MB
 	for (uintptr_t addr = 0x000E0000; addr < 0x000FFFFF; addr += 16)
-		if (IsRSDP((RSDPDescriptor *) addr)) return (RSDPDescriptor *) addr;
-	return nullptr;
+		if (IsRSDP(addr)) return addr;
+	return 0;
 }
 
-static bool IsValidACPISDTHeader(const ACPISDTHeader *header) {
+static bool IsValidSDTHeader(const SDTHeader *header) {
 	uint8_t sum = 0;
 	for (uint32_t i = 0; i < header->length; i++)
 		sum += ((uint8_t *) header)[i];
 	return sum == 0;
 }
 
-static const MADT *LocateMADT(const RSDPDescriptor *rsdp) {
-	uintptr_t root_addr = 0;
+uintptr_t LocateMADT(uintptr_t rsdp_addr) {
+	uintptr_t entry_address_base = 0;
+	uintptr_t entry_address_mask = 0;
+	ptrdiff_t entry_pointer_size = 0;
 	uint32_t  entry_count = 0;
-	if (rsdp->revision == 2) {
-		const XSDT *root = (const XSDT *) ((const RSDPDescriptor20 *) rsdp)->xsdt_address;
-		MMU::Get().AllocatePage((uintptr_t) root);
-		entry_count = (root->header.length - sizeof(root->header)) / sizeof(*root->sdt_pointer);
-		root_addr = (uintptr_t) root;
-		dprintln("XSDT");
-	} else {
-		const RSDT *root = (const RSDT *) (uintptr_t) rsdp->rsdt_address;
-		MMU::Get().AllocatePage((uintptr_t) root);
-		entry_count = (root->header.length - sizeof(root->header)) / sizeof(*root->sdt_pointer);
-		root_addr = (uintptr_t) root;
-		dprintln("RSDT");
-	}
 
-	FROG::ScopeGuard guard(
-	    [root_addr]() { MMU::Get().UnAllocatePage(root_addr); });
+	const RSDP *rsdp = (const RSDP *) rsdp_addr;
+	if (rsdp->revision == 2) {
+		uintptr_t xsdt_addr = rsdp->v2_xsdt_address;
+		MMU::Get().AllocatePage(xsdt_addr);
+		entry_address_base = xsdt_addr + sizeof(SDTHeader);
+		entry_address_mask = (uintptr_t) 0xFFFFFFFFFFFFFFFF;
+		entry_count = (((const SDTHeader *) xsdt_addr)->length - sizeof(SDTHeader)) / 8;
+		entry_pointer_size = 8;
+		MMU::Get().UnAllocatePage(xsdt_addr);
+	} else {
+		uintptr_t rsdt_addr = rsdp->rsdt_address;
+		MMU::Get().AllocatePage(rsdt_addr);
+		entry_address_base = rsdt_addr + sizeof(SDTHeader);
+		entry_address_mask = 0xFFFFFFFF;
+		entry_count = (((const SDTHeader *) rsdt_addr)->length - sizeof(SDTHeader)) / 4;
+		entry_pointer_size = 4;
+		MMU::Get().UnAllocatePage(rsdt_addr);
+	}
 
 	for (uint32_t i = 0; i < entry_count; i++) {
-		const ACPISDTHeader *header = nullptr;
-		if (rsdp->revision == 2)
-			header = (const ACPISDTHeader *) ((const XSDT *) root_addr)->sdt_pointer[i];
-		else
-			header =
-			    (const ACPISDTHeader *) (uintptr_t) ((const RSDT *) root_addr)->sdt_pointer[i];
-		if (memcmp(header->signature, "APIC", 4) == 0 && IsValidACPISDTHeader(header))
-			return (const MADT *) header;
+		uintptr_t entry_addr_ptr = entry_address_base + i * entry_pointer_size;
+		MMU::Get().AllocatePage(entry_addr_ptr);
+
+		uintptr_t entry_addr = *(uintptr_t *) entry_addr_ptr & entry_address_mask;
+		MMU::Get().AllocatePage(entry_addr);
+
+		FROG::ScopeGuard _([&]() {
+			MMU::Get().UnAllocatePage(entry_addr);
+			MMU::Get().UnAllocatePage(entry_addr_ptr);
+		});
+
+		const SDTHeader *entry = (const SDTHeader *) entry_addr;
+		if (memcmp(entry->signature, "APIC", 4) == 0 && IsValidSDTHeader(entry))
+			return entry_addr;
 	}
 
-	return nullptr;
+	return 0;
 }
 
 APIC *APIC::Create() {
@@ -197,19 +197,21 @@ APIC *APIC::Create() {
 		return nullptr;
 	}
 
-	const RSDPDescriptor *rsdp = LocateRSDP();
-	if (rsdp == nullptr) {
+	uintptr_t rsdp_addr = LocateRSDP();
+	if (!rsdp_addr) {
 		dprintln("Could not locate RSDP");
 		return nullptr;
 	}
 
-	const MADT *madt = LocateMADT(rsdp);
-	if (madt == nullptr) {
+	uintptr_t madt_addr = LocateMADT(rsdp_addr);
+	if (!madt_addr) {
 		dprintln("Could not find MADT in RSDP");
 		return nullptr;
 	}
 
-	MMU::Get().AllocatePage((uintptr_t) madt);
+	MMU::Get().AllocatePage(madt_addr);
+
+	const MADT *madt = (const MADT *) madt_addr;
 
 	APIC *apic = new APIC;
 	apic->m_local_apic = madt->local_apic;
