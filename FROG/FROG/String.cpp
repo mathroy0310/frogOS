@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:29 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 03:26:31 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 12:00:55 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ ErrorOr<void> String::Insert(char ch, size_type index) {
 	m_data[m_size] = '\0';
 	return {};
 }
-
+	
 ErrorOr<void> String::Insert(StringView other, size_type index) {
 	//dprintln("insert '{}' to '{}' at index {}", other, *this, index);
 

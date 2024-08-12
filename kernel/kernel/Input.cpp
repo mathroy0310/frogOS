@@ -6,15 +6,15 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 13:38:25 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 14:30:13 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 17:47:52 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Queue.h>
-#include <kernel/APIC.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
 #include <kernel/Input.h>
+#include <kernel/InterruptController.h>
 #include <kernel/PIT.h>
 #include <kernel/Serial.h>
 #include <kernel/kprint.h>
@@ -512,7 +512,7 @@ static void mouse_irq_handler() {
 static void initialize_keyboard() {
 	// Register callback and IRQ
 	IDT::register_irq_handler(KEYBOARD_IRQ, keyboard_irq_handler);
-	APIC::EnableIRQ(KEYBOARD_IRQ);
+	InterruptController::Get().EnableIrq(KEYBOARD_IRQ);
 	i8042_controller_command(I8042_ENABLE_FIRST_PORT);
 
 	MUST(s_command_queue.Push({
@@ -541,7 +541,7 @@ static void initialize_keyboard() {
 static void initialize_mouse() {
 	// Register callback and IRQ
 	IDT::register_irq_handler(MOUSE_IRQ, mouse_irq_handler);
-	APIC::EnableIRQ(MOUSE_IRQ);
+	InterruptController::Get().EnableIrq(MOUSE_IRQ);
 	i8042_controller_command(I8042_ENABLE_SECOND_PORT);
 
 	MUST(s_command_queue.Push({

@@ -6,18 +6,18 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 03:02:09 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 17:50:22 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Memory.h>
 #include <FROG/StringView.h>
 #include <FROG/Vector.h>
-#include <kernel/APIC.h>
 #include <kernel/GDT.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
 #include <kernel/Input.h>
+#include <kernel/InterruptController.h>
 #include <kernel/MMU.h>
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
@@ -87,8 +87,8 @@ extern "C" void kernel_main() {
 	dprintln("VESA initialized");
 	TTY *tty1 = new TTY(terminal_driver);
 
-	APIC::Initialize(cmdline.force_pic);
-	dprintln("APIX initialized");
+	InterruptController::Initialize(cmdline.force_pic);
+	dprintln("Interrupt controller initialized");
 
 	PIT::initialize();
 	dprintln("PIT initialized");

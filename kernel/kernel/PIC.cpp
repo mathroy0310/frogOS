@@ -6,13 +6,15 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:12 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 01:52:19 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 17:49:30 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
 #include <kernel/PIC.h>
+
+#include <string.h>
 
 #define PIC1 0x20 /* IO base address for master PIC */
 #define PIC2 0xA0 /* IO base address for slave PIC */
@@ -35,9 +37,13 @@
 #define ICW4_BUF_MASTER 0x0C /* Buffered mode/master */
 #define ICW4_SFNM 0x10       /* Special fully nested (not) */
 
-namespace PIC {
+PIC *PIC::Create() {
+	MaskAll();
+	Remap();
+	return new PIC;
+}
 
-void Remap() {
+void PIC::Remap() {
 	uint8_t a1 = IO::inb(PIC1_DATA);
 	uint8_t a2 = IO::inb(PIC2_DATA);
 
@@ -70,32 +76,17 @@ void Remap() {
 	IO::outb(PIC2_DATA, a2);
 }
 
-void MaskAll() {
-	IO::outb(PIC1_DATA, 0xff);
-	IO::outb(PIC2_DATA, 0xff);
+void PIC::MaskAll() {
+	IO::outb(PIC1_DATA, 0xFF);
+	IO::outb(PIC2_DATA, 0xFF);
 }
 
-void EOI(uint8_t irq) {
-	if (irq >= 8)
-		IO::outb(PIC2_COMMAND, PIC_EOI);
+void PIC::EOI(uint8_t irq) {
+	if (irq >= 8) IO::outb(PIC2_COMMAND, PIC_EOI);
 	IO::outb(PIC1_COMMAND, PIC_EOI);
 }
 
-void Mask(uint8_t irq) {
-	uint16_t port;
-	uint8_t  value;
-
-	if (irq < 8) {
-		port = PIC1_DATA;
-	} else {
-		port = PIC2_DATA;
-		irq -= 8;
-	}
-	value = IO::inb(port) | (1 << irq);
-	IO::outb(port, value);
-}
-
-void Unmask(uint8_t irq) {
+void PIC::EnableIrq(uint8_t irq) {
 	uint16_t port;
 	uint8_t  value;
 
@@ -109,12 +100,13 @@ void Unmask(uint8_t irq) {
 	IO::outb(port, value);
 }
 
-uint16_t GetISR() {
+void PIC::GetISR(uint32_t out[8]) {
+	memset(out, 0, 8 * sizeof(uint32_t));
 	IO::outb(PIC1_COMMAND, 0x0b);
 	IO::outb(PIC2_COMMAND, 0x0b);
-	uint8_t isr0 = IO::inb(PIC1_COMMAND);
-	uint8_t isr1 = IO::inb(PIC2_COMMAND);
-	return (isr1 << 8) | isr0;
-}
+	uint16_t isr0 = IO::inb(PIC1_COMMAND);
+	uint16_t isr1 = IO::inb(PIC2_COMMAND);
 
-} // namespace PIC
+	uintptr_t addr = (uintptr_t) out + IRQ_VECTOR_BASE / 8;
+	*(uint16_t *) addr = (isr1 << 8) | isr0;
+}

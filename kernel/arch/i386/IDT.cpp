@@ -6,12 +6,13 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:42:59 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 17:42:43 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <kernel/APIC.h>
+#include <FROG/Errors.h>
 #include <kernel/IDT.h>
+#include <kernel/InterruptController.h>
 #include <kernel/Panic.h>
 #include <kernel/Serial.h>
 #include <kernel/kmalloc.h>
@@ -80,8 +81,8 @@ struct IDTR {
 	void    *offset;
 } __attribute((packed));
 
-static IDTR           s_idtr;
-static GateDescriptor *s_idt;
+static IDTR            s_idtr;
+static GateDescriptor *s_idt = nullptr;
 
 static void (**s_irq_handlers)();
 
@@ -120,7 +121,7 @@ INTERRUPT_HANDLER____(0x1F, "Unkown Exception 0x1F")
 
 extern "C" void handle_irq() {
 	uint32_t isr[8];
-	APIC::GetISR(isr);
+	InterruptController::Get().GetISR(isr);
 
 	uint8_t irq = 0;
 	for (uint8_t i = 0; i < 8; i++) {
@@ -143,7 +144,7 @@ found:
 	else
 		Kernel::Panic("no handler for irq 0x{2H}\n", irq);
 
-	APIC::EOI(irq);
+	InterruptController::Get().EOI(irq);
 }
 
 extern "C" void handle_irq_common();
@@ -190,7 +191,7 @@ void initialize() {
 	s_idtr.offset = s_idt;
 	s_idtr.size = 0x100 * sizeof(GateDescriptor) - 1;
 
-	for (uint8_t i = 0xFF; i > IRQ_VECTOR_BASE; i--)
+	for (uint8_t i = 0x00; i <= 0xFF - IRQ_VECTOR_BASE; i++)
 		register_irq_handler(i, nullptr);
 
 	REGISTER_HANDLER(0x00);
