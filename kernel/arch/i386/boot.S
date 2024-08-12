@@ -124,6 +124,8 @@ _start:
 	xorl %ebp, %ebp
 	call kernel_main
 
+	call _fini
+
 system_halt:
 	xchgw %bx, %bx
 	cli
