@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:37:20 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:42:59 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include <kernel/IDT.h>
 #include <kernel/Panic.h>
 #include <kernel/Serial.h>
+#include <kernel/kmalloc.h>
 #include <kernel/kprint.h>
 
 #define INTERRUPT_HANDLER____(i, msg)                                          \
@@ -80,9 +81,9 @@ struct IDTR {
 } __attribute((packed));
 
 static IDTR           s_idtr;
-static GateDescriptor s_idt[0x100];
+static GateDescriptor *s_idt;
 
-static void (*s_irq_handlers[0x100])(){nullptr};
+static void (**s_irq_handlers)();
 
 INTERRUPT_HANDLER____(0x00, "Division Error")
 INTERRUPT_HANDLER____(0x01, "Debug")
@@ -180,8 +181,14 @@ void register_irq_handler(uint8_t irq, void (*f)()) {
 }
 
 void initialize() {
+	s_idt = (GateDescriptor *) kmalloc_eternal(0x100 * sizeof(GateDescriptor));
+	s_irq_handlers = (void (**)()) kmalloc_eternal(0x100 * sizeof(void (*)()));
+
+	for (uint32_t i = 0; i < 0x100; i++)
+		s_irq_handlers[i] = nullptr;
+
 	s_idtr.offset = s_idt;
-	s_idtr.size = sizeof(s_idt) - 1;
+	s_idtr.size = 0x100 * sizeof(GateDescriptor) - 1;
 
 	for (uint8_t i = 0xFF; i > IRQ_VECTOR_BASE; i--)
 		register_irq_handler(i, nullptr);

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:14 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:21:24 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:42:04 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ static constexpr uintptr_t s_kmalloc_end = s_kmalloc_base + s_kmalloc_size;
 static constexpr uintptr_t s_kmalloc_eternal_base = s_kmalloc_end;
 static constexpr size_t    s_kmalloc_eternal_size = 1 * MB;
 static constexpr uintptr_t s_kmalloc_eternal_end = s_kmalloc_eternal_base + s_kmalloc_eternal_size;
+static uintptr_t s_kmalloc_eternal_ptr = s_kmalloc_eternal_base;
 
 static constexpr size_t s_kmalloc_default_align = alignof(max_align_t);
 static constexpr size_t s_kmalloc_chunk_size = s_kmalloc_default_align;
@@ -100,6 +101,15 @@ void kmalloc_dump_info() {
 	kprintln("kmalloc eternal: {}->{}", (void *) s_kmalloc_eternal_base, (void *) s_kmalloc_eternal_end);
 	kprintln("  used: {}", s_kmalloc_eternal_used);
 	kprintln("  free: {}", s_kmalloc_eternal_free);
+}
+
+void *kmalloc_eternal(size_t size) {
+	if (size_t rem = size % alignof(max_align_t))
+		size += alignof(max_align_t) - rem;
+	ASSERT(s_kmalloc_eternal_ptr + size < s_kmalloc_eternal_end);
+	void *result = (void *) s_kmalloc_eternal_ptr;
+	s_kmalloc_eternal_ptr += size;
+	return result;
 }
 
 void *kmalloc(size_t size) { return kmalloc(size, s_kmalloc_default_align); }
