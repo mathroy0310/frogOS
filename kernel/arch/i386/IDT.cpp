@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:34:50 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:36:21 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -173,12 +173,12 @@ static void flush_idt() { asm volatile("lidt %0" ::"m"(s_idtr)); }
 static void register_interrupt_handler(uint8_t index, void (*f)()) {
 	s_idt[index].low = 0x00080000 | ((uint32_t) (f) & 0x0000ffff);
 	s_idt[index].high = ((uint32_t) (f) & 0xffff0000) | 0x8e00;
-	flush_idt();
 }
 
 void register_irq_handler(uint8_t irq, void (*f)()) {
 	s_irq_handlers[IRQ_VECTOR_BASE + irq] = f;
 	register_interrupt_handler(IRQ_VECTOR_BASE + irq, handle_irq_common);
+	flush_idt();
 }
 
 void initialize() {
