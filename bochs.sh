@@ -14,7 +14,7 @@ COM1_DEVICE=$(cat $COM1_DEVICE_FILE)
 rm $COM1_DEVICE_FILE
 
 cat > $BOCHS_CONFIG_FILE << EOF
-ata0-master: type=cdrom, path=banan-os.iso, status=inserted
+ata0-master: type=cdrom, path=frog-os.iso, status=inserted
 boot: cdrom
 clock: sync=realtime, time0=local
 display_library: x, options="gui_debug"
