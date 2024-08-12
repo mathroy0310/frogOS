@@ -6,14 +6,14 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:17:09 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 13:36:14 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:52:08 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <FROG/Formatter.h>
-#include <FROG/Forward.h>
+#include <FROG/ForwardList.h>
 
 namespace FROG {
 

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:35:30 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 12:42:54 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:51:25 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,22 +42,5 @@ template <typename T> class OwnPtr {
 
 } // namespace FROG
 
-namespace std {
-enum class align_val_t : size_t {};
-}
-
-inline void *operator new(size_t size) { return FROG::allocator(size); }
-inline void *operator new[](size_t size) { return FROG::allocator(size); }
-inline void *operator new(size_t size, std::align_val_t align) {
-	return FROG::allocator_align(size, (size_t) align);
-}
-inline void *operator new[](size_t size, std::align_val_t align) {
-	return FROG::allocator_align(size, (size_t) align);
-}
 inline void *operator new(size_t, void *addr) { return addr; }
 inline void *operator new[](size_t, void *addr) { return addr; }
-
-inline void operator delete(void *addr) { FROG::deallocator(addr); }
-inline void operator delete[](void *addr) { FROG::deallocator(addr); }
-inline void operator delete(void *addr, size_t) { FROG::deallocator(addr); }
-inline void operator delete[](void *addr, size_t) { FROG::deallocator(addr); }
