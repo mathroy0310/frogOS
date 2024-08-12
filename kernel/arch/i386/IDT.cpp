@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 17:59:33 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:34:53 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,9 +142,18 @@ found:
 
 	if (s_irq_handlers[irq])
 		s_irq_handlers[irq]();
-	else
-		Kernel::Panic("no handler for irq 0x{2H}\n", irq);
+	else {
+		uint32_t isr_byte = irq / 32;
+		uint32_t isr_bit = irq % 32;
 
+		uint32_t isr[8];
+		InterruptController::Get().GetISR(isr);
+		if (!(isr[isr_byte] & (1 << isr_bit))) {
+			dprintln("spurious irq 0x{2H}", irq);
+			return;
+		}
+		dprintln("no handler for irq 0x{2H}\n", irq);
+	}
 	InterruptController::Get().EOI(irq);
 }
 

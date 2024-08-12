@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:12 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 17:49:30 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:37:06 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 #define PIC2_DATA (PIC2 + 1)
 
 #define PIC_EOI 0x20 /* End-of-interrupt command code */
+#define PIC_READ_ISR 0x0B
 
 #define ICW1_ICW4 0x01      /* ICW4 (not) needed */
 #define ICW1_SINGLE 0x02    /* Single (cascade) mode */
@@ -102,8 +103,8 @@ void PIC::EnableIrq(uint8_t irq) {
 
 void PIC::GetISR(uint32_t out[8]) {
 	memset(out, 0, 8 * sizeof(uint32_t));
-	IO::outb(PIC1_COMMAND, 0x0b);
-	IO::outb(PIC2_COMMAND, 0x0b);
+	IO::outb(PIC1_COMMAND, PIC_READ_ISR);
+	IO::outb(PIC2_COMMAND, PIC_READ_ISR);
 	uint16_t isr0 = IO::inb(PIC1_COMMAND);
 	uint16_t isr1 = IO::inb(PIC2_COMMAND);
 

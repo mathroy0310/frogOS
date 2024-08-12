@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 18:18:41 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:18:48 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:39:35 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,29 +15,30 @@
 #include <FROG/Formatter.h>
 #include <kernel/PIT.h>
 
-#define dprintln(...)                                                                                                                              \
-	do {                                                                                                                                           \
+#define dprintln(...)                                                                                                                               \
+	do {                                                                                                                                            \
 		FROG::Formatter::print(Debug::putchar, "[{5}.{3}] {}:{}:  ", PIT::ms_since_boot() / 1000, PIT::ms_since_boot() % 1000, __FILE__, __LINE__); \
 		FROG::Formatter::print(Debug::putchar, __VA_ARGS__);                                                                                        \
 		FROG::Formatter::print(Debug::putchar, "\r\n");                                                                                             \
 	} while (false)
 
-#define dwarnln(...)                                     \
-	do {                                                 \
+#define dwarnln(...)                                      \
+	do {                                                  \
 		FROG::Formatter::print(Debug::putchar, "\e[33m"); \
-		dprintln(__VA_ARGS__);                           \
+		dprintln(__VA_ARGS__);                            \
 		FROG::Formatter::print(Debug::putchar, "\e[m");   \
 	} while (false)
 
-#define derrorln(...)                                    \
-	do {                                                 \
+#define derrorln(...)                                     \
+	do {                                                  \
 		FROG::Formatter::print(Debug::putchar, "\e[31m"); \
-		dprintln(__VA_ARGS__);                           \
+		dprintln(__VA_ARGS__);                            \
 		FROG::Formatter::print(Debug::putchar, "\e[m");   \
 	} while (false)
 
 #define BOCHS_BREAK() asm volatile("xchgw %bx, %bx")
 
 namespace Debug {
+void DumpStackTrace();
 void putchar(char);
-}
+} // namespace Debug
