@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/05 01:34:45 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/09 12:13:41 by mathroy0310    `                          #
+#    Updated: 2024/08/12 02:38:13 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -48,6 +48,7 @@ kernel/font.o           \
 kernel/Input.o          \
 kernel/kernel.o			\
 kernel/kmalloc.o		\
+kernel/Panic.o          \
 kernel/PIC.o			\
 kernel/PIT.o			\
 kernel/RTC.o			\
