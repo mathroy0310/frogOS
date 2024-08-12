@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 11:44:09 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:54:32 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:40:05 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,5 +30,5 @@ class MMU {
 	MMU();
 
   private:
-	uint64_t *m_page_descriptor_pointer_table;
+	uint64_t *m_highest_paging_struct;
 };
