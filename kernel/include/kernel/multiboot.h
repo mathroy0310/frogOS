@@ -6,13 +6,18 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 01:34:16 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 11:17:57 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:58:06 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <stdint.h>
+
+#define MULTIBOOT_FLAGS_FRAMEBUFFER (1 << 12)
+
+#define MULTIBOOT_FRAMEBUFFER_TYPE_GRAPHICS 1
+#define MULTIBOOT_FRAMEBUFFER_TYPE_TEXT 2
 
 struct framebuffer_info_t {
 	uint64_t addr;

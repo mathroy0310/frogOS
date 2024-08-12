@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:45:21 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 13:45:37 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:55:34 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,6 @@ class Shell {
 	FROG::Vector<FROG::String> ParseArguments(FROG::StringView) const;
 	void                     ProcessCommand(const FROG::Vector<FROG::String> &);
 	void                     KeyEventCallback(Input::KeyEvent);
-	void                     MouseMoveEventCallback(Input::MouseMoveEvent);
 
   private:
 	TTY                     *m_tty;
@@ -45,12 +44,6 @@ class Shell {
 		uint32_t col = 0;
 		uint32_t index = 0;
 	} m_cursor_pos;
-
-	struct {
-		bool    exists = false;
-		int32_t x = 0;
-		int32_t y = 0;
-	} m_mouse_pos;
 };
 
 } // namespace Kernel

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 13:45:50 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 02:58:39 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,15 +35,8 @@ using namespace FROG;
 
 static auto s_default_prompt = "\\[\e[32m\\]user\\[\e[m\\]# "_sv;
 
-static uint8_t s_pointer[]{
-    ________, ________, ________, ________, ________, X_______,
-    XX______, XXX_____, XXXX____, XXXXX___, XXXXXX__, XXXXXXX_,
-    XXXXXXXX, XXX_____, XX______, X_______,
-};
-
 Shell::Shell(TTY *tty) : m_tty(tty) {
 	Input::register_key_event_callback({&Shell::KeyEventCallback, this});
-	Input::register_mouse_move_event_callback({&Shell::MouseMoveEventCallback, this});
 	SetPrompt(s_default_prompt);
 	MUST(m_buffer.PushBack(""_sv));
 }
@@ -366,17 +359,6 @@ void Shell::KeyEventCallback(Input::KeyEvent event) {
 	}
 
 	TTY_PRINT("\e[{}G", m_prompt_length + m_cursor_pos.col + 1);
-
-	if (m_mouse_pos.exists)
-		VESA::PutBitmapAt(s_pointer, m_mouse_pos.x, m_mouse_pos.y, VESA::Color::BRIGHT_WHITE);
-}
-
-void Shell::MouseMoveEventCallback(Input::MouseMoveEvent event) {
-	m_mouse_pos.exists = true;
-	m_tty->RenderFromBuffer(m_mouse_pos.x, m_mouse_pos.y);
-	m_mouse_pos.x = Math::clamp<int32_t>(m_mouse_pos.x + event.dx, 0, m_tty->Width() - 1);
-	m_mouse_pos.y = Math::clamp<int32_t>(m_mouse_pos.y - event.dy, 0, m_tty->Height() - 1);
-	VESA::PutBitmapAt(s_pointer, m_mouse_pos.x, m_mouse_pos.y, VESA::Color::BRIGHT_WHITE);
 }
 
 } // namespace Kernel

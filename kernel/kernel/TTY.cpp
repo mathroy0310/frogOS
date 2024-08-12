@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:58:57 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 12:49:17 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 03:00:54 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 #include <kernel/Panic.h>
 #include <kernel/Serial.h>
 #include <kernel/TTY.h>
-#include <kernel/VESA.h>
+#include <kernel/TerminalDriver.h>
 #include <kernel/kmalloc.h>
 
 #include <string.h>
@@ -38,9 +38,9 @@ template <typename T> inline constexpr T clamp(T x, T a, T b) {
 
 static TTY *s_tty = nullptr;
 
-TTY::TTY() {
-	m_width = VESA::GetTerminalWidth();
-	m_height = VESA::GetTerminalHeight();
+TTY::TTY(TerminalDriver *driver) : m_terminal_driver(driver) {
+	m_width = m_terminal_driver->Width();
+	m_height = m_terminal_driver->Height();
 
 	m_buffer = new Cell[m_width * m_height];
 
@@ -50,7 +50,7 @@ TTY::TTY() {
 void TTY::Clear() {
 	for (uint32_t i = 0; i < m_width * m_height; i++)
 		m_buffer[i] = {.foreground = m_foreground, .background = m_background, .character = ' '};
-	VESA::Clear(m_background);
+	m_terminal_driver->Clear(m_background);
 }
 
 void TTY::SetCursorPosition(uint32_t x, uint32_t y) {
@@ -59,7 +59,7 @@ void TTY::SetCursorPosition(uint32_t x, uint32_t y) {
 
 	if (last_x != uint32_t(-1) && last_y != uint32_t(-1))
 		RenderFromBuffer(last_x, last_y);
-	VESA::SetCursorPosition(x, y, VESA::Color::BRIGHT_WHITE);
+	m_terminal_driver->SetCursorPosition(x, y);
 	last_x = m_column = x;
 	last_y = m_row = y;
 }
@@ -111,58 +111,58 @@ void TTY::HandleAnsiSGR() {
 	switch (m_ansi_state.nums[0]) {
 	case -1:
 	case 0:
-		m_foreground = VESA::Color::BRIGHT_WHITE;
-		m_background = VESA::Color::BLACK;
+		m_foreground = TerminalColor::BRIGHT_WHITE;
+		m_background = TerminalColor::BLACK;
 		break;
 
 	case 30:
-		m_foreground = VESA::Color::BRIGHT_BLACK;
+		m_foreground = TerminalColor::BRIGHT_BLACK;
 		break;
 	case 31:
-		m_foreground = VESA::Color::BRIGHT_RED;
+		m_foreground = TerminalColor::BRIGHT_RED;
 		break;
 	case 32:
-		m_foreground = VESA::Color::BRIGHT_GREEN;
+		m_foreground = TerminalColor::BRIGHT_GREEN;
 		break;
 	case 33:
-		m_foreground = VESA::Color::BRIGHT_YELLOW;
+		m_foreground = TerminalColor::BRIGHT_YELLOW;
 		break;
 	case 34:
-		m_foreground = VESA::Color::BRIGHT_BLUE;
+		m_foreground = TerminalColor::BRIGHT_BLUE;
 		break;
 	case 35:
-		m_foreground = VESA::Color::BRIGHT_MAGENTA;
+		m_foreground = TerminalColor::BRIGHT_MAGENTA;
 		break;
 	case 36:
-		m_foreground = VESA::Color::BRIGHT_CYAN;
+		m_foreground = TerminalColor::BRIGHT_CYAN;
 		break;
 	case 37:
-		m_foreground = VESA::Color::BRIGHT_WHITE;
+		m_foreground = TerminalColor::BRIGHT_WHITE;
 		break;
 
 	case 40:
-		m_background = VESA::Color::BRIGHT_BLACK;
+		m_background = TerminalColor::BRIGHT_BLACK;
 		break;
 	case 41:
-		m_background = VESA::Color::BRIGHT_RED;
+		m_background = TerminalColor::BRIGHT_RED;
 		break;
 	case 42:
-		m_background = VESA::Color::BRIGHT_GREEN;
+		m_background = TerminalColor::BRIGHT_GREEN;
 		break;
 	case 43:
-		m_background = VESA::Color::BRIGHT_YELLOW;
+		m_background = TerminalColor::BRIGHT_YELLOW;
 		break;
 	case 44:
-		m_background = VESA::Color::BRIGHT_BLUE;
+		m_background = TerminalColor::BRIGHT_BLUE;
 		break;
 	case 45:
-		m_background = VESA::Color::BRIGHT_MAGENTA;
+		m_background = TerminalColor::BRIGHT_MAGENTA;
 		break;
 	case 46:
-		m_background = VESA::Color::BRIGHT_CYAN;
+		m_background = TerminalColor::BRIGHT_CYAN;
 		break;
 	case 47:
-		m_background = VESA::Color::BRIGHT_WHITE;
+		m_background = TerminalColor::BRIGHT_WHITE;
 		break;
 	}
 }
@@ -269,7 +269,7 @@ void TTY::HandleAnsiEscape(uint16_t ch) {
 void TTY::RenderFromBuffer(uint32_t x, uint32_t y) {
 	ASSERT(x < m_width && y < m_height);
 	const auto &cell = m_buffer[y * m_width + x];
-	VESA::PutCharAt(cell.character, x, y, cell.foreground, cell.background);
+	m_terminal_driver->PutCharAt(cell.character, x, y, cell.foreground, cell.background);
 }
 
 void TTY::PutCharAt(uint16_t ch, uint32_t x, uint32_t y) {
@@ -278,7 +278,7 @@ void TTY::PutCharAt(uint16_t ch, uint32_t x, uint32_t y) {
 	cell.character = ch;
 	cell.foreground = m_foreground;
 	cell.background = m_background;
-	VESA::PutCharAt(ch, x, y, m_foreground, m_background);
+	m_terminal_driver->PutCharAt(ch, x, y, m_foreground, m_background);
 }
 
 void TTY::PutChar(char ch) {

@@ -1,5 +1,5 @@
 // (c) 2009, 2010 Lutz Sammer, License: AGPLv3
-
+#pragma once
 /// bitmap font structure
 struct bitmap_font {
 	unsigned char         Width;  ///< max. character width

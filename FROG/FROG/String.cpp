@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:29 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:48:34 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 03:26:31 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,7 +66,7 @@ ErrorOr<void> String::Insert(char ch, size_type index) {
 }
 
 ErrorOr<void> String::Insert(StringView other, size_type index) {
-	dprintln("insert '{}' to '{}' at index {}", other, *this, index);
+	//dprintln("insert '{}' to '{}' at index {}", other, *this, index);
 
 	ASSERT(index <= m_size);
 	TRY(EnsureCapasity(m_size + other.Size() + 1));

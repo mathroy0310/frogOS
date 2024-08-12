@@ -6,22 +6,22 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 02:32:58 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 12:48:43 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 03:23:24 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <kernel/Serial.h>
-#include <kernel/VESA.h>
+#include <kernel/TerminalDriver.h>
 
 class TTY {
   public:
-	TTY();
+	TTY(TerminalDriver *);
 	void Clear();
+	void PutChar(char ch);
 	void Write(const char *data, size_t size);
 	void WriteString(const char *data);
-	void PutChar(char ch);
 	void SetCursorPosition(uint32_t x, uint32_t y);
 
 	uint32_t Height() const { return m_height; }
@@ -40,9 +40,9 @@ class TTY {
 
   private:
 	struct Cell {
-		VESA::Color foreground = VESA::Color::BRIGHT_WHITE;
-		VESA::Color background = VESA::Color::BLACK;
-		uint16_t    character = ' ';
+		TerminalDriver::Color foreground = TerminalColor::BRIGHT_WHITE;
+		TerminalDriver::Color background = TerminalColor::BLACK;
+		uint16_t              character = ' ';
 	};
 
 	struct AnsiState {
@@ -51,12 +51,13 @@ class TTY {
 		int32_t nums[2] = {-1, -1};
 	};
 
-	uint32_t    m_width{0};
-	uint32_t    m_height{0};
-	uint32_t    m_row{0};
-	uint32_t    m_column{0};
-	VESA::Color m_foreground{VESA::Color::BRIGHT_WHITE};
-	VESA::Color m_background{VESA::Color::BLACK};
-	Cell       *m_buffer{nullptr};
-	AnsiState   m_ansi_state;
+	uint32_t              m_width{0};
+	uint32_t              m_height{0};
+	uint32_t              m_row{0};
+	uint32_t              m_column{0};
+	TerminalDriver::Color m_foreground{TerminalColor::BRIGHT_WHITE};
+	TerminalDriver::Color m_background{TerminalColor::BLACK};
+	Cell                 *m_buffer{nullptr};
+	AnsiState             m_ansi_state;
+	TerminalDriver       *m_terminal_driver{nullptr};
 };

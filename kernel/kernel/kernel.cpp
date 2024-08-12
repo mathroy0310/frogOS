@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:28:09 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 03:02:09 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@
 #include <kernel/Serial.h>
 #include <kernel/Shell.h>
 #include <kernel/TTY.h>
-#include <kernel/VESA.h>
+#include <kernel/VesaTerminalDriver.h>
 #include <kernel/kmalloc.h>
 #include <kernel/kprint.h>
 #include <kernel/multiboot.h>
@@ -81,10 +81,11 @@ extern "C" void kernel_main() {
 
 	MMU::Intialize();
 	dprintln("MMU initialized");
-
-	if (!VESA::Initialize()) return;
+	
+	TerminalDriver *terminal_driver = VesaTerminalDriver::Create();
+	ASSERT(terminal_driver);
 	dprintln("VESA initialized");
-	TTY *tty1 = new TTY;
+	TTY *tty1 = new TTY(terminal_driver);
 
 	APIC::Initialize(cmdline.force_pic);
 	dprintln("APIX initialized");
