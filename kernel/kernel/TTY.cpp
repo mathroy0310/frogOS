@@ -6,14 +6,14 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:58:57 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 03:00:54 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:22:20 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Errors.h>
 #include <kernel/IO.h>
 #include <kernel/Panic.h>
-#include <kernel/Serial.h>
+#include <kernel/Debug.h>
 #include <kernel/TTY.h>
 #include <kernel/TerminalDriver.h>
 #include <kernel/kmalloc.h>

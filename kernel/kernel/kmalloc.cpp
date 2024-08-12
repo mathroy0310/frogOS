@@ -6,15 +6,15 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:14 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:42:04 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:23:50 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Errors.h>
 #include <FROG/Math.h>
 #include <kernel/kmalloc.h>
+#include <kernel/kprint.h>
 #include <kernel/multiboot.h>
-
 #include <stdint.h>
 
 #define MB (1 << 20)

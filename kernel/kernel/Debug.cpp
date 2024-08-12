@@ -1,22 +1,24 @@
 /* ************************************************************************** */
 /*                                                             _              */
 /*                                                 __   ___.--'_\`.           */
-/*   Serial.h                                     ( _\`.' -   'o\` )          */
+/*   Debug.cpp                                    ( _\`.' -   'o\` )          */
 /*                                                _\\.'_'      _.-'           */
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 23:25:23 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:19:52 by mathroy0310    `                         */
+/*   Created: 2024/08/12 18:20:21 by mathroy0310   \`        `-\\             */
+/*   Updated: 2024/08/12 18:20:21 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma once
+#include <kernel/Debug.h>
+#include <kernel/Serial.h>
+#include <kernel/TTY.h>
 
-namespace Serial {
+namespace Debug {
 
-void Initialize();
-bool IsInitialized();
+void putchar(char ch) {
+	if (Serial::IsInitialized()) return Serial::putchar(ch);
+	if (TTY::IsInitialized()) return TTY::PutCharCurrent(ch);
+}
 
-void putchar(char);
-
-} // namespace Serial
+} // namespace Debug

@@ -6,11 +6,12 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 13:38:25 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 17:47:52 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:20:34 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Queue.h>
+#include <kernel/Debug.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
 #include <kernel/Input.h>

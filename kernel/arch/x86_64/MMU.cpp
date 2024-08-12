@@ -6,11 +6,12 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 18:05:24 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:05:37 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:18:24 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Errors.h>
+#include <kernel/Debug.h>
 #include <kernel/MMU.h>
 #include <kernel/kmalloc.h>
 

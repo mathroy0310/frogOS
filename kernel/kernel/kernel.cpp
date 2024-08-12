@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 17:50:22 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:24:12 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
 #include <kernel/RTC.h>
-#include <kernel/Serial.h>
+#include <kernel/Debug.h>
 #include <kernel/Shell.h>
 #include <kernel/TTY.h>
 #include <kernel/VesaTerminalDriver.h>
@@ -69,7 +69,7 @@ extern "C" void kernel_main() {
 		dprintln("Invalid multiboot magic number");
 		return;
 	}
-	Serial::initialize();
+	Serial::Initialize();
 	dprintln("Serial output initialized");
 	auto cmdline = ParseCommandLine();
 

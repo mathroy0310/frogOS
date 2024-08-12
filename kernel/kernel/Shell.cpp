@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:58:39 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:22:14 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,10 +18,7 @@
 #include <kernel/Input.h>
 #include <kernel/PIT.h>
 #include <kernel/RTC.h>
-#include <kernel/Serial.h>
 #include <kernel/Shell.h>
-#include <kernel/TTY.h>
-#include <kernel/font.h>
 
 #include <ctype.h>
 

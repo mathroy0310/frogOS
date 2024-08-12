@@ -6,18 +6,18 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 17:47:09 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 17:57:04 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:20:10 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/ScopeGuard.h>
 #include <kernel/APIC.h>
 #include <kernel/CPUID.h>
+#include <kernel/Debug.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
 #include <kernel/MMU.h>
 #include <kernel/Serial.h>
-
 #include <string.h>
 
 #define LAPIC_EIO_REG 0xB0
@@ -172,14 +172,16 @@ static const MADT *LocateMADT(const RSDPDescriptor *rsdp) {
 		dprintln("RSDT");
 	}
 
-	FROG::ScopeGuard guard([root_addr]() { MMU::Get().UnAllocatePage(root_addr); });
+	FROG::ScopeGuard guard(
+	    [root_addr]() { MMU::Get().UnAllocatePage(root_addr); });
 
 	for (uint32_t i = 0; i < entry_count; i++) {
 		const ACPISDTHeader *header = nullptr;
 		if (rsdp->revision == 2)
 			header = (const ACPISDTHeader *) ((const XSDT *) root_addr)->sdt_pointer[i];
 		else
-			header = (const ACPISDTHeader *) (uintptr_t) ((const RSDT *) root_addr)->sdt_pointer[i];
+			header =
+			    (const ACPISDTHeader *) (uintptr_t) ((const RSDT *) root_addr)->sdt_pointer[i];
 		if (memcmp(header->signature, "APIC", 4) == 0 && IsValidACPISDTHeader(header))
 			return (const MADT *) header;
 	}

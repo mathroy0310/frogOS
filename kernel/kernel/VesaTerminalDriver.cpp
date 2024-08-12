@@ -6,13 +6,13 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 03:01:24 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 03:13:05 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:23:28 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Errors.h>
 #include <kernel/MMU.h>
-#include <kernel/Serial.h>
+#include <kernel/Debug.h>
 #include <kernel/VesaTerminalDriver.h>
 #include <kernel/multiboot.h>
 

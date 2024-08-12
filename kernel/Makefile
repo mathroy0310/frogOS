@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/05 01:34:45 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/12 17:40:29 by mathroy0310    `                          #
+#    Updated: 2024/08/12 18:18:16 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -46,6 +46,7 @@ $(KERNEL_ARCH_OBJS)				\
 kernel/APIC.o					\
 kernel/build_libc.o				\
 kernel/CPUID.o					\
+kernel/Debug.o 					\
 kernel/font.o					\
 kernel/Input.o					\
 kernel/InterruptController.o	\

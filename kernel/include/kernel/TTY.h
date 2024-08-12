@@ -6,13 +6,12 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 02:32:58 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 03:23:24 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:20:01 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include <kernel/Serial.h>
 #include <kernel/TerminalDriver.h>
 
 class TTY {
