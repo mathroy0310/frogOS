@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:53:35 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 17:44:15 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 18:57:27 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ class APIC final : public InterruptController {
   public:
 	virtual void EOI(uint8_t) override;
 	virtual void EnableIrq(uint8_t) override;
-	virtual void GetISR(uint32_t[8]) override;
+	virtual bool IsInService(uint8_t) override;
 
   private:
 	uint32_t ReadFromLocalAPIC(ptrdiff_t);

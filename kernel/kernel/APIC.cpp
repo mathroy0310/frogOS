@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 17:47:09 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:48:09 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 19:00:34 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,8 @@
 
 #define IOAPIC_MAX_REDIRS 0x01
 #define IOAPIC_REDIRS 0x10
+
+#define DEBUG_PRINT_PROCESSORS 1
 
 // https://uefi.org/specs/ACPI/6.5/05_ACPI_Software_Programming_Model.html#multiple-apic-description-table-madt-format
 
@@ -267,6 +269,16 @@ APIC *APIC::Create() {
 	uint32_t sivr = apic->ReadFromLocalAPIC(LAPIC_SIV_REG);
 	apic->WriteToLocalAPIC(LAPIC_SIV_REG, sivr | 0x1FF);
 
+#if DEBUG_PRINT_PROCESSORS
+	for (auto &processor : apic->m_processors) {
+		dprintln("Processor{}", processor.processor_id);
+		dprintln("  lapic id: {}", processor.apic_id);
+		dprintln("  status:   {}", (processor.flags & Processor::Flags::Enabled) ? "enabled" :
+		                           (processor.flags & Processor::Flags::OnlineCapable) ? "can be enabled" :
+		                                                                                 "disabled");
+	}
+#endif
+
 	return apic;
 }
 
@@ -316,7 +328,10 @@ void APIC::EnableIrq(uint8_t irq) {
 	ioapic->Write(IOAPIC_REDIRS + gsi * 2 + 1, redir.hi_dword);
 }
 
-void APIC::GetISR(uint32_t out[8]) {
-	for (uint32_t i = 0; i < 8; i++)
-		out[i] = ReadFromLocalAPIC(LAPIC_IS_REG + i * 0x10);
+bool APIC::IsInService(uint8_t irq) {
+	uint32_t dword = (irq + IRQ_VECTOR_BASE) / 32;
+	uint32_t bit = (irq + IRQ_VECTOR_BASE) % 32;
+
+	uint32_t isr = ReadFromLocalAPIC(LAPIC_IS_REG + dword * 0x10);
+	return isr & (1 << bit);
 }

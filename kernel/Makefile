@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/05 01:34:45 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/12 18:41:20 by mathroy0310    `                          #
+#    Updated: 2024/08/12 19:07:58 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -31,7 +31,7 @@ LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -lk -lfrogk -lgcc
  
 ARCHDIR=arch/$(HOSTARCH)
- 
+
 include $(ARCHDIR)/make.config
  
 CFLAGS:=$(CFLAGS) $(KERNEL_ARCH_CFLAGS)

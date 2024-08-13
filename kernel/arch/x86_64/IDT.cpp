@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:43:04 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 19:04:45 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,32 @@
 	register_interrupt_handler(IRQ_VECTOR_BASE + i, irq##i)
 
 namespace IDT {
+
+struct Registers {
+	uint64_t rsp;
+	uint64_t rip;
+	uint64_t rflags;
+	uint64_t cr4;
+	uint64_t cr3;
+	uint64_t cr2;
+	uint64_t cr0;
+
+	uint64_t r15;
+	uint64_t r14;
+	uint64_t r13;
+	uint64_t r12;
+	uint64_t r11;
+	uint64_t r10;
+	uint64_t r9;
+	uint64_t r8;
+	uint64_t rsi;
+	uint64_t rdi;
+	uint64_t rbp;
+	uint64_t rdx;
+	uint64_t rcx;
+	uint64_t rbx;
+	uint64_t rax;
+};
 
 struct GateDescriptor {
 	uint16_t offset1;
@@ -77,35 +103,21 @@ static const char *isr_exceptions[] = {
     "Unkown Exception 0x1F",
 };
 
-extern "C" void cpp_isr_handler(uint64_t isr, uint64_t error) {
-	uint64_t rax, rbx, rcx, rdx, rsp, rbp;
-	uint64_t cr0, cr2, cr3, cr4;
-	asm volatile("" : "=a"(rax), "=b"(rbx), "=c"(rcx), "=d"(rdx));
-	asm volatile("movq %%rsp, %0" : "=r"(rsp));
-	asm volatile("movq %%rbp, %0" : "=r"(rbp));
-	asm volatile("movq %%cr0, %0" : "=r"(cr0));
-	asm volatile("movq %%cr2, %0" : "=r"(cr2));
-	asm volatile("movq %%cr3, %0" : "=r"(cr3));
-	asm volatile("movq %%cr4, %0" : "=r"(cr4));
-
+extern "C" void cpp_isr_handler(uint64_t isr, uint64_t error, const Registers *regs) {
 	Kernel::Panic("{} (error code: 0x{16H})\r\n"
 	              "Register dump\r\n"
 	              "rax=0x{16H}, rbx=0x{16H}, rcx=0x{16H}, rdx=0x{16H}\r\n"
-	              "rsp=0x{16H}, rbp=0x{16H}\r\n"
-	              "CR0=0x{16H}, CR2=0x{16H}, CR3=0x{16H}, CR4=0x{16H}\r\n",
-	              isr_exceptions[isr], error, rax, rbx, rcx, rdx, rsp, rbp, cr0, cr2, cr3, cr4);
+	              "rsp=0x{16H}, rbp=0x{16H}, rdi=0x{16H}, rsi=0x{16H}\r\n"
+	              "rip=0x{16H}, rflags=0x{16H}\r\n"
+	              "cr0=0x{16H}, cr2=0x{16H}, cr3=0x{16H}, cr4=0x{16H}\r\n",
+	              isr_exceptions[isr], error, regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsp, regs->rbp, regs->rdi, regs->rsi, regs->rip, regs->rflags, regs->cr0, regs->cr2, regs->cr3, regs->cr4);
 }
 
 extern "C" void cpp_irq_handler(uint64_t irq) {
 	if (s_irq_handlers[irq])
 		s_irq_handlers[irq]();
 	else {
-		uint32_t isr_byte = irq / 32;
-		uint32_t isr_bit = irq % 32;
-
-		uint32_t isr[8];
-		InterruptController::Get().GetISR(isr);
-		if (!(isr[isr_byte] & (1 << isr_bit))) {
+		if (!InterruptController::Get().IsInService(irq)) {
 			dprintln("spurious irq 0x{2H}", irq);
 			return;
 		}
@@ -117,18 +129,20 @@ extern "C" void cpp_irq_handler(uint64_t irq) {
 
 static void flush_idt() { asm volatile("lidt %0" ::"m"(s_idtr)); }
 
-static void register_interrupt_handler(uint8_t index, void (*f)()) {
+static void register_interrupt_handler(uint8_t index, void (*handler)()) {
 	GateDescriptor &descriptor = s_idt[index];
-	descriptor.offset1 = (uint16_t) ((uint64_t) f >> 0);
-	descriptor.offset2 = (uint16_t) ((uint64_t) f >> 16);
-	descriptor.offset3 = (uint32_t) ((uint64_t) f >> 32);
+	descriptor.offset1 = (uint16_t) ((uint64_t) handler >> 0);
+	descriptor.offset2 = (uint16_t) ((uint64_t) handler >> 16);
+	descriptor.offset3 = (uint32_t) ((uint64_t) handler >> 32);
 
 	descriptor.selector = 0x08;
 	descriptor.IST = 0;
 	descriptor.flags = 0x8E;
 }
 
-void register_irq_handler(uint8_t irq, void (*f)()) { s_irq_handlers[irq] = f; }
+void register_irq_handler(uint8_t irq, void (*handler)()) {
+	s_irq_handlers[irq] = handler;
+}
 
 extern "C" void isr0();
 extern "C" void isr1();

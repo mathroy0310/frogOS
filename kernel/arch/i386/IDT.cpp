@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:34:53 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 19:05:04 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,7 @@
 #include <kernel/IDT.h>
 #include <kernel/InterruptController.h>
 #include <kernel/Panic.h>
-#include <kernel/Serial.h>
 #include <kernel/kmalloc.h>
-#include <kernel/kprint.h>
 
 #define INTERRUPT_HANDLER____(i, msg)                                          \
 	static void interrupt##i() {                                               \
@@ -121,20 +119,14 @@ INTERRUPT_HANDLER_ERR(0x1E, "Security Exception")
 INTERRUPT_HANDLER____(0x1F, "Unkown Exception 0x1F")
 
 extern "C" void handle_irq() {
-	uint32_t isr[8];
-	InterruptController::Get().GetISR(isr);
-
 	uint8_t irq = 0;
-	for (uint8_t i = 0; i < 8; i++) {
-		for (uint8_t j = 0; j < 32; j++) {
-			if (isr[i] & ((uint32_t) 1 << j)) {
-				irq = 32 * i + j;
-				goto found;
-			}
+	for (uint32_t i = 0; i <= 0xFF; i++) {
+		if (InterruptController::Get().IsInService(i)) {
+			irq = i;
+			break;
 		}
 	}
 
-found:
 	if (irq == 0) {
 		dprintln("Spurious irq");
 		return;
@@ -142,18 +134,9 @@ found:
 
 	if (s_irq_handlers[irq])
 		s_irq_handlers[irq]();
-	else {
-		uint32_t isr_byte = irq / 32;
-		uint32_t isr_bit = irq % 32;
-
-		uint32_t isr[8];
-		InterruptController::Get().GetISR(isr);
-		if (!(isr[isr_byte] & (1 << isr_bit))) {
-			dprintln("spurious irq 0x{2H}", irq);
-			return;
-		}
+	else
 		dprintln("no handler for irq 0x{2H}\n", irq);
-	}
+
 	InterruptController::Get().EOI(irq);
 }
 
