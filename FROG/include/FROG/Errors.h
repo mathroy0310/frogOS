@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 14:41:49 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 20:44:43 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,11 +32,11 @@
 #error "NOT IMPLEMENTED"
 #endif
 
-#define TRY(error)                 \
-	({                             \
-		auto e = error;            \
-		if (e.IsError()) return e; \
-		e.Value();                 \
+#define TRY(error)                            \
+	({                                        \
+		auto e = error;                       \
+		if (e.IsError()) return e.GetError(); \
+		e.Value();                            \
 	})
 
 namespace FROG {

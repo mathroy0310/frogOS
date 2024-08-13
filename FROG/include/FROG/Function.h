@@ -6,12 +6,13 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 13:03:56 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 14:31:01 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 20:44:24 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
+#include <FROG/Memory.h>
 #include <FROG/Errors.h>
 #include <FROG/Move.h>
 
