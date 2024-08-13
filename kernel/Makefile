@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/05 01:34:45 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/12 19:07:58 by mathroy0310    `                          #
+#    Updated: 2024/08/12 20:39:23 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,7 +26,7 @@ BOOTDIR?=$(EXEC_PREFIX)/boot
 INCLUDEDIR?=$(PREFIX)/include
  
 CFLAGS:=$(CFLAGS) -D__is_kernel -Iinclude -fstack-protector -ffreestanding -Wall -Wextra -Wno-unused-function -Werror=return-type
-CPPFLAGS:=$(CPPFLAGS) -fno-rtti -fno-exceptions -fno-omit-frame-pointer
+CPPFLAGS:=$(CPPFLAGS) -fno-rtti -fno-exceptions -fno-omit-frame-pointer -mno-sse -mno-sse2
 LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -lk -lfrogk -lgcc
  
