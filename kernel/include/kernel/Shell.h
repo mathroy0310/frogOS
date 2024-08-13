@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:45:21 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:55:34 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:43:39 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,21 +23,21 @@ class Shell {
   public:
 	Shell(TTY *);
 	Shell(const Shell &) = delete;
-	void SetPrompt(FROG::StringView);
-	void Run();
+	void set_prompt(FROG::StringView);
+	void run();
 
   private:
-	void                     ReRenderBuffer() const;
-	FROG::Vector<FROG::String> ParseArguments(FROG::StringView) const;
-	void                     ProcessCommand(const FROG::Vector<FROG::String> &);
-	void                     KeyEventCallback(Input::KeyEvent);
+	void                       rerender_buffer() const;
+	FROG::Vector<FROG::String> parse_arguments(FROG::StringView) const;
+	void process_command(const FROG::Vector<FROG::String> &);
+	void key_event_callback(Input::KeyEvent);
 
   private:
-	TTY                     *m_tty;
+	TTY                       *m_tty;
 	FROG::Vector<FROG::String> m_old_buffer;
 	FROG::Vector<FROG::String> m_buffer;
-	FROG::String              m_prompt;
-	uint32_t                 m_prompt_length = 0;
+	FROG::String               m_prompt;
+	uint32_t                   m_prompt_length = 0;
 
 	struct {
 		uint32_t line = 0;

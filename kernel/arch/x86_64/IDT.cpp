@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 19:04:45 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:16:26 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,7 +104,7 @@ static const char *isr_exceptions[] = {
 };
 
 extern "C" void cpp_isr_handler(uint64_t isr, uint64_t error, const Registers *regs) {
-	Kernel::Panic("{} (error code: 0x{16H})\r\n"
+	Kernel::panic("{} (error code: 0x{16H})\r\n"
 	              "Register dump\r\n"
 	              "rax=0x{16H}, rbx=0x{16H}, rcx=0x{16H}, rdx=0x{16H}\r\n"
 	              "rsp=0x{16H}, rbp=0x{16H}, rdi=0x{16H}, rsi=0x{16H}\r\n"
@@ -117,14 +117,14 @@ extern "C" void cpp_irq_handler(uint64_t irq) {
 	if (s_irq_handlers[irq])
 		s_irq_handlers[irq]();
 	else {
-		if (!InterruptController::Get().IsInService(irq)) {
+		if (!InterruptController::get().is_in_service(irq)) {
 			dprintln("spurious irq 0x{2H}", irq);
 			return;
 		}
 		dprintln("no handler for irq 0x{2H}\n", irq);
 	}
 
-	InterruptController::Get().EOI(irq);
+	InterruptController::get().eoi(irq);
 }
 
 static void flush_idt() { asm volatile("lidt %0" ::"m"(s_idtr)); }

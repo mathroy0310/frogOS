@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 13:38:25 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:20:34 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:14:05 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -215,15 +215,15 @@ static bool i8042_command(uint8_t target, uint8_t command) {
 static void i8042_handle_byte(uint8_t target, uint8_t raw) {
 	bool waiting_response = false;
 
-	if (!s_command_queue.Empty()) {
-		auto &command = s_command_queue.Front();
+	if (!s_command_queue.empty()) {
+		auto &command = s_command_queue.front();
 		if (command.target == target && command._sent && !command._done)
 			waiting_response = true;
 	}
 
 	if (target == TARGET_KEYBOARD) {
 		if (waiting_response) {
-			auto &command = s_command_queue.Front();
+			auto &command = s_command_queue.front();
 
 			if (raw == I8042_KB_RESEND) {
 				dprintln("PS/2 Keyboard: Resend 0x{H}",
@@ -241,7 +241,7 @@ static void i8042_handle_byte(uint8_t target, uint8_t raw) {
 				command._done = false;
 				s_command_response_index = 0;
 			} else if (raw == 0xEE && command.command == 0xEE) {
-				s_command_queue.Pop();
+				s_command_queue.pop();
 			} else {
 				s_command_response[s_command_response_index++] = raw;
 				if (s_command_response_index >= command.resp_cnt)
@@ -253,7 +253,7 @@ static void i8042_handle_byte(uint8_t target, uint8_t raw) {
 		}
 	} else if (target == TARGET_MOUSE) {
 		if (waiting_response) {
-			auto &command = s_command_queue.Front();
+			auto &command = s_command_queue.front();
 
 			if (raw == I8042_MOUSE_ACK) {
 				command._ack++;
@@ -274,45 +274,45 @@ static void i8042_handle_byte(uint8_t target, uint8_t raw) {
 					bool middle = s_mouse_data_buffer[0] & (1 << 2);
 
 					if (left)
-						MUST(s_mouse_button_event_queue.Push({.button = MouseButton::Left}));
+						MUST(s_mouse_button_event_queue.push({.button = MouseButton::Left}));
 					if (right)
-						MUST(s_mouse_button_event_queue.Push({.button = MouseButton::Right}));
+						MUST(s_mouse_button_event_queue.push({.button = MouseButton::Right}));
 					if (middle)
-						MUST(s_mouse_button_event_queue.Push({.button = MouseButton::Middle}));
+						MUST(s_mouse_button_event_queue.push({.button = MouseButton::Middle}));
 				}
 
 				if (s_mouse_data_buffer[1] || s_mouse_data_buffer[2]) {
 					int16_t rel_x = (int16_t) s_mouse_data_buffer[1] - ((s_mouse_data_buffer[0] << 4) & 0x100);
 					int16_t rel_y = (int16_t) s_mouse_data_buffer[2] - ((s_mouse_data_buffer[0] << 3) & 0x100);
 
-					MUST(s_mouse_move_event_queue.Push({.dx = rel_x, .dy = rel_y}));
+					MUST(s_mouse_move_event_queue.push({.dx = rel_x, .dy = rel_y}));
 				}
 
 				s_mouse_data_buffer_index = 0;
 			}
 		}
 	} else {
-		Kernel::Panic("Unknown target");
+		Kernel::panic("Unknown target");
 	}
 }
 
 void update() {
-	if (!s_command_queue.Empty()) {
-		auto &command = s_command_queue.Front();
+	if (!s_command_queue.empty()) {
+		auto &command = s_command_queue.front();
 		if (command.target != TARGET_KEYBOARD && command.target != TARGET_MOUSE)
-			Kernel::Panic("Undefined target for command 0x{2H}", command.command);
+			Kernel::panic("Undefined target for command 0x{2H}", command.command);
 
 		if (command._sent == 0 && command._ack == 0) {
 			command._sent++;
 			if (!i8042_command(command.target, command.command))
-				Kernel::Panic("PS/2 command oof {}, 0x{2H}", command.target,
+				Kernel::panic("PS/2 command oof {}, 0x{2H}", command.target,
 				              command.command);
 		}
 
 		if (command._sent == 1 && command._ack == 1 && command.has_data) {
 			command._sent++;
 			if (!i8042_command(command.target, command.data))
-				Kernel::Panic("PS/2 data oof {}, 0x{2H}", command.target,
+				Kernel::panic("PS/2 data oof {}, 0x{2H}", command.target,
 				              command.data);
 		}
 
@@ -329,22 +329,22 @@ void update() {
 				switch (command.command) {
 				case I8042_KB_RESET:
 					if (s_command_response[0] != I8042_KB_SELF_TEST_PASS)
-						Kernel::Panic("PS/2 Keyboard self test failed");
+						Kernel::panic("PS/2 Keyboard self test failed");
 					break;
 				case I8042_KB_SET_SCAN_CODE_SET:
 					break;
 				case I8042_KB_SET_LEDS:
 					break;
 				default:
-					Kernel::Panic("PS/2 Keyboard unhandled command");
+					Kernel::panic("PS/2 Keyboard unhandled command");
 				}
 			} else if (command.target == TARGET_MOUSE) {
 				switch (command.command) {
 				case I8042_MOUSE_RESET:
 					if (s_command_response[0] != I8042_MOUSE_SELF_TEST_PASS)
-						Kernel::Panic("PS/2 Mouse self test failed");
+						Kernel::panic("PS/2 Mouse self test failed");
 					if (s_command_response[1] != 0x00)
-						Kernel::Panic("PS/2 Mouse invalid byte sent after self "
+						Kernel::panic("PS/2 Mouse invalid byte sent after self "
 						              "test");
 					break;
 				case I8042_MOUSE_ENABLE:
@@ -352,31 +352,31 @@ void update() {
 				case I8042_MOUSE_DISABLE:
 					break;
 				default:
-					Kernel::Panic("PS/2 Mouse unhandled command");
+					Kernel::panic("PS/2 Mouse unhandled command");
 				}
 			}
 
 			s_command_response_index = 0;
-			s_command_queue.Pop();
+			s_command_queue.pop();
 		}
 	}
 
-	while (!s_key_event_queue.Empty()) {
+	while (!s_key_event_queue.empty()) {
 		if (s_key_event_callback)
-			s_key_event_callback(s_key_event_queue.Front());
-		s_key_event_queue.Pop();
+			s_key_event_callback(s_key_event_queue.front());
+		s_key_event_queue.pop();
 	}
 
-	while (!s_mouse_button_event_queue.Empty()) {
+	while (!s_mouse_button_event_queue.empty()) {
 		if (s_mouse_button_event_callback)
-			s_mouse_button_event_callback(s_mouse_button_event_queue.Front());
-		s_mouse_button_event_queue.Pop();
+			s_mouse_button_event_callback(s_mouse_button_event_queue.front());
+		s_mouse_button_event_queue.pop();
 	}
 
-	while (!s_mouse_move_event_queue.Empty()) {
+	while (!s_mouse_move_event_queue.empty()) {
 		if (s_mouse_move_event_callback)
-			s_mouse_move_event_callback(s_mouse_move_event_queue.Front());
-		s_mouse_move_event_queue.Pop();
+			s_mouse_move_event_callback(s_mouse_move_event_queue.front());
+		s_mouse_move_event_queue.pop();
 	}
 }
 
@@ -468,7 +468,7 @@ static void keyboard_new_key() {
 	}
 
 	if (update_leds) {
-		MUST(s_command_queue.Push({
+		MUST(s_command_queue.push({
 		    .target = TARGET_KEYBOARD,
 		    .command = I8042_KB_SET_LEDS,
 		    .data = s_led_states,
@@ -487,8 +487,8 @@ static void keyboard_new_key() {
 	s_modifiers = modifiers;
 
 	if (key != Key::INVALID) {
-		auto error_or = s_key_event_queue.Push({.key = key, .modifiers = modifiers, .pressed = pressed});
-		if (error_or.IsError()) dwarnln("{}", error_or.GetError());
+		auto error_or = s_key_event_queue.push({.key = key, .modifiers = modifiers, .pressed = pressed});
+		if (error_or.is_error()) dwarnln("{}", error_or.get_error());
 	}
 	s_keyboard_key_buffer_size -= index + 1;
 	memmove(s_keyboard_key_buffer, s_keyboard_key_buffer + index, s_keyboard_key_buffer_size);
@@ -513,17 +513,17 @@ static void mouse_irq_handler() {
 static void initialize_keyboard() {
 	// Register callback and IRQ
 	IDT::register_irq_handler(KEYBOARD_IRQ, keyboard_irq_handler);
-	InterruptController::Get().EnableIrq(KEYBOARD_IRQ);
+	InterruptController::get().enable_irq(KEYBOARD_IRQ);
 	i8042_controller_command(I8042_ENABLE_FIRST_PORT);
 
-	MUST(s_command_queue.Push({
+	MUST(s_command_queue.push({
 	    .target = TARGET_KEYBOARD,
 	    .command = I8042_KB_RESET,
 	    .resp_cnt = 1,
 	}));
 
 	// Set scan code set 2
-	MUST(s_command_queue.Push({
+	MUST(s_command_queue.push({
 	    .target = TARGET_KEYBOARD,
 	    .command = I8042_KB_SET_SCAN_CODE_SET,
 	    .data = 0x02,
@@ -531,7 +531,7 @@ static void initialize_keyboard() {
 	}));
 
 	// Turn LEDs off
-	MUST(s_command_queue.Push({
+	MUST(s_command_queue.push({
 	    .target = TARGET_KEYBOARD,
 	    .command = I8042_KB_SET_LEDS,
 	    .data = s_led_states,
@@ -542,17 +542,17 @@ static void initialize_keyboard() {
 static void initialize_mouse() {
 	// Register callback and IRQ
 	IDT::register_irq_handler(MOUSE_IRQ, mouse_irq_handler);
-	InterruptController::Get().EnableIrq(MOUSE_IRQ);
+	InterruptController::get().enable_irq(MOUSE_IRQ);
 	i8042_controller_command(I8042_ENABLE_SECOND_PORT);
 
-	MUST(s_command_queue.Push({
+	MUST(s_command_queue.push({
 	    .target = TARGET_MOUSE,
 	    .command = I8042_MOUSE_RESET,
 	    .resp_cnt = 2,
 	}));
 
 	// Mouse should be disabled when sending commands
-	MUST(s_command_queue.Push({
+	MUST(s_command_queue.push({
 	    .target = TARGET_MOUSE,
 	    .command = I8042_MOUSE_ENABLE,
 	}));

@@ -6,11 +6,10 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 11:24:17 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 14:12:36 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:29:15 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma once
 
 #include <FROG/Errors.h>
 
@@ -30,12 +29,12 @@ template <typename T, size_t S> class Array {
 	const T &operator[](size_type) const;
 	T &operator[](size_type);
 
-	const T &Back() const;
-	T       &Back();
-	const T &Front() const;
-	T       &Front();
+	const T &back() const;
+	T       &back();
+	const T &front() const;
+	T       &front();
 
-	constexpr size_type Size() const;
+	constexpr size_type size() const;
 
   private:
 	T m_data[S];
@@ -62,28 +61,28 @@ template <typename T, size_t S> T &Array<T, S>::operator[](size_type index) {
 	return m_data[index];
 }
 
-template <typename T, size_t S> const T &Array<T, S>::Back() const {
+template <typename T, size_t S> const T &Array<T, S>::back() const {
 	ASSERT(S != 0);
 	return m_data[S - 1];
 }
 
-template <typename T, size_t S> T &Array<T, S>::Back() {
+template <typename T, size_t S> T &Array<T, S>::back() {
 	ASSERT(S != 0);
 	return m_data[S - 1];
 }
 
-template <typename T, size_t S> const T &Array<T, S>::Front() const {
+template <typename T, size_t S> const T &Array<T, S>::front() const {
 	ASSERT(S != 0);
 	return m_data[0];
 }
 
-template <typename T, size_t S> T &Array<T, S>::Front() {
+template <typename T, size_t S> T &Array<T, S>::front() {
 	ASSERT(S != 0);
 	return m_data[0];
 }
 
 template <typename T, size_t S>
-constexpr typename Array<T, S>::size_type Array<T, S>::Size() const {
+constexpr typename Array<T, S>::size_type Array<T, S>::size() const {
 	return S;
 }
 

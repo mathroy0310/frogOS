@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 18:05:24 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 20:35:52 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:16:41 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,12 +28,12 @@
 
 static MMU *s_instance = nullptr;
 
-void MMU::Intialize() {
+void MMU::initialize() {
 	ASSERT(s_instance == nullptr);
 	s_instance = new MMU();
 }
 
-MMU &MMU::Get() {
+MMU &MMU::get() {
 	ASSERT(s_instance);
 	return *s_instance;
 }
@@ -89,7 +89,7 @@ MMU::~MMU() {
 	kfree(pml4);
 }
 
-void MMU::AllocatePage(uintptr_t address) {
+void MMU::allocate_page(uintptr_t address) {
 	ASSERT((address >> 48) == 0);
 
 	address &= PAGE_MASK;
@@ -123,14 +123,14 @@ void MMU::AllocatePage(uintptr_t address) {
 	asm volatile("invlpg (%0)" ::"r"(address) : "memory");
 }
 
-void MMU::AllocateRange(uintptr_t address, ptrdiff_t size) {
+void MMU::allocate_range(uintptr_t address, ptrdiff_t size) {
 	uintptr_t s_page = address & PAGE_MASK;
 	uintptr_t e_page = (address + size - 1) & PAGE_MASK;
 	for (uintptr_t page = s_page; page <= e_page; page += PAGE_SIZE)
-		AllocatePage(page);
+		allocate_page(page);
 }
 
-void MMU::UnAllocatePage(uintptr_t address) {
+void MMU::unallocate_page(uintptr_t address) {
 	ASSERT((address >> 48) == 0);
 
 	address &= PAGE_MASK;
@@ -165,9 +165,9 @@ cleanup_done:
 	asm volatile("invlpg (%0)" ::"r"(address) : "memory");
 }
 
-void MMU::UnAllocateRange(uintptr_t address, ptrdiff_t size) {
+void MMU::unallocate_range(uintptr_t address, ptrdiff_t size) {
 	uintptr_t s_page = address & PAGE_MASK;
 	uintptr_t e_page = (address + size - 1) & PAGE_MASK;
 	for (uintptr_t page = s_page; page <= e_page; page += PAGE_SIZE)
-		UnAllocatePage(page);
+		unallocate_page(page);
 }

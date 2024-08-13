@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 11:44:09 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 20:36:16 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:15:56 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,19 +17,17 @@
 
 class MMU {
   public:
-	static void Intialize();
-	static MMU &Get();
+	static void initialize();
+	static MMU &get();
 
 	MMU();
 	~MMU();
-	
-	void AllocatePage(uintptr_t);
-	void AllocateRange(uintptr_t, ptrdiff_t);
 
-	void UnAllocatePage(uintptr_t);
-	void UnAllocateRange(uintptr_t, ptrdiff_t);
+	void allocate_page(uintptr_t);
+	void allocate_range(uintptr_t, ptrdiff_t);
 
-
+	void unallocate_page(uintptr_t);
+	void unallocate_range(uintptr_t, ptrdiff_t);
 
   private:
 	uint64_t *m_highest_paging_struct;

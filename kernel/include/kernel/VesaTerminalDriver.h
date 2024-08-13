@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 03:02:40 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 03:02:41 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:17:47 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,24 +17,24 @@
 
 class VesaTerminalDriver final : public TerminalDriver {
   public:
-	static VesaTerminalDriver *Create();
+	static VesaTerminalDriver *create();
 	~VesaTerminalDriver();
 
-	virtual uint32_t Width() const override { return m_width / m_font.Width; }
-	virtual uint32_t Height() const override {
+	virtual uint32_t width() const override { return m_width / m_font.Width; }
+	virtual uint32_t height() const override {
 		return m_height / m_font.Height;
 	}
 
-	virtual void PutCharAt(uint16_t, uint32_t, uint32_t, Color, Color) override;
-	virtual void Clear(Color) override;
+	virtual void putchar_at(uint16_t, uint32_t, uint32_t, Color, Color) override;
+	virtual void clear(Color) override;
 
-	virtual void SetCursorPosition(uint32_t, uint32_t) override;
+	virtual void set_cursor_position(uint32_t, uint32_t) override;
 
   private:
 	VesaTerminalDriver(uint32_t width, uint32_t height, uint32_t pitch, uint8_t bpp, uintptr_t address, bitmap_font font)
 	    : m_width(width), m_height(height), m_pitch(pitch), m_bpp(bpp), m_address(address), m_font(font) {}
 
-	void SetPixel(uint32_t, Color);
+	void set_pixel(uint32_t, Color);
 
   private:
 	uint32_t    m_width = 0;

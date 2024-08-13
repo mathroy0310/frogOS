@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 11:42:54 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:45:44 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:16:08 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,12 +28,12 @@
 
 static MMU *s_instance = nullptr;
 
-void MMU::Intialize() {
+void MMU::initialize() {
 	ASSERT(s_instance == nullptr);
 	s_instance = new MMU();
 }
 
-MMU &MMU::Get() {
+MMU &MMU::get() {
 	ASSERT(s_instance);
 	return *s_instance;
 }
@@ -76,7 +76,7 @@ MMU::MMU() {
 	asm volatile("movl %0, %%cr3" ::"r"(m_highest_paging_struct));
 }
 
-void MMU::AllocatePage(uintptr_t address) {
+void MMU::allocate_page(uintptr_t address) {
 #if MMU_DEBUG_PRINT
 	dprintln("AllocatePage(0x{8H})", address & PAGE_MASK);
 #endif
@@ -99,14 +99,14 @@ void MMU::AllocatePage(uintptr_t address) {
 	asm volatile("invlpg (%0)" ::"r"(address & PAGE_MASK) : "memory");
 }
 
-void MMU::AllocateRange(uintptr_t address, ptrdiff_t size) {
+void MMU::allocate_range(uintptr_t address, ptrdiff_t size) {
 	uintptr_t s_page = address & PAGE_MASK;
 	uintptr_t e_page = (address + size - 1) & PAGE_MASK;
 	for (uintptr_t page = s_page; page <= e_page; page += PAGE_SIZE)
-		AllocatePage(page);
+		allocate_page(page);
 }
 
-void MMU::UnAllocatePage(uintptr_t address) {
+void MMU::unallocate_page(uintptr_t address) {
 #if MMU_DEBUG_PRINT
 	dprintln("UnAllocatePage(0x{8H})", address & PAGE_MASK);
 #endif
@@ -127,9 +127,9 @@ void MMU::UnAllocatePage(uintptr_t address) {
 	asm volatile("invlpg (%0)" ::"r"(address & PAGE_MASK) : "memory");
 }
 
-void MMU::UnAllocateRange(uintptr_t address, ptrdiff_t size) {
+void MMU::unallocate_range(uintptr_t address, ptrdiff_t size) {
 	uintptr_t s_page = address & PAGE_MASK;
 	uintptr_t e_page = (address + size - 1) & PAGE_MASK;
 	for (uintptr_t page = s_page; page <= e_page; page += PAGE_SIZE)
-		UnAllocatePage(page);
+		unallocate_page(page);
 }

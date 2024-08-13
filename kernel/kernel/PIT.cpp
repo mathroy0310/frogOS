@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:10 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:00:09 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:57:09 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ static uint64_t s_system_time = 0;
 
 void irq_handler() {
 	s_system_time++;
-	Kernel::Scheduler::Get().Switch();
+	Kernel::Scheduler::get().switch_thread();
 }
 
 uint64_t ms_since_boot() { return s_system_time; }
@@ -57,7 +57,7 @@ void initialize() {
 
 	IDT::register_irq_handler(PIT_IRQ, irq_handler);
 
-	InterruptController::Get().EnableIrq(PIT_IRQ);
+	InterruptController::get().enable_irq(PIT_IRQ);
 }
 
 } // namespace PIT

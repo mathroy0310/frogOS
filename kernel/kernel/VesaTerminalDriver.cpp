@@ -6,19 +6,19 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 03:01:24 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:23:28 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:22:27 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Errors.h>
-#include <kernel/MMU.h>
 #include <kernel/Debug.h>
+#include <kernel/MMU.h>
 #include <kernel/VesaTerminalDriver.h>
 #include <kernel/multiboot.h>
 
 extern const struct bitmap_font font;
 
-VesaTerminalDriver *VesaTerminalDriver::Create() {
+VesaTerminalDriver *VesaTerminalDriver::create() {
 	if (!(g_multiboot_info->flags & MULTIBOOT_FLAGS_FRAMEBUFFER)) {
 		dprintln("Bootloader did not provide framebuffer");
 		return nullptr;
@@ -41,21 +41,21 @@ VesaTerminalDriver *VesaTerminalDriver::Create() {
 		return nullptr;
 	}
 
-	MMU::Get().AllocateRange(framebuffer.addr, framebuffer.pitch * framebuffer.height);
+	MMU::get().allocate_range(framebuffer.addr, framebuffer.pitch * framebuffer.height);
 
 	auto *driver =
 	    new VesaTerminalDriver(framebuffer.width, framebuffer.height,
 	                           framebuffer.pitch, framebuffer.bpp, framebuffer.addr, font);
-	driver->SetCursorPosition(0, 0);
-	driver->Clear(TerminalColor::BLACK);
+	driver->set_cursor_position(0, 0);
+	driver->clear(TerminalColor::BLACK);
 	return driver;
 }
 
 VesaTerminalDriver::~VesaTerminalDriver() {
-	MMU::Get().UnAllocateRange(m_address, m_pitch * m_height);
+	MMU::get().unallocate_range(m_address, m_pitch * m_height);
 }
 
-void VesaTerminalDriver::SetPixel(uint32_t offset, Color color) {
+void VesaTerminalDriver::set_pixel(uint32_t offset, Color color) {
 	uint32_t *pixel = (uint32_t *) (m_address + offset);
 	switch (m_bpp) {
 	case 24:
@@ -67,7 +67,7 @@ void VesaTerminalDriver::SetPixel(uint32_t offset, Color color) {
 	}
 }
 
-void VesaTerminalDriver::PutCharAt(uint16_t ch, uint32_t x, uint32_t y, Color fg, Color bg) {
+void VesaTerminalDriver::putchar_at(uint16_t ch, uint32_t x, uint32_t y, Color fg, Color bg) {
 	uint32_t glyph_index = 0;
 	for (uint32_t i = 0; i < m_font.Chars; i++) {
 		if (m_font.Index[i] == ch) {
@@ -86,14 +86,14 @@ void VesaTerminalDriver::PutCharAt(uint16_t ch, uint32_t x, uint32_t y, Color fg
 		uint32_t pixel_offset = row_offset;
 		for (uint32_t dx = 0; dx < m_font.Width && x + dx < m_width; dx++) {
 			uint8_t bitmask = 1 << (font.Width - dx - 1);
-			SetPixel(pixel_offset, glyph[dy] & bitmask ? fg : bg);
+			set_pixel(pixel_offset, glyph[dy] & bitmask ? fg : bg);
 			pixel_offset += m_bpp / 8;
 		}
 		row_offset += m_pitch;
 	}
 }
 
-void VesaTerminalDriver::Clear(Color color) {
+void VesaTerminalDriver::clear(Color color) {
 	if (m_bpp == 32) {
 		uint32_t cells_per_row = m_pitch / 4;
 		for (uint32_t y = 0; y < m_height; y++)
@@ -106,14 +106,14 @@ void VesaTerminalDriver::Clear(Color color) {
 	for (uint32_t y = 0; y < m_height; y++) {
 		uint32_t pixel_offset = row_offset;
 		for (uint32_t x = 0; x < m_width; x++) {
-			SetPixel(pixel_offset, color);
+			set_pixel(pixel_offset, color);
 			pixel_offset += m_bpp / 8;
 		}
 		row_offset += m_pitch;
 	}
 }
 
-void VesaTerminalDriver::SetCursorPosition(uint32_t x, uint32_t y) {
+void VesaTerminalDriver::set_cursor_position(uint32_t x, uint32_t y) {
 	ASSERT(m_font.Height == 16 && m_font.Width == 8);
 	constexpr uint8_t cursor[] = {
 	    ________, ________, ________, ________, ________, ________,
@@ -129,7 +129,7 @@ void VesaTerminalDriver::SetCursorPosition(uint32_t x, uint32_t y) {
 		uint32_t pixel_offset = row_offset;
 		for (uint32_t dx = 0; dx < m_font.Width && x + dx < m_width; dx++) {
 			uint8_t bitmask = 1 << (font.Width - dx - 1);
-			if (cursor[dy] & bitmask) SetPixel(pixel_offset, s_cursor_color);
+			if (cursor[dy] & bitmask) set_pixel(pixel_offset, s_cursor_color);
 			pixel_offset += m_bpp / 8;
 		}
 		row_offset += m_pitch;

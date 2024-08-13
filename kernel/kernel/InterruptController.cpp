@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 17:48:10 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 17:48:16 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:14:24 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,19 +17,19 @@
 
 static InterruptController *s_instance = nullptr;
 
-InterruptController &InterruptController::Get() {
+InterruptController &InterruptController::get() {
 	ASSERT(s_instance);
 	return *s_instance;
 }
 
-void InterruptController::Initialize(bool force_pic) {
+void InterruptController::initialize(bool force_pic) {
 	ASSERT(s_instance == nullptr);
 
-	PIC::MaskAll();
-	PIC::Remap();
+	PIC::mask_all();
+	PIC::remap();
 
-	if (!force_pic) s_instance = APIC::Create();
+	if (!force_pic) s_instance = APIC::create();
 	if (s_instance) return;
 	dprintln("Using PIC instead of APIC");
-	s_instance = PIC::Create();
+	s_instance = PIC::create();
 }

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 20:04:22 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:32:55 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:42:25 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,6 @@
 
 namespace RTC {
 
-FROG::Time GetCurrentTime();
+FROG::Time get_current_time();
 
 } // namespace RTC

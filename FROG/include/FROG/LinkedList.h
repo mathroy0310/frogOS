@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 20:47:11 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 20:48:33 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:30:41 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,31 +35,31 @@ template <typename T> class LinkedList {
 	LinkedList() = default;
 	~LinkedList();
 
-	[[nodiscard]] ErrorOr<void> PushBack(const T &);
-	[[nodiscard]] ErrorOr<void> PushBack(T &&);
-	[[nodiscard]] ErrorOr<void> Insert(const_iterator, const T &);
-	[[nodiscard]] ErrorOr<void> Insert(const_iterator, T &&);
+	[[nodiscard]] ErrorOr<void> push_back(const T &);
+	[[nodiscard]] ErrorOr<void> push_back(T &&);
+	[[nodiscard]] ErrorOr<void> insert(const_iterator, const T &);
+	[[nodiscard]] ErrorOr<void> insert(const_iterator, T &&);
 	template <typename... Args>
-	[[nodiscard]] ErrorOr<void> EmplaceBack(Args...);
+	[[nodiscard]] ErrorOr<void> emplace_back(Args...);
 	template <typename... Args>
-	[[nodiscard]] ErrorOr<void> Emplace(const_iterator, Args...);
+	[[nodiscard]] ErrorOr<void> emplace(const_iterator, Args...);
 
-	void PopBack();
-	void Remove(const_iterator);
-	void Clear();
+	void pop_back();
+	void remove(const_iterator);
+	void clear();
 
 	iterator       begin() { return iterator(m_data, false); }
 	const_iterator begin() const { return const_iterator(m_data, false); }
 	iterator       end() { return iterator(m_last, true); }
 	const_iterator end() const { return const_iterator(m_last, true); }
 
-	const T &Back() const;
-	T       &Back();
-	const T &Front() const;
-	T       &Front();
+	const T &back() const;
+	T       &back();
+	const T &front() const;
+	T       &front();
 
-	size_type Size() const;
-	bool      Empty() const;
+	size_type size() const;
+	bool      empty() const;
 
   private:
 	struct Node {
@@ -203,27 +203,27 @@ template <typename T> class LinkedListConstIterator {
 	friend class LinkedList<T>;
 };
 
-template <typename T> LinkedList<T>::~LinkedList() { Clear(); }
+template <typename T> LinkedList<T>::~LinkedList() { clear(); }
 
-template <typename T> ErrorOr<void> LinkedList<T>::PushBack(const T &value) {
-	return PushBack(Move(T(value)));
+template <typename T> ErrorOr<void> LinkedList<T>::push_back(const T &value) {
+	return push_back(Move(T(value)));
 }
 
-template <typename T> ErrorOr<void> LinkedList<T>::PushBack(T &&value) {
-	return Insert(end(), Move(value));
-}
-
-template <typename T>
-ErrorOr<void> LinkedList<T>::Insert(const_iterator iter, const T &value) {
-	return Insert(iter, Move(T(value)));
+template <typename T> ErrorOr<void> LinkedList<T>::push_back(T &&value) {
+	return insert(end(), Move(value));
 }
 
 template <typename T>
-ErrorOr<void> LinkedList<T>::Insert(const_iterator iter, T &&value) {
+ErrorOr<void> LinkedList<T>::insert(const_iterator iter, const T &value) {
+	return insert(iter, Move(T(value)));
+}
+
+template <typename T>
+ErrorOr<void> LinkedList<T>::insert(const_iterator iter, T &&value) {
 	Node *next = iter.m_past_end ? nullptr : iter.m_current;
 	Node *prev = next ? next->prev : m_last;
 	Node *new_node = TRY(allocate_node());
-	new (&new_node->value) T(Move(value));
+	new (&new_node->value) T(move(value));
 	new_node->next = next;
 	new_node->prev = prev;
 	(prev ? prev->next : m_data) = new_node;
@@ -234,17 +234,17 @@ ErrorOr<void> LinkedList<T>::Insert(const_iterator iter, T &&value) {
 
 template <typename T>
 template <typename... Args>
-ErrorOr<void> LinkedList<T>::EmplaceBack(Args... args) {
-	return Emplace(end(), Forward<Args>(args)...);
+ErrorOr<void> LinkedList<T>::emplace_back(Args... args) {
+	return emplace(end(), forward<Args>(args)...);
 }
 
 template <typename T>
 template <typename... Args>
-ErrorOr<void> LinkedList<T>::Emplace(const_iterator iter, Args... args) {
+ErrorOr<void> LinkedList<T>::emplace(const_iterator iter, Args... args) {
 	Node *next = iter.m_past_end ? nullptr : iter.m_current;
 	Node *prev = next ? next->prev : m_last;
 	Node *new_node = TRY(allocate_node());
-	new (&new_node->value) T(Forward<Args>(args)...);
+	new (&new_node->value) T(forward<Args>(args)...);
 	new_node->next = next;
 	new_node->prev = prev;
 	(prev ? prev->next : m_data) = new_node;
@@ -253,9 +253,9 @@ ErrorOr<void> LinkedList<T>::Emplace(const_iterator iter, Args... args) {
 	return {};
 }
 
-template <typename T> void LinkedList<T>::PopBack() { return Remove(m_last); }
+template <typename T> void LinkedList<T>::pop_back() { return remove(m_last); }
 
-template <typename T> void LinkedList<T>::Remove(const_iterator iter) {
+template <typename T> void LinkedList<T>::remove(const_iterator iter) {
 	ASSERT(m_size > 0);
 	Node *node = iter.m_current;
 	Node *prev = node->prev;
@@ -267,7 +267,7 @@ template <typename T> void LinkedList<T>::Remove(const_iterator iter) {
 	m_size--;
 }
 
-template <typename T> void LinkedList<T>::Clear() {
+template <typename T> void LinkedList<T>::clear() {
 	Node *ptr = m_data;
 	while (ptr) {
 		Node *next = ptr->next;
@@ -280,38 +280,38 @@ template <typename T> void LinkedList<T>::Clear() {
 	m_size = 0;
 }
 
-template <typename T> const T &LinkedList<T>::Back() const {
+template <typename T> const T &LinkedList<T>::back() const {
 	ASSERT(m_size > 0);
 	return *const_iterator(m_last);
 }
 
-template <typename T> T &LinkedList<T>::Back() {
+template <typename T> T &LinkedList<T>::back() {
 	ASSERT(m_size > 0);
 	return *iterator(m_last);
 }
 
-template <typename T> const T &LinkedList<T>::Front() const {
+template <typename T> const T &LinkedList<T>::front() const {
 	ASSERT(m_size > 0);
 	return *const_iterator(m_data);
 }
 
-template <typename T> T &LinkedList<T>::Front() {
+template <typename T> T &LinkedList<T>::front() {
 	ASSERT(m_size > 0);
 	return *iterator(m_data);
 }
 
 template <typename T>
-typename LinkedList<T>::size_type LinkedList<T>::Size() const {
+typename LinkedList<T>::size_type LinkedList<T>::size() const {
 	return m_size;
 }
 
-template <typename T> bool LinkedList<T>::Empty() const { return m_size == 0; }
+template <typename T> bool LinkedList<T>::empty() const { return m_size == 0; }
 
 template <typename T>
 ErrorOr<typename LinkedList<T>::Node *> LinkedList<T>::allocate_node() const {
 	Node *node = (Node *) FROG::allocator(sizeof(Node));
 	if (node == nullptr)
-		return Error::FromString("LinkedList: Could not allocate memory");
+		return Error::from_string("LinkedList: Could not allocate memory");
 	return node;
 }
 

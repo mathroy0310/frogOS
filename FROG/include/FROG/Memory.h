@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:35:30 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 20:38:19 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:31:04 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,8 @@ static constexpr void (&deallocator)(void *) = free;
 #endif
 
 template <typename T> class Unique {
+	FROG_NON_COPYABLE(Unique<T>);
+
   public:
 	template <typename... Args> Unique(const Args &...args) {
 		m_pointer = new T(args...);
@@ -59,15 +61,15 @@ template <typename T> class RefCounted {
 		}
 	}
 	RefCounted(const RefCounted<T> &other) { *this = other; }
-	RefCounted(RefCounted<T> &&other) { *this = Move(other); }
-	~RefCounted() { Reset(); }
+	RefCounted(RefCounted<T> &&other) { *this = move(other); }
+	~RefCounted() { reset(); }
 
-	template <typename... Args> static RefCounted<T> Create(Args... args) {
-		return RefCounted<T>(new T(Forward<Args>(args)...), new int32_t(1));
+	template <typename... Args> static RefCounted<T> create(Args... args) {
+		return RefCounted<T>(new T(forward<Args>(args)...), new int32_t(1));
 	}
 
 	RefCounted<T> &operator=(const RefCounted<T> &other) {
-		Reset();
+		reset();
 		if (other) {
 			m_pointer = other.m_pointer;
 			m_count = other.m_count;
@@ -77,12 +79,12 @@ template <typename T> class RefCounted {
 	}
 
 	RefCounted<T> &operator=(RefCounted<T> &&other) {
-		Reset();
+		reset();
 		m_pointer = other.m_pointer;
 		m_count = other.m_count;
 		other.m_pointer = nullptr;
 		other.m_count = nullptr;
-		if (!(*this)) Reset();
+		if (!(*this)) reset();
 		return *this;
 	}
 
@@ -92,7 +94,7 @@ template <typename T> class RefCounted {
 	T       *operator->() { return m_pointer; }
 	const T *operator->() const { return m_pointer; }
 
-	void Reset() {
+	void reset() {
 		ASSERT(!m_count == !m_pointer);
 		if (!m_count) return;
 		(*m_count)--;

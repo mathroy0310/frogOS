@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 20:04:41 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 23:44:26 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:57:44 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ static void get_time(FROG::Time &out) {
 	out.year = get_rtc_register(CMOS_REGISTER_YEAR);
 }
 
-FROG::Time GetCurrentTime() {
+FROG::Time get_current_time() {
 	FROG::Time last_time = {};
 	FROG::Time time = {};
 

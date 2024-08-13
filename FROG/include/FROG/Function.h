@@ -6,14 +6,14 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 13:03:56 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 20:44:24 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:30:23 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include <FROG/Memory.h>
 #include <FROG/Errors.h>
+#include <FROG/Memory.h>
 #include <FROG/Move.h>
 
 namespace FROG {
@@ -43,7 +43,7 @@ template <typename Ret, typename... Args> class Function<Ret(Args...)> {
 
 	Ret operator()(Args... args) {
 		ASSERT(*this);
-		return reinterpret_cast<CallableBase *>(m_storage)->call(Forward<Args>(args)...);
+		return reinterpret_cast<CallableBase *>(m_storage)->call(forward<Args>(args)...);
 	}
 
 	operator bool() const {
@@ -62,7 +62,7 @@ template <typename Ret, typename... Args> class Function<Ret(Args...)> {
 		CallablePointer(Ret (*function)(Args...)) : m_function(function) {}
 
 		virtual Ret call(Args... args) override {
-			return m_function(Forward<Args>(args)...);
+			return m_function(forward<Args>(args)...);
 		}
 
 	  private:
@@ -74,7 +74,7 @@ template <typename Ret, typename... Args> class Function<Ret(Args...)> {
 		    : m_owner(owner), m_function(function) {}
 
 		virtual Ret call(Args... args) override {
-			return (m_owner->*m_function)(Forward<Args>(args)...);
+			return (m_owner->*m_function)(forward<Args>(args)...);
 		}
 
 	  private:
@@ -87,7 +87,7 @@ template <typename Ret, typename... Args> class Function<Ret(Args...)> {
 		    : m_owner(owner), m_function(function) {}
 
 		virtual Ret call(Args... args) override {
-			return (m_owner->*m_function)(Forward<Args>(args)...);
+			return (m_owner->*m_function)(forward<Args>(args)...);
 		}
 
 	  private:
@@ -99,7 +99,7 @@ template <typename Ret, typename... Args> class Function<Ret(Args...)> {
 		CallableLambda(Lambda lambda) : m_lambda(lambda) {}
 
 		virtual Ret call(Args... args) override {
-			return m_lambda(Forward<Args>(args)...);
+			return m_lambda(forward<Args>(args)...);
 		}
 
 	  private:

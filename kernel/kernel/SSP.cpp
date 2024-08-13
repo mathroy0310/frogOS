@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:37 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 10:16:01 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:58:00 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
 __BEGIN_DECLS
 
 __attribute__((noreturn)) void __stack_chk_fail(void) {
-	Kernel::Panic("Stack smashing detected");
+	Kernel::panic("Stack smashing detected");
 	abort();
 }
 

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:23:53 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 12:33:12 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:39:10 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,10 +81,10 @@ enum Features : uint32_t {
 	EDX_PBE = (uint32_t) 1 << 31,
 };
 
-const char *FeatStringECX(uint32_t feat);
-const char *FeatStringEDX(uint32_t feat);
-const char *GetVendor();
-void        GetFeatures(uint32_t &ecx, uint32_t &edx);
-bool        Is64Bit();
+const char *feature_string_ecx(uint32_t feat);
+const char *feature_string_edx(uint32_t feat);
+const char *get_vendor();
+void        get_features(uint32_t &ecx, uint32_t &edx);
+bool        is_64_bit();
 
 } // namespace CPUID

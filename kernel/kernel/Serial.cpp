@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:32 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:21:53 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:59:05 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ namespace Serial {
 
 static bool s_initialized = false;
 
-void Initialize() {
+void initialize() {
 	IO::outb(COM1_PORT + 1, 0x00); // Disable all interrupts
 	IO::outb(COM1_PORT + 3, 0x80); // Enable DLAB (set baud rate divisor)
 	IO::outb(COM1_PORT + 0, 0x03); // Set divisor to 3 (lo byte) 38400 baud
@@ -40,7 +40,7 @@ void Initialize() {
 	s_initialized = true;
 }
 
-bool IsInitialized() { return s_initialized; }
+bool is_initialized() { return s_initialized; }
 
 static int is_transmit_empty() { return IO::inb(COM1_PORT + 5) & 0x20; }
 

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 18:20:21 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 20:43:20 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:53:15 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 #include <kernel/TTY.h>
 
 namespace Debug {
-void DumpStackTrace() {
+void dump_stack_trace() {
 	struct stackframe {
 		stackframe *rbp;
 		uintptr_t   rip;
@@ -39,8 +39,8 @@ void DumpStackTrace() {
 	}
 }
 void putchar(char ch) {
-	if (Serial::IsInitialized()) return Serial::putchar(ch);
-	if (TTY::IsInitialized()) return TTY::PutCharCurrent(ch);
+	if (Serial::is_initialized()) return Serial::putchar(ch);
+	if (TTY::is_initialized()) return TTY::putchar_current(ch);
 }
 
 } // namespace Debug

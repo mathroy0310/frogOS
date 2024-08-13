@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:17:43 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:18:21 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ extern "C" void kernel_main() {
 	DISABLE_INTERRUPTS();
 
 	auto cmdline = ParseCommandLine();
-	if (!cmdline.disable_serial) Serial::Initialize();
+	if (!cmdline.disable_serial) Serial::initialize();
 	if (g_multiboot_magic != 0x2BADB002) {
 		dprintln("Invalid multiboot magic number");
 		return;
@@ -87,15 +87,15 @@ extern "C" void kernel_main() {
 	IDT::initialize();
 	dprintln("IDT initialized");
 
-	MMU::Intialize();
+	MMU::initialize();
 	dprintln("MMU initialized");
 
-	TerminalDriver *terminal_driver = VesaTerminalDriver::Create();
+	TerminalDriver *terminal_driver = VesaTerminalDriver::create();
 	ASSERT(terminal_driver);
 	dprintln("VESA initialized");
 	tty1 = new TTY(terminal_driver);
 
-	InterruptController::Initialize(cmdline.force_pic);
+	InterruptController::initialize(cmdline.force_pic);
 	dprintln("Interrupt controller initialized");
 
 	PIT::initialize();
@@ -103,15 +103,15 @@ extern "C" void kernel_main() {
 	if (!Input::initialize()) return;
 	dprintln("8042 initialized");
 
-	Scheduler::Initialize();
-	Scheduler &scheduler = Scheduler::Get();
-	scheduler.AddThread([]() {
+	Scheduler::initialize();
+	Scheduler &scheduler = Scheduler::get();
+	scheduler.add_thread([]() {
 		uint64_t start = PIT::ms_since_boot();
 		while (PIT::ms_since_boot() < start + 3000)
 			continue;
-		Shell(tty1).Run();
+		Shell(tty1).run();
 	});
-	scheduler.AddThread([]() {
+	scheduler.add_thread([]() {
 		kprintln("\e[32m");
 		kprintln("  .d888                             ");
 		kprintln(" d88P\"                              ");
@@ -126,6 +126,6 @@ extern "C" void kernel_main() {
 		kprintln("                       \"Y88P\"       ");
 		kprintln("\e[m");
 	});
-	scheduler.Start();
+	scheduler.start();
 	ASSERT(false);
 }

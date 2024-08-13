@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 18:18:41 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:39:35 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:39:16 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,6 @@
 #define BOCHS_BREAK() asm volatile("xchgw %bx, %bx")
 
 namespace Debug {
-void DumpStackTrace();
+void dump_stack_trace();
 void putchar(char);
 } // namespace Debug

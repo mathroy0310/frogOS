@@ -6,12 +6,13 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 22:57:03 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 22:57:11 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:56:55 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
+#include <FROG/Function.h>
 #include <FROG/LinkedList.h>
 #include <kernel/Thread.h>
 
@@ -22,14 +23,14 @@ class Scheduler {
 	FROG_NON_MOVABLE(Scheduler);
 
   public:
-	static void       Initialize();
-	static Scheduler &Get();
+	static void       initialize();
+	static Scheduler &get();
 
-	const Thread &CurrentThread() const;
+	const Thread &current_thread() const;
 
-	void AddThread(void (*)());
-	void Switch();
-	void Start();
+	void add_thread(void (*)());
+	void switch_thread();
+	void start();
 
 	static constexpr size_t ms_between_switch = 4;
 

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:12 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:59:40 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:14:24 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,13 +38,13 @@
 #define ICW4_BUF_MASTER 0x0C /* Buffered mode/master */
 #define ICW4_SFNM 0x10       /* Special fully nested (not) */
 
-PIC *PIC::Create() {
-	MaskAll();
-	Remap();
+PIC *PIC::create() {
+	mask_all();
+	remap();
 	return new PIC;
 }
 
-void PIC::Remap() {
+void PIC::remap() {
 	uint8_t a1 = IO::inb(PIC1_DATA);
 	uint8_t a2 = IO::inb(PIC2_DATA);
 
@@ -77,17 +77,17 @@ void PIC::Remap() {
 	IO::outb(PIC2_DATA, a2);
 }
 
-void PIC::MaskAll() {
+void PIC::mask_all() {
 	IO::outb(PIC1_DATA, 0xFF);
 	IO::outb(PIC2_DATA, 0xFF);
 }
 
-void PIC::EOI(uint8_t irq) {
+void PIC::eoi(uint8_t irq) {
 	if (irq >= 8) IO::outb(PIC2_COMMAND, PIC_EOI);
 	IO::outb(PIC1_COMMAND, PIC_EOI);
 }
 
-void PIC::EnableIrq(uint8_t irq) {
+void PIC::enable_irq(uint8_t irq) {
 	uint16_t port;
 	uint8_t  value;
 
@@ -101,7 +101,7 @@ void PIC::EnableIrq(uint8_t irq) {
 	IO::outb(port, value);
 }
 
-bool PIC::IsInService(uint8_t irq) {
+bool PIC::is_in_service(uint8_t irq) {
 	uint16_t port = irq < 8 ? PIC1_COMMAND : PIC2_COMMAND;
 	uint8_t  bit = irq < 8 ? irq : irq - 8;
 

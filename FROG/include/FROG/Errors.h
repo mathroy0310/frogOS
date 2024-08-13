@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 20:44:43 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:29:46 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,32 +18,32 @@
 
 #if defined(__is_kernel)
 #include <kernel/Panic.h>
-#define MUST(error)                                         \
-	({                                                      \
-		auto e = error;                                     \
-		if (e.IsError()) Kernel::Panic("{}", e.GetError()); \
-		e.Value();                                          \
+#define MUST(error)                                           \
+	({                                                        \
+		auto e = error;                                       \
+		if (e.is_error()) Kernel::panic("{}", e.get_error()); \
+		e.value();                                            \
 	})
 #define ASSERT(cond)                                            \
 	do {                                                        \
-		if (!(cond)) Kernel::Panic("ASSERT(" #cond ") failed"); \
+		if (!(cond)) Kernel::panic("ASSERT(" #cond ") failed"); \
 	} while (false)
 #else
 #error "NOT IMPLEMENTED"
 #endif
 
-#define TRY(error)                            \
-	({                                        \
-		auto e = error;                       \
-		if (e.IsError()) return e.GetError(); \
-		e.Value();                            \
+#define TRY(error)                              \
+	({                                          \
+		auto e = error;                         \
+		if (e.is_error()) return e.get_error(); \
+		e.value();                              \
 	})
 
 namespace FROG {
 
 class Error {
   public:
-	static Error FromString(const char *message) {
+	static Error from_string(const char *message) {
 		Error result;
 		strncpy(result.m_message, message, sizeof(m_message));
 		result.m_message[sizeof(result.m_message) - 1] = '\0';
@@ -51,8 +51,8 @@ class Error {
 		return result;
 	}
 
-	uint8_t     GetErrorCode() const { return m_error_code; }
-	const char *GetMessage() const { return m_message; }
+	uint8_t     get_error_code() const { return m_error_code; }
+	const char *get_message() const { return m_message; }
 
   private:
 	char    m_message[128];
@@ -68,14 +68,16 @@ template <typename T> class ErrorOr {
 		m_data = (void *) new Error(error);
 	}
 	template <typename S>
-	ErrorOr(const ErrorOr<S> &other) : ErrorOr(other.GetError()) {}
+	ErrorOr(const ErrorOr<S> &other) : ErrorOr(other.get_error()) {}
 	~ErrorOr() {
-		IsError() ? (delete reinterpret_cast<Error *>(m_data)) : (delete reinterpret_cast<T *>(m_data));
+		is_error() ? (delete reinterpret_cast<Error *>(m_data)) : (delete reinterpret_cast<T *>(m_data));
 	}
 
-	bool         IsError() const { return m_has_error; }
-	const Error &GetError() const { return *reinterpret_cast<Error *>(m_data); }
-	T           &Value() { return *reinterpret_cast<T *>(m_data); }
+	bool         is_error() const { return m_has_error; }
+	const Error &get_error() const {
+		return *reinterpret_cast<Error *>(m_data);
+	}
+	T &value() { return *reinterpret_cast<T *>(m_data); }
 
   private:
 	bool  m_has_error = false;
@@ -88,9 +90,9 @@ template <> class ErrorOr<void> {
 	ErrorOr(const Error &error) : m_error(error) {}
 	~ErrorOr() {}
 
-	bool         IsError() const { return m_has_error; }
-	const Error &GetError() const { return m_error; }
-	void         Value() {}
+	bool         is_error() const { return m_has_error; }
+	const Error &get_error() const { return m_error; }
+	void         value() {}
 
   private:
 	Error m_error;
@@ -102,9 +104,9 @@ template <> class ErrorOr<void> {
 namespace FROG::Formatter {
 template <typename F>
 void print_argument_impl(F putc, const Error &error, const ValueFormat &) {
-	if (error.GetErrorCode() == 0xFF)
-		print(putc, error.GetMessage());
+	if (error.get_error_code() == 0xFF)
+		print(putc, error.get_message());
 	else
-		print(putc, "{} ({})", error.GetMessage(), error.GetErrorCode());
+		print(putc, "{} ({})", error.get_message(), error.get_error_code());
 }
 } // namespace FROG::Formatter

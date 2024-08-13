@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:24:48 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 12:32:41 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:52:59 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,21 +25,21 @@ void get_cpuid_string(uint32_t code, uint32_t *out) {
 	             : "a"(code));
 }
 
-const char *GetVendor() {
+const char *get_vendor() {
 	static char vendor[13]{};
 	get_cpuid_string(0x00, (uint32_t *) vendor);
 	vendor[12] = '\0';
 	return vendor;
 }
 
-void GetFeatures(uint32_t &ecx, uint32_t &edx) {
+void get_features(uint32_t &ecx, uint32_t &edx) {
 	uint32_t buffer[4]{};
 	get_cpuid(0x01, buffer);
 	ecx = buffer[2];
 	edx = buffer[3];
 }
 
-bool Is64Bit() {
+bool is_64_bit() {
 	uint32_t buffer[4]{};
 	get_cpuid(0x80000000, buffer);
 	if (buffer[0] < 0x80000001) return false;
@@ -48,7 +48,7 @@ bool Is64Bit() {
 	return buffer[3] & (1 << 29);
 }
 
-const char *FeatStringECX(uint32_t feat) {
+const char *feature_string_ecx(uint32_t feat) {
 	switch (feat) {
 	case Features::ECX_SSE3:
 		return "ECX_SSE3";
@@ -117,7 +117,7 @@ const char *FeatStringECX(uint32_t feat) {
 	}
 }
 
-const char *FeatStringEDX(uint32_t feat) {
+const char *feature_string_edx(uint32_t feat) {
 	switch (feat) {
 	case Features::EDX_FPU:
 		return "EDX_FPU";

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 02:32:58 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 22:58:26 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:44:33 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,25 +18,25 @@
 class TTY {
   public:
 	TTY(TerminalDriver *);
-	void Clear();
-	void PutChar(char ch);
-	void Write(const char *data, size_t size);
-	void WriteString(const char *data);
-	void SetCursorPosition(uint32_t x, uint32_t y);
+	void clear();
+	void putchar(char ch);
+	void write(const char *data, size_t size);
+	void write_string(const char *data);
+	void set_cursor_position(uint32_t x, uint32_t y);
 
-	uint32_t Height() const { return m_height; }
-	uint32_t Width() const { return m_width; }
+	uint32_t height() const { return m_height; }
+	uint32_t width() const { return m_width; }
 
-	void RenderFromBuffer(uint32_t x, uint32_t y);
+	void render_from_buffer(uint32_t x, uint32_t y);
 
-	static void PutCharCurrent(char ch);
-	static bool IsInitialized();
+	static void putchar_current(char ch);
+	static bool is_initialized();
 
   private:
-	void ResetAnsiEscape();
-	void HandleAnsiSGR();
-	void HandleAnsiEscape(uint16_t ch);
-	void PutCharAt(uint16_t ch, uint32_t x, uint32_t y);
+	void reset_ansi_escape();
+	void handle_ansi_sgr();
+	void handle_ansi_escape(uint16_t ch);
+	void putchar_at(uint16_t ch, uint32_t x, uint32_t y);
 
   private:
 	struct Cell {

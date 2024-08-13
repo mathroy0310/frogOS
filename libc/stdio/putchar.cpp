@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 00:30:17 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 10:16:05 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:08:55 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,9 @@
 
 int putchar(int c) {
 #if defined(__is_libk)
-	Kernel::Panic("Please use kprint() instead of stdio");
+	Kernel::panic("Please use kprint() instead of stdio");
 	char ch = (char) c;
-	TTY::PutCharCurrent(ch);
+	TTY::putchar_current(ch);
 #else
 	abort();
 #endif

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:23 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:19:52 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:43:17 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,8 @@
 
 namespace Serial {
 
-void Initialize();
-bool IsInitialized();
+void initialize();
+bool is_initialized();
 
 void putchar(char);
 
