@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 20:47:11 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:30:41 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:26:41 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,9 +40,9 @@ template <typename T> class LinkedList {
 	[[nodiscard]] ErrorOr<void> insert(const_iterator, const T &);
 	[[nodiscard]] ErrorOr<void> insert(const_iterator, T &&);
 	template <typename... Args>
-	[[nodiscard]] ErrorOr<void> emplace_back(Args...);
+	[[nodiscard]] ErrorOr<void> emplace_back(Args&&...);
 	template <typename... Args>
-	[[nodiscard]] ErrorOr<void> emplace(const_iterator, Args...);
+	[[nodiscard]] ErrorOr<void> emplace(const_iterator, Args&&...);
 
 	void pop_back();
 	void remove(const_iterator);
@@ -234,13 +234,13 @@ ErrorOr<void> LinkedList<T>::insert(const_iterator iter, T &&value) {
 
 template <typename T>
 template <typename... Args>
-ErrorOr<void> LinkedList<T>::emplace_back(Args... args) {
+ErrorOr<void> LinkedList<T>::emplace_back(Args &&...args) {
 	return emplace(end(), forward<Args>(args)...);
 }
 
 template <typename T>
 template <typename... Args>
-ErrorOr<void> LinkedList<T>::emplace(const_iterator iter, Args... args) {
+ErrorOr<void> LinkedList<T>::emplace(const_iterator iter, Args &&...args) {
 	Node *next = iter.m_past_end ? nullptr : iter.m_current;
 	Node *prev = next ? next->prev : m_last;
 	Node *new_node = TRY(allocate_node());

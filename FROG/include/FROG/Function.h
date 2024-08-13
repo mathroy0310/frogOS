@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 13:03:56 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:30:23 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:25:27 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ namespace FROG {
 template <typename> class Function;
 template <typename Ret, typename... Args> class Function<Ret(Args...)> {
   public:
-	Function() {}
+	Function() = default;
 	Function(Ret (*function)(Args...)) {
 		static_assert(sizeof(CallablePointer) <= m_size);
 		new (m_storage) CallablePointer(function);
@@ -41,6 +41,8 @@ template <typename Ret, typename... Args> class Function<Ret(Args...)> {
 		new (m_storage) CallableLambda<Lambda>(lambda);
 	}
 
+	~Function() { clear(); }
+
 	Ret operator()(Args... args) {
 		ASSERT(*this);
 		return reinterpret_cast<CallableBase *>(m_storage)->call(forward<Args>(args)...);
@@ -50,6 +52,11 @@ template <typename Ret, typename... Args> class Function<Ret(Args...)> {
 		for (size_t i = 0; i < m_size; i++)
 			if (m_storage[i]) return true;
 		return false;
+	}
+
+	void clear() {
+		if (*this) reinterpret_cast<CallableBase *>(m_storage)->~CallableBase();
+		memset(m_storage, 0, m_size);
 	}
 
   private:

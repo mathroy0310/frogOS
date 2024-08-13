@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:16:46 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 00:13:14 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 00:27:25 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ template <typename T> class Queue {
 
 	[[nodiscard]] ErrorOr<void>                             push(T &&);
 	[[nodiscard]] ErrorOr<void>                             push(const T &);
-	template <typename... Args> [[nodiscard]] ErrorOr<void> emplace(Args...);
+	template <typename... Args> [[nodiscard]] ErrorOr<void> emplace(Args &&...);
 
 	void pop();
 	void clear();
@@ -112,7 +112,7 @@ template <typename T> ErrorOr<void> Queue<T>::push(const T &value) {
 
 template <typename T>
 template <typename... Args>
-ErrorOr<void> Queue<T>::emplace(Args... args) {
+ErrorOr<void> Queue<T>::emplace(Args &&...args) {
 	TRY(ensure_capacity(m_size + 1));
 	new (address_of(m_size)) T(forward<Args>(args)...);
 	m_size++;
