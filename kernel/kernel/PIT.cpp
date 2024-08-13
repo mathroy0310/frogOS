@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:10 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 17:49:55 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:00:09 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,9 @@
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
 #include <kernel/InterruptController.h>
+#include <kernel/Scheduler.h>
 #include <kernel/kprint.h>
+#include <kernel/PIT.h>
 
 #define IRQ_TIMER 0
 
@@ -38,13 +40,12 @@
 namespace PIT {
 static uint64_t s_system_time = 0;
 
-void clock_handle() {
+void irq_handler() {
 	s_system_time++;
+	Kernel::Scheduler::Get().Switch();
 }
 
-uint64_t ms_since_boot() {
-	return s_system_time;
-}
+uint64_t ms_since_boot() { return s_system_time; }
 
 void initialize() {
 	constexpr uint16_t timer_reload = BASE_FREQUENCY / TICKS_PER_SECOND;
@@ -54,9 +55,9 @@ void initialize() {
 	IO::outb(TIMER0_CTL, (timer_reload >> 0) & 0xff);
 	IO::outb(TIMER0_CTL, (timer_reload >> 8) & 0xff);
 
-	IDT::register_irq_handler(IRQ_TIMER, clock_handle);
+	IDT::register_irq_handler(PIT_IRQ, irq_handler);
 
-	InterruptController::Get().EnableIrq(IRQ_TIMER);
+	InterruptController::Get().EnableIrq(PIT_IRQ);
 }
 
 } // namespace PIT

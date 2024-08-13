@@ -6,14 +6,16 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 11:58:57 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:22:20 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:11:53 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Errors.h>
-#include <kernel/IO.h>
-#include <kernel/Panic.h>
+#include <FROG/ScopeGuard.h>
 #include <kernel/Debug.h>
+#include <kernel/IO.h>
+#include <kernel/LockGuard.h>
+#include <kernel/Panic.h>
 #include <kernel/TTY.h>
 #include <kernel/TerminalDriver.h>
 #include <kernel/kmalloc.h>
@@ -282,6 +284,8 @@ void TTY::PutCharAt(uint16_t ch, uint32_t x, uint32_t y) {
 }
 
 void TTY::PutChar(char ch) {
+	Kernel::LockGuard guard(m_lock);
+
 	uint16_t cp = handle_unicode(ch);
 	if (cp == 0xFFFF) return;
 

@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:28:38 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 23:17:43 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
 #include <kernel/RTC.h>
+#include <kernel/Scheduler.h>
 #include <kernel/Serial.h>
 #include <kernel/Shell.h>
 #include <kernel/TTY.h>
@@ -65,7 +66,11 @@ ParsedCommandLine ParseCommandLine() {
 	return result;
 }
 
+static TTY *tty1 = nullptr;
+
 extern "C" void kernel_main() {
+	using namespace Kernel;
+
 	DISABLE_INTERRUPTS();
 
 	auto cmdline = ParseCommandLine();
@@ -88,7 +93,7 @@ extern "C" void kernel_main() {
 	TerminalDriver *terminal_driver = VesaTerminalDriver::Create();
 	ASSERT(terminal_driver);
 	dprintln("VESA initialized");
-	TTY *tty1 = new TTY(terminal_driver);
+	tty1 = new TTY(terminal_driver);
 
 	InterruptController::Initialize(cmdline.force_pic);
 	dprintln("Interrupt controller initialized");
@@ -98,31 +103,29 @@ extern "C" void kernel_main() {
 	if (!Input::initialize()) return;
 	dprintln("8042 initialized");
 
-	ENABLE_INTERRUPTS();
-
-	kprintln("\e[32m");
-	kprintln("  .d888                             ");
-	kprintln(" d88P\"                              ");
-	kprintln(" 888                                ");
-	kprintln(" 888888888d888 .d88b.  .d88b.       ");
-	kprintln(" 888   888P\"  d88\"\"88bd88P\"88b      ");
-	kprintln(" 888   888    888  888888  888      ");
-	kprintln(" 888   888    Y88..88PY88b 888      ");
-	kprintln(" 888   888     \"Y88P\"  \"Y88888      ");
-	kprintln("                           888      ");
-	kprintln("                      Y8b d88P      ");
-	kprintln("                       \"Y88P\"       ");
-	kprintln("\e[m");
-	// kprintln("☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄▼▲¶§▬↔↕▲▼⌐√≈≡≤≥░▒▓█▄▌▐▀▒░┼─│┤├┐└┬┴┼▀▐▄▌░▒");
-	// kprintln("▐▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▌");
-	// auto time = RTC::GetCurrentTime();
-	// kprintln("▐  {}  ▌", time);
-	// kprintln("▐▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▌");
-
-	Kernel::Shell shell(tty1);
-	shell.Run();
-
-	for (;;) {
-		asm("hlt");
-	}
+	Scheduler::Initialize();
+	Scheduler &scheduler = Scheduler::Get();
+	scheduler.AddThread([]() {
+		uint64_t start = PIT::ms_since_boot();
+		while (PIT::ms_since_boot() < start + 3000)
+			continue;
+		Shell(tty1).Run();
+	});
+	scheduler.AddThread([]() {
+		kprintln("\e[32m");
+		kprintln("  .d888                             ");
+		kprintln(" d88P\"                              ");
+		kprintln(" 888                                ");
+		kprintln(" 888888888d888 .d88b.  .d88b.       ");
+		kprintln(" 888   888P\"  d88\"\"88bd88P\"88b      ");
+		kprintln(" 888   888    888  888888  888      ");
+		kprintln(" 888   888    Y88..88PY88b 888      ");
+		kprintln(" 888   888     \"Y88P\"  \"Y88888      ");
+		kprintln("                           888      ");
+		kprintln("                      Y8b d88P      ");
+		kprintln("                       \"Y88P\"       ");
+		kprintln("\e[m");
+	});
+	scheduler.Start();
+	ASSERT(false);
 }

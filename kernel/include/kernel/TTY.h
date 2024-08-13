@@ -6,12 +6,13 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 02:32:58 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 18:20:01 by mathroy0310    `                         */
+/*   Updated: 2024/08/12 22:58:26 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
+#include <kernel/SpinLock.h>
 #include <kernel/TerminalDriver.h>
 
 class TTY {
@@ -59,4 +60,5 @@ class TTY {
 	Cell                 *m_buffer{nullptr};
 	AnsiState             m_ansi_state;
 	TerminalDriver       *m_terminal_driver{nullptr};
+	Kernel::SpinLock      m_lock;
 };

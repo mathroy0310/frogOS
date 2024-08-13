@@ -6,7 +6,7 @@
 #    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
 #                                                 \\_'-`---'\\__,              #
 #    Created: 2024/08/05 01:34:45 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/12 20:53:35 by mathroy0310    `                          #
+#    Updated: 2024/08/12 22:56:39 by mathroy0310    `                          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -55,10 +55,12 @@ kernel/kmalloc.o				\
 kernel/PIC.o					\
 kernel/PIT.o					\
 kernel/RTC.o					\
+kernel/Scheduler.o 				\
 kernel/Serial.o					\
 kernel/Shell.o					\
-kernel/SpinLock.o \
+kernel/SpinLock.o 				\
 kernel/SSP.o					\
+kernel/Thread.o 				\
 kernel/TTY.o					\
 kernel/VesaTerminalDriver.o		\
 icxxabi.o						\
