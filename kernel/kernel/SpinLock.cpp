@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/12 20:51:02 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 20:51:03 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 21:55:52 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,4 +21,5 @@ void SpinLock::lock() { spinlock_lock_asm(&m_lock); }
 
 void SpinLock::unlock() { spinlock_unlock_asm(&m_lock); }
 
+bool SpinLock::is_locked() const { return m_lock; }
 } // namespace Kernel
