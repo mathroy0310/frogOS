@@ -6,9 +6,13 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 21:12:05 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 22:52:08 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 21:59:19 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
+
+#include <kernel/LockGuard.h>
+#include <kernel/Panic.h>
+#include <kernel/SpinLock.h>
 
 #define ATEXIT_MAX_FUNCS 128
 
@@ -60,6 +64,29 @@ void __cxa_finalize(void *f) {
 		};
 	};
 };
+
+namespace __cxxabiv1 {
+/* guard variables */
+static Kernel::SpinLock s_spin_lock;
+
+/* The ABI requires a 64-bit type.  */
+__extension__ typedef int __guard __attribute__((mode(__DI__)));
+
+int __cxa_guard_acquire(__guard *g) {
+	Kernel::LockGuard lock_guard(s_spin_lock);
+	return !*(int *) g;
+}
+
+void __cxa_guard_release(__guard *g) {
+	Kernel::LockGuard lock_guard(s_spin_lock);
+	*(int *) g = 1;
+}
+
+void __cxa_guard_abort(__guard *) {
+	Kernel::panic("__cxa_guard_abort");
+	__builtin_unreachable();
+}
+} // namespace __cxxabiv1
 
 #ifdef __cplusplus
 };
