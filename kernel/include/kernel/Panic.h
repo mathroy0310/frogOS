@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/04 23:25:36 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:41:51 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 22:00:38 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 #include <kernel/Debug.h>
 #include <kernel/Serial.h>
 #include <kernel/TTY.h>
-#include <kernel/kprint.h>
 
 #define panic(...) detail::panic_impl(__FILE__, __LINE__, __VA_ARGS__)
 

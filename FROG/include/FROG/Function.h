@@ -6,7 +6,7 @@
 /*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
 /*                                                \\_'-`---'\\__,             */
 /*   Created: 2024/08/09 13:03:56 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 00:25:27 by mathroy0310    `                         */
+/*   Updated: 2024/08/13 22:05:47 by mathroy0310    `                         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,6 +58,7 @@ template <typename Ret, typename... Args> class Function<Ret(Args...)> {
 		if (*this) reinterpret_cast<CallableBase *>(m_storage)->~CallableBase();
 		memset(m_storage, 0, m_size);
 	}
+	static constexpr size_t size() { return m_size; }
 
   private:
 	struct CallableBase {
