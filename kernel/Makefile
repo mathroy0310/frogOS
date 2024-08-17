@@ -28,7 +28,7 @@ INCLUDEDIR?=$(PREFIX)/include
 CFLAGS:=$(CFLAGS) -D__is_kernel -D__arch=$(HOSTARCH) -Iinclude -fstack-protector -ffreestanding -Wall -Wextra -Wno-unused-function -Werror=return-type
 CPPFLAGS:=$(CPPFLAGS) -fno-rtti -fno-exceptions -fno-omit-frame-pointer -mno-sse -mno-sse2
 LDFLAGS:=$(LDFLAGS)
-LIBS:=$(LIBS) -nostdlib -lk -lfrogk -lgcc
+LIBS:=$(LIBS) -nostdlib -L$(SYSROOT)/usr/lib -lk -lfrogk -lgcc
  
 ARCHDIR=arch/$(HOSTARCH)
 
