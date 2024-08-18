@@ -104,28 +104,23 @@ extern "C" void kernel_main() {
 	dprintln("8042 initialized");
 
 	Scheduler::initialize();
-	Scheduler &scheduler = Scheduler::get();
-	scheduler.add_thread([]() {
-		uint64_t start = PIT::ms_since_boot();
-		while (PIT::ms_since_boot() < start + 3000)
-			continue;
-		Shell(tty1).run();
-	});
-	scheduler.add_thread([]() {
-		kprintln("\e[32m");
-		kprintln("  .d888                             ");
-		kprintln(" d88P\"                              ");
-		kprintln(" 888                                ");
-		kprintln(" 888888888d888 .d88b.  .d88b.       ");
-		kprintln(" 888   888P\"  d88\"\"88bd88P\"88b      ");
-		kprintln(" 888   888    888  888888  888      ");
-		kprintln(" 888   888    Y88..88PY88b 888      ");
-		kprintln(" 888   888     \"Y88P\"  \"Y88888      ");
-		kprintln("                           888      ");
-		kprintln("                      Y8b d88P      ");
-		kprintln("                       \"Y88P\"       ");
-		kprintln("\e[m");
-	});
+	Scheduler& scheduler = Scheduler::get();
+	scheduler.add_thread(FROG::Function<void()>([tty1] { Shell(tty1).run(); }));
+	// scheduler.add_thread([]() {
+	// 	kprintln("\e[32m");
+	// 	kprintln("  .d888                             ");
+	// 	kprintln(" d88P\"                              ");
+	// 	kprintln(" 888                                ");
+	// 	kprintln(" 888888888d888 .d88b.  .d88b.       ");
+	// 	kprintln(" 888   888P\"  d88\"\"88bd88P\"88b      ");
+	// 	kprintln(" 888   888    888  888888  888      ");
+	// 	kprintln(" 888   888    Y88..88PY88b 888      ");
+	// 	kprintln(" 888   888     \"Y88P\"  \"Y88888      ");
+	// 	kprintln("                           888      ");
+	// 	kprintln("                      Y8b d88P      ");
+	// 	kprintln("                       \"Y88P\"       ");
+	// 	kprintln("\e[m");
+	// });
 	scheduler.start();
 	ASSERT(false);
 }

@@ -28,11 +28,19 @@ class Scheduler {
 
 	const Thread &current_thread() const;
 
-	void add_thread(void (*)());
+	template <typename... Args>
+	void add_thread(const FROG::Function<void(Args...)> &func, Args... args) {
+		uintptr_t flags;
+		asm volatile("pushf; pop %0" : "=r"(flags));
+		asm volatile("cli");
+		MUST(m_threads.emplace_back(func, FROG::forward<Args>(args)...));
+		if (flags & (1 << 9)) asm volatile("sti");
+	}
+
 	void switch_thread();
 	void start();
 
-	static constexpr size_t ms_between_switch = 4;
+	static constexpr size_t ms_between_switch = 1;
 
   private:
 	Scheduler() {}

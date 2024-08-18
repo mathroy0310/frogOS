@@ -14,6 +14,7 @@
 #include <FROG/StringView.h>
 #include <FROG/Vector.h>
 #include <kernel/CPUID.h>
+#include <kernel/Scheduler.h>
 #include <kernel/IO.h>
 #include <kernel/Input.h>
 #include <kernel/PIT.h>
@@ -172,6 +173,30 @@ void Shell::process_command(const Vector<String> &arguments) {
 		process_command(new_args);
 		auto duration = PIT::ms_since_boot() - start;
 		TTY_PRINTLN("took {} ms", duration);
+	} else if (arguments.front() == "thread") {
+		static SpinLock s_thread_spinlock;
+
+		// NOTE: This is a workaround to pass values as copies to threads.
+		//       I have only implemented passing integer and pointers.
+		//       We don't continue execution until the thread has unlocked
+		//       the spinlock.
+		s_thread_spinlock.lock();
+		Scheduler::get().add_thread(Function<void(const Vector<String> *)>([this](const Vector<String> *args_ptr) {
+			                            auto args = *args_ptr;
+			                            s_thread_spinlock.unlock();
+
+			                            args.remove(0);
+
+			                            auto start = PIT::ms_since_boot();
+			                            while (PIT::ms_since_boot() < start + 5000)
+				                            ;
+
+			                            process_command(args);
+		                            }),
+		                            &arguments);
+
+		while (s_thread_spinlock.is_locked())
+			;
 	} else if (arguments.front() == "memory") {
 		if (arguments.size() != 1) {
 			TTY_PRINTLN("'memory' does not support command line arguments");
