@@ -12,10 +12,10 @@
 
 #!/bin/sh
 set -e
-. ./iso.sh
+. ./disk.sh
 
 qemu-system-$(./target-triplet-to-arch.sh $HOST) 		\
 	-m 128												\
 	-smp 2												\
-	-drive format=raw,media=cdrom,file=frog-os.iso		\
+	-drive format=raw,media=disk,file=frog-os.img		\
 	-serial stdio

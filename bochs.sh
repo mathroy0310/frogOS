@@ -1,5 +1,5 @@
 set -e
-. ./iso.sh
+. ./disk.sh
 
 BOCHS_CONFIG_FILE=bochsrc
 COM1_TERMINAL=kitty
@@ -14,8 +14,8 @@ COM1_DEVICE=$(cat $COM1_DEVICE_FILE)
 rm $COM1_DEVICE_FILE
 
 cat > $BOCHS_CONFIG_FILE << EOF
-ata0-master: type=cdrom, path=frog-os.iso, status=inserted
-boot: cdrom
+ata0-master: type=disk, path=frog-os.img, status=inserted
+boot: disk
 clock: sync=realtime, time0=local
 display_library: x, options="gui_debug"
 magic_break: enabled=1
