@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   Errors.h                                     ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 01:16:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:29:46 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Errors.h                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 01:16:34 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/18 00:19:41 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,9 +86,9 @@ template <typename T> class ErrorOr {
 
 template <> class ErrorOr<void> {
   public:
-	ErrorOr() {}
-	ErrorOr(const Error &error) : m_error(error) {}
-	~ErrorOr() {}
+	ErrorOr()														{ }
+	ErrorOr(const Error& error) : m_error(error), m_has_error(true)	{ }
+	~ErrorOr()															{ }
 
 	bool         is_error() const { return m_has_error; }
 	const Error &get_error() const { return m_error; }
