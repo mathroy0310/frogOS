@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   Scheduler.cpp                                ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/12 23:00:36 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:58:44 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Scheduler.cpp                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/12 23:00:36 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/18 00:25:50 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,7 +81,6 @@ void Scheduler::switch_thread() {
 		start_thread(args[0], args[1], args[2], args[3], next.rsp(), next.rbp(), next.rip());
 	} else if (next.state() == Thread::State::Paused) {
 		next.set_state(Thread::State::Running);
-		BOCHS_BREAK();
 		continue_thread(next.rsp(), next.rbp(), next.rip());
 	}
 

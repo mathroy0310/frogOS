@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   PIT.cpp                                      ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 23:25:10 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:57:09 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   PIT.cpp                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/04 23:25:10 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/18 00:28:56 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,9 @@
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
 #include <kernel/InterruptController.h>
+#include <kernel/PIT.h>
 #include <kernel/Scheduler.h>
 #include <kernel/kprint.h>
-#include <kernel/PIT.h>
 
 #define IRQ_TIMER 0
 
@@ -58,6 +58,12 @@ void initialize() {
 	IDT::register_irq_handler(PIT_IRQ, irq_handler);
 
 	InterruptController::get().enable_irq(PIT_IRQ);
+}
+
+void sleep(uint64_t ms) {
+	uint64_t end = s_system_time + ms;
+	while (s_system_time < end)
+		asm volatile("hlt");
 }
 
 } // namespace PIT
