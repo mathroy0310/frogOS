@@ -19,4 +19,4 @@ for PROJECT in $PROJECTS; do
 done
  
 rm -rf sysroot
-rm -rf frog-os.imh
+rm -rf frog-os.img

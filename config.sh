@@ -1,12 +1,12 @@
 # **************************************************************************** #
-#                                                              _               #
-#                                                  __   ___.--'_\`.            #
-#    config.sh                                    ( _\`.' -   'o\` )           #
-#                                                 _\\.'_'      _.-'            #
-#    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
-#                                                 \\_'-`---'\\__,              #
-#    Created: 2024/08/04 01:32:58 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/04 19:58:29 by mathroy0310    `                          #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    config.sh                                          :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2024/08/04 01:32:58 by mathroy0310       #+#    #+#              #
+#    Updated: 2024/08/18 00:06:18 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,7 +28,7 @@ export LIBDIR=$EXEC_PREFIX/lib
 export INCLUDEDIR=$PREFIX/include
  
 export CFLAGS='-O2 -g'
-export CPPFLAGS=''
+export CPPFLAGS='--std=c++20'
  
 # Configure the cross-compiler to use the desired system root.
 export SYSROOT="$(pwd)/sysroot"

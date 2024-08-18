@@ -5,8 +5,8 @@
 namespace Kernel {
 
 template <typename Lock> class LockGuard {
-	FROG_NON_COPYABLE(LockGuard<Lock>);
-	FROG_NON_MOVABLE(LockGuard<Lock>);
+	FROG_NON_COPYABLE(LockGuard);
+	FROG_NON_MOVABLE(LockGuard);
 
   public:
 	LockGuard(Lock &lock) : m_lock(lock) { m_lock.lock(); }

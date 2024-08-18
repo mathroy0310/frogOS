@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   Vector.h                                     ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 01:17:04 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 00:27:55 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Vector.h                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 01:17:04 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/18 00:04:29 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,76 +19,15 @@
 
 namespace FROG {
 
-template <typename T> class Vector;
-
-template <typename T> class VectorIterator {
-  public:
-	VectorIterator() = default;
-	VectorIterator(const VectorIterator &other) : m_data(other.m_data) {}
-	VectorIterator &operator=(const VectorIterator &other) {
-		m_data = other.m_data;
-		return *this;
-	}
-	VectorIterator &operator++() {
-		m_data++;
-		return *this;
-	}
-	T       &operator*() { return *m_data; }
-	const T &operator*() const { return *m_data; }
-	T       *operator->() { return m_data; }
-	const T *operator->() const { return m_data; }
-	bool     operator==(const VectorIterator<T> &other) const {
-        return !(*this != other);
-	}
-	bool operator!=(const VectorIterator<T> &other) const {
-		return m_data != other.m_data;
-	}
-
-  private:
-	VectorIterator(T *data) : m_data(data) {}
-
-  private:
-	T *m_data = nullptr;
-	friend class Vector<T>;
-};
-
-template <typename T> class VectorConstIterator {
-  public:
-	VectorConstIterator() = default;
-	VectorConstIterator(const VectorConstIterator &other)
-	    : m_data(other.m_data) {}
-	VectorConstIterator &operator=(const VectorConstIterator &other) {
-		m_data = other.m_data;
-		return *this;
-	}
-	VectorConstIterator &operator++() {
-		m_data++;
-		return *this;
-	}
-	const T &operator*() const { return *m_data; }
-	const T *operator->() const { return m_data; }
-	bool     operator==(const VectorConstIterator<T> &other) const {
-        return !(*this != other);
-	}
-	bool operator!=(const VectorConstIterator<T> &other) const {
-		return m_data != other.m_data;
-	}
-
-  private:
-	VectorConstIterator(T *data) : m_data(data) {}
-
-  private:
-	const T *m_data = nullptr;
-	friend class Vector<T>;
-};
+template <typename T, bool CONST> class VectorIterator;
 
 // T must be move assignable, move constructable (and copy constructable for some functions)
 template <typename T> class Vector {
   public:
 	using size_type = size_t;
 	using value_type = T;
-	using iterator = VectorIterator<T>;
-	using const_iterator = VectorConstIterator<T>;
+	using iterator = VectorIterator<T, false>;
+	using const_iterator = VectorIterator<T, true>;
 
   public:
 	Vector() = default;
@@ -108,16 +47,16 @@ template <typename T> class Vector {
 	[[nodiscard]] ErrorOr<void> insert(size_type, T &&);
 	[[nodiscard]] ErrorOr<void> insert(size_type, const T &);
 
-	iterator       begin();
-	iterator       end();
-	const_iterator begin() const;
-	const_iterator end() const;
+	iterator       begin() { return iterator(address_of(0)); }
+	const_iterator begin() const { return const_iterator(address_of(0)); }
+	iterator       end() { return iterator(address_of(m_size)); }
+	const_iterator end() const { return const_iterator(address_of(m_size)); }
 
 	void pop_back();
 	void remove(size_type);
 	void clear();
 
-	bool has(const T &) const;
+	bool contains(const T &) const;
 
 	const T &operator[](size_type) const;
 	T &operator[](size_type);
@@ -143,6 +82,70 @@ template <typename T> class Vector {
 	uint8_t  *m_data = nullptr;
 	size_type m_capacity = 0;
 	size_type m_size = 0;
+};
+
+template <typename T, bool CONST> class VectorIterator {
+  public:
+	using value_type = T;
+
+  public:
+	VectorIterator() = default;
+	template <bool C>
+	VectorIterator(const VectorIterator<T, C> &other, enable_if_t<C == CONST || !C>)
+	    : m_data(other.m_data) {}
+
+	VectorIterator<T, CONST> &operator++() {
+		m_data++;
+		return *this;
+	}
+	VectorIterator<T, CONST> &operator--() {
+		m_data--;
+		return *this;
+	}
+	VectorIterator<T, CONST> operator++(int) {
+		auto temp = *this;
+		++(*this);
+		return temp;
+	}
+	VectorIterator<T, CONST> operator--(int) {
+		auto temp = *this;
+		--(*this);
+		return temp;
+	}
+
+	template <bool ENABLE = !CONST> enable_if_t<ENABLE, T &> operator*() {
+		ASSERT(m_data);
+		return *m_data;
+	}
+	const T &operator*() const {
+		ASSERT(m_data);
+		return *m_data;
+	}
+
+	template <bool ENABLE = !CONST> enable_if_t<ENABLE, T *> operator->() {
+		ASSERT(m_data);
+		return m_data;
+	}
+	const T *operator->() const {
+		ASSERT(m_data);
+		return m_data;
+	}
+
+	bool operator==(const VectorIterator<T, CONST> &other) const {
+		return m_data == other.m_data;
+	}
+	bool operator!=(const VectorIterator<T, CONST> &other) const {
+		return !(*this == other);
+	}
+
+  private:
+	VectorIterator(T *data) : m_data(data) {}
+
+  private:
+	T *m_data = nullptr;
+
+	friend class Vector<T>;
+	friend class VectorIterator<T, !CONST>;
 };
 
 template <typename T> Vector<T>::Vector(Vector<T> &&other) {
@@ -245,24 +248,6 @@ ErrorOr<void> Vector<T>::insert(size_type index, const T &value) {
 	return insert(move(T(value)), index);
 }
 
-template <typename T> typename Vector<T>::iterator Vector<T>::begin() {
-	return VectorIterator<T>(address_of(0));
-}
-
-template <typename T> typename Vector<T>::iterator Vector<T>::end() {
-	return VectorIterator<T>(address_of(m_size));
-}
-
-template <typename T>
-typename Vector<T>::const_iterator Vector<T>::begin() const {
-	return VectorConstIterator<T>(address_of(0));
-}
-
-template <typename T>
-typename Vector<T>::const_iterator Vector<T>::end() const {
-	return VectorConstIterator<T>(address_of(m_size));
-}
-
 template <typename T> void Vector<T>::pop_back() {
 	ASSERT(m_size > 0);
 	address_of(m_size - 1)->~T();
@@ -286,7 +271,7 @@ template <typename T> void Vector<T>::clear() {
 	m_size = 0;
 }
 
-template <typename T> bool Vector<T>::has(const T &other) const {
+template <typename T> bool Vector<T>::contains(const T &other) const {
 	for (size_type i = 0; i < m_size; i++)
 		if (*address_of(i) == other) return true;
 	return false;
@@ -355,7 +340,7 @@ template <typename T> ErrorOr<void> Vector<T>::ensure_capacity(size_type size) {
 	uint8_t  *new_data = (uint8_t *) FROG::allocator(new_cap * sizeof(T));
 	if (new_data == nullptr)
 		return Error::from_string("Vector: Could not allocate memory");
-	for (size_type i = 0; i < m_size; i++) {
+	for (size_type i = 0; i < m_size; i++) {	
 		new (address_of(i, new_data)) T(move(*address_of(i)));
 		address_of(i)->~T();
 	}

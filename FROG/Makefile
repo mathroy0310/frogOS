@@ -1,12 +1,12 @@
 # **************************************************************************** #
-#                                                              _               #
-#                                                  __   ___.--'_\`.            #
-#    Makefile                                     ( _\`.' -   'o\` )           #
-#                                                 _\\.'_'      _.-'            #
-#    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
-#                                                 \\_'-`---'\\__,              #
-#    Created: 2024/08/05 01:17:18 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/09 14:39:33 by mathroy0310    `                          #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2024/08/05 01:17:18 by mathroy0310       #+#    #+#              #
+#    Updated: 2024/08/18 00:05:13 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,7 +28,7 @@ LIBDIR?=$(EXEC_PREFIX)/lib
 CFLAGS:=$(CFLAGS) -Iinclude -ffreestanding -Wall -Wextra
 CPPFLAGS:=$(CPPFLAGS)
 LIBFROGK_CFLAGS:=$(CFLAGS) -D__is_kernel -Iinclude -ffreestanding -Wall -Wextra -Werror=return-type
-LIBFROGK_CPPFLAGS:=$(CPPFLAGS) -fno-rtti -fno-exceptions -fno-threadsafe-statics
+LIBFROGK_CPPFLAGS:=$(CPPFLAGS) -fno-rtti -fno-exceptions
  
 ARCHDIR=arch/$(HOSTARCH)
  
