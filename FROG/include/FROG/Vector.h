@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:17:04 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/18 00:04:29 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/18 00:16:18 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,6 +87,7 @@ template <typename T> class Vector {
 template <typename T, bool CONST> class VectorIterator {
   public:
 	using value_type = T;
+	using data_type = maybe_const_t<CONST, T>;
 
   public:
 	VectorIterator() = default;
@@ -139,10 +140,10 @@ template <typename T, bool CONST> class VectorIterator {
 	}
 
   private:
-	VectorIterator(T *data) : m_data(data) {}
+	VectorIterator(data_type* data) : m_data(data) { }
 
   private:
-	T *m_data = nullptr;
+	data_type* m_data = nullptr;
 
 	friend class Vector<T>;
 	friend class VectorIterator<T, !CONST>;
