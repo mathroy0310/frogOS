@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   kernel.cpp                                   ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 01:34:19 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 00:18:21 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   kernel.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/19 00:27:36 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include <FROG/StringView.h>
 #include <FROG/Vector.h>
 #include <kernel/Debug.h>
+#include <kernel/DiskIO.h>
 #include <kernel/GDT.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
@@ -36,8 +37,6 @@
 #define ENABLE_INTERRUPTS() asm volatile("sti")
 
 extern "C" const char g_kernel_cmdline[];
-
-using namespace FROG;
 
 struct ParsedCommandLine {
 	bool force_pic = false;
@@ -67,6 +66,22 @@ ParsedCommandLine ParseCommandLine() {
 }
 
 static TTY *tty1 = nullptr;
+
+void print_logo(void) {
+	kprintln("\e[32m");
+	kprintln("  .d888                             ");
+	kprintln(" d88P\"                              ");
+	kprintln(" 888                                ");
+	kprintln(" 888888888d888 .d88b.  .d88b.       ");
+	kprintln(" 888   888P\"  d88\"\"88bd88P\"88b      ");
+	kprintln(" 888   888    888  888888  888      ");
+	kprintln(" 888   888    Y88..88PY88b 888      ");
+	kprintln(" 888   888     \"Y88P\"  \"Y88888      ");
+	kprintln("                           888      ");
+	kprintln("                      Y8b d88P      ");
+	kprintln("                       \"Y88P\"       ");
+	kprintln("\e[m");
+}
 
 extern "C" void kernel_main() {
 	using namespace Kernel;
@@ -104,23 +119,10 @@ extern "C" void kernel_main() {
 	dprintln("8042 initialized");
 
 	Scheduler::initialize();
-	Scheduler& scheduler = Scheduler::get();
+	Scheduler &scheduler = Scheduler::get();
+	scheduler.add_thread(FROG::Function<void()>([] { DiskIO::initialize(); }));
 	scheduler.add_thread(FROG::Function<void()>([tty1] { Shell(tty1).run(); }));
-	// scheduler.add_thread([]() {
-	// 	kprintln("\e[32m");
-	// 	kprintln("  .d888                             ");
-	// 	kprintln(" d88P\"                              ");
-	// 	kprintln(" 888                                ");
-	// 	kprintln(" 888888888d888 .d88b.  .d88b.       ");
-	// 	kprintln(" 888   888P\"  d88\"\"88bd88P\"88b      ");
-	// 	kprintln(" 888   888    888  888888  888      ");
-	// 	kprintln(" 888   888    Y88..88PY88b 888      ");
-	// 	kprintln(" 888   888     \"Y88P\"  \"Y88888      ");
-	// 	kprintln("                           888      ");
-	// 	kprintln("                      Y8b d88P      ");
-	// 	kprintln("                       \"Y88P\"       ");
-	// 	kprintln("\e[m");
-	// });
+	//scheduler.add_thread(FROG::Function<void()>([tty1] { print_logo(); }));
 	scheduler.start();
 	ASSERT(false);
 }

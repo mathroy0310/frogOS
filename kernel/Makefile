@@ -1,12 +1,12 @@
 # **************************************************************************** #
-#                                                              _               #
-#                                                  __   ___.--'_\`.            #
-#    Makefile                                     ( _\`.' -   'o\` )           #
-#                                                 _\\.'_'      _.-'            #
-#    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
-#                                                 \\_'-`---'\\__,              #
-#    Created: 2024/08/05 01:34:45 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/12 22:56:39 by mathroy0310    `                          #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2024/08/05 01:34:45 by mathroy0310       #+#    #+#              #
+#    Updated: 2024/08/19 00:01:46 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,9 +44,11 @@ BUILDDIR=$(abspath build)
 KERNEL_OBJS=					\
 $(KERNEL_ARCH_OBJS)				\
 kernel/APIC.o					\
+kernel/ATA.o					\
 kernel/build_libc.o				\
 kernel/CPUID.o					\
 kernel/Debug.o 					\
+kernel/DiskIO.o					\
 kernel/font.o					\
 kernel/Input.o					\
 kernel/InterruptController.o	\

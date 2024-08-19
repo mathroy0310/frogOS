@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:17:04 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/18 00:22:31 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/19 00:08:05 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,9 @@ template <typename T> class Vector {
 	void pop_back();
 	void remove(size_type);
 	void clear();
+
+	T       *data() { return m_data; }
+	const T *data() const { return m_data; }
 
 	bool contains(const T &) const;
 
@@ -361,19 +364,16 @@ template <typename T> ErrorOr<void> Vector<T>::ensure_capacity(size_type size) {
 
 } // namespace FROG
 
-namespace FROG::Formatter
-{
+namespace FROG::Formatter {
 
-	template<typename F, typename T>
-	void print_argument_impl(F putc, const Vector<T>& vector, const ValueFormat& format)
-	{
-		putc('[');
-		for (typename Vector<T>::size_type i = 0; i < vector.size(); i++)
-		{
-			if (i != 0) putc(',');
-			print_argument_impl(putc, vector[i], format);
-		}
-		putc(']');
+template <typename F, typename T>
+void print_argument_impl(F putc, const Vector<T> &vector, const ValueFormat &format) {
+	putc('[');
+	for (typename Vector<T>::size_type i = 0; i < vector.size(); i++) {
+		if (i != 0) putc(',');
+		print_argument_impl(putc, vector[i], format);
 	}
-
+	putc(']');
 }
+
+} // namespace FROG::Formatter
