@@ -22,7 +22,7 @@ start_thread:
 	movl 20(%eax), %esp
 
 	pushl 16(%eax)
-	@@ -25,14 +24,15 @@ start_thread:
+
 	pushl 4(%eax)
 	pushl $exit_thread_trampoline
 
