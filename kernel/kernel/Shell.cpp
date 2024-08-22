@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   Shell.cpp                                    ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 01:34:34 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 00:21:27 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Shell.cpp                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/22 11:42:53 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,11 @@
 #include <FROG/StringView.h>
 #include <FROG/Vector.h>
 #include <kernel/CPUID.h>
-#include <kernel/Scheduler.h>
 #include <kernel/IO.h>
 #include <kernel/Input.h>
 #include <kernel/PIT.h>
 #include <kernel/RTC.h>
+#include <kernel/Scheduler.h>
 #include <kernel/Shell.h>
 
 #include <ctype.h>
@@ -181,19 +181,16 @@ void Shell::process_command(const Vector<String> &arguments) {
 		//       We don't continue execution until the thread has unlocked
 		//       the spinlock.
 		s_thread_spinlock.lock();
-		Scheduler::get().add_thread(Function<void(const Vector<String> *)>([this](const Vector<String> *args_ptr) {
-			                            auto args = *args_ptr;
-			                            s_thread_spinlock.unlock();
+		MUST(Scheduler::get().add_thread(Function<void(const Vector<String> *)>([this](const Vector<String> *args_ptr) {
+			                                 auto args = *args_ptr;
+			                                 s_thread_spinlock.unlock();
 
-			                            args.remove(0);
+			                                 args.remove(0);
+			                                 PIT::sleep(5000);
 
-			                            auto start = PIT::ms_since_boot();
-			                            while (PIT::ms_since_boot() < start + 5000)
-				                            ;
-
-			                            process_command(args);
-		                            }),
-		                            &arguments);
+			                                 process_command(args);
+		                                 }),
+		                                 &arguments));
 
 		while (s_thread_spinlock.is_locked())
 			;
@@ -203,6 +200,13 @@ void Shell::process_command(const Vector<String> &arguments) {
 			return;
 		}
 		kmalloc_dump_info();
+	} else if (arguments.front() == "sleep") {
+		if (arguments.size() != 1) {
+			TTY_PRINTLN("'sleep' does not support command line arguments");
+			return;
+		}
+		PIT::sleep(5000);
+		TTY_PRINTLN("done");
 	} else if (arguments.front() == "cpuinfo") {
 		if (arguments.size() != 1) {
 			TTY_PRINTLN("'cpuinfo' does not support command line arguments");

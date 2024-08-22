@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/19 00:27:36 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/22 11:37:08 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,9 +120,10 @@ extern "C" void kernel_main() {
 
 	Scheduler::initialize();
 	Scheduler &scheduler = Scheduler::get();
-	scheduler.add_thread(FROG::Function<void()>([] { DiskIO::initialize(); }));
-	scheduler.add_thread(FROG::Function<void()>([tty1] { Shell(tty1).run(); }));
-	//scheduler.add_thread(FROG::Function<void()>([tty1] { print_logo(); }));
+	MUST(scheduler.add_thread(FROG::Function<void()>([] { DiskIO::initialize(); })));
+	MUST(
+	    scheduler.add_thread(FROG::Function<void()>([tty1] { Shell(tty1).run(); })));
+	// scheduler.add_thread(FROG::Function<void()>([tty1] { print_logo(); }));
 	scheduler.start();
 	ASSERT(false);
 }

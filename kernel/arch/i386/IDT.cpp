@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   IDT.cpp                                      ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/09 01:54:51 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 22:01:49 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   IDT.cpp                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/09 01:54:51 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/22 11:19:37 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,7 +136,8 @@ found:
 	else
 		dprintln("no handler for irq 0x{2H}\n", irq);
 
-	InterruptController::get().eoi(irq);
+	if (irq != PIT_IRQ)
+		InterruptController::get().eoi(irq);
 }
 
 extern "C" void handle_irq_common();

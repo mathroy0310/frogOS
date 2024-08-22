@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   Thread.h                                     ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/12 22:58:42 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 22:58:44 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Thread.h                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/12 22:58:42 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/22 11:30:35 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ namespace Kernel
 			NotStarted,
 			Running,
 			Paused,
+			Sleeping,
 			Done,
 		};
 
@@ -48,11 +49,9 @@ namespace Kernel
 		uint32_t id() const { return m_id; }
 
 		void set_rsp(uintptr_t rsp) { m_rsp = rsp; }
-		void set_rbp(uintptr_t rbp) { m_rbp = rbp; }
 		void set_rip(uintptr_t rip) { m_rip = rip; }
 		void set_state(State state) { m_state = state; }
 		uintptr_t rsp() const { return m_rsp; }
-		uintptr_t rbp() const { return m_rbp; }
 		uintptr_t rip() const { return m_rip; }
 		State state() const { return m_state; }
 
@@ -67,7 +66,6 @@ namespace Kernel
 		State			m_state			= State::NotStarted;
 		uintptr_t		m_args[4]		= {};
 		uintptr_t		m_rip			= 0;
-		uintptr_t		m_rbp			= 0;
 		uintptr_t		m_rsp			= 0;
 		const uint32_t	m_id			= 0;
 		

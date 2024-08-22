@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 23:25:10 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/18 00:28:56 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/22 11:31:17 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ static uint64_t s_system_time = 0;
 
 void irq_handler() {
 	s_system_time++;
-	Kernel::Scheduler::get().switch_thread();
+	Kernel::Scheduler::get().reschedule();
 }
 
 uint64_t ms_since_boot() { return s_system_time; }
@@ -63,7 +63,7 @@ void initialize() {
 void sleep(uint64_t ms) {
 	uint64_t end = s_system_time + ms;
 	while (s_system_time < end)
-		asm volatile("hlt");
+		Kernel::Scheduler::get().set_current_thread_sleeping();
 }
 
 } // namespace PIT
