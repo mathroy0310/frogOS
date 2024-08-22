@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 22:57:03 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/22 11:37:08 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/22 11:48:36 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ class Scheduler {
 	const Thread &current_thread() const;
 
 	template <typename... Args>
-	[[nodiscard]] FROG::ErrorOr<void> add_thread(const FROG::Function<void(Args...)> &func, Args... args) {
+	FROG::ErrorOr<void> add_thread(const FROG::Function<void(Args...)> &func, Args... args) {
 		uintptr_t flags;
 		asm volatile("pushf; pop %0" : "=r"(flags));
 		asm volatile("cli");

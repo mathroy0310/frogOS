@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/18 00:19:41 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/22 11:46:26 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ class Error {
 	uint8_t m_error_code;
 };
 
-template <typename T> class ErrorOr {
+template <typename T> class [[nodiscard]] ErrorOr {
   public:
 	ErrorOr(const T &value) : m_has_error(false) {
 		m_data = (void *) new T(value);
@@ -84,11 +84,11 @@ template <typename T> class ErrorOr {
 	void *m_data = nullptr;
 };
 
-template <> class ErrorOr<void> {
+template <> class [[nodiscard]] ErrorOr<void> {
   public:
-	ErrorOr()														{ }
-	ErrorOr(const Error& error) : m_error(error), m_has_error(true)	{ }
-	~ErrorOr()															{ }
+	ErrorOr() {}
+	ErrorOr(const Error &error) : m_error(error), m_has_error(true) {}
+	~ErrorOr() {}
 
 	bool         is_error() const { return m_has_error; }
 	const Error &get_error() const { return m_error; }

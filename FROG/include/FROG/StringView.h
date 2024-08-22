@@ -1,15 +1,14 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   StringView.h                                 ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 01:17:09 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:32:39 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   StringView.h                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 01:17:09 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/22 11:48:16 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #include <FROG/Formatter.h>
 #include <FROG/ForwardList.h>
@@ -33,8 +32,8 @@ class StringView {
 
 	StringView substring(size_type, size_type = -1) const;
 
-	[[nodiscard]] ErrorOr<Vector<StringView>> split(char, bool = false);
-	[[nodiscard]] ErrorOr<Vector<StringView>> split(bool (*comp)(char), bool = false);
+	ErrorOr<Vector<StringView>> split(char, bool = false);
+	ErrorOr<Vector<StringView>> split(bool (*comp)(char), bool = false);
 
 	char back() const;
 	char front() const;

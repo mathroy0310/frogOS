@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/18 00:24:15 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/18 00:24:17 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/22 11:46:44 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,10 +36,10 @@ template <typename T, typename HASH = hash<T>> class HashSet {
 	HashSet<T, HASH> &operator=(const HashSet<T, HASH> &);
 	HashSet<T, HASH> &operator=(HashSet<T, HASH> &&);
 
-	[[nodiscard]] ErrorOr<void> insert(const T &);
-	[[nodiscard]] ErrorOr<void> insert(T &&);
-	void                        remove(const T &);
-	void                        clear();
+	ErrorOr<void> insert(const T &);
+	ErrorOr<void> insert(T &&);
+	void          remove(const T &);
+	void          clear();
 
 	const_iterator begin() const {
 		return const_iterator(this, m_buckets.begin());
@@ -52,9 +52,9 @@ template <typename T, typename HASH = hash<T>> class HashSet {
 	bool      empty() const;
 
   private:
-	[[nodiscard]] ErrorOr<void> rebucket(size_type);
-	Vector<T>                  &get_bucket(const T &);
-	const Vector<T>            &get_bucket(const T &) const;
+	ErrorOr<void>    rebucket(size_type);
+	Vector<T>       &get_bucket(const T &);
+	const Vector<T> &get_bucket(const T &) const;
 
   private:
 	Vector<Vector<T>> m_buckets;

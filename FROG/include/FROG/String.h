@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   String.h                                     ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 01:16:49 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:32:47 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   String.h                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 01:16:49 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/22 11:48:05 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,11 +35,11 @@ class String {
 	String &operator=(String &&);
 	String &operator=(StringView);
 
-	[[nodiscard]] ErrorOr<void> push_back(char);
-	[[nodiscard]] ErrorOr<void> insert(char, size_type);
-	[[nodiscard]] ErrorOr<void> insert(StringView, size_type);
-	[[nodiscard]] ErrorOr<void> append(StringView);
-	[[nodiscard]] ErrorOr<void> append(const String &);
+	ErrorOr<void> push_back(char);
+	ErrorOr<void> insert(char, size_type);
+	ErrorOr<void> insert(StringView, size_type);
+	ErrorOr<void> append(StringView);
+	ErrorOr<void> append(const String &);
 
 	void pop_back();
 	void remove(size_type);
@@ -54,8 +54,8 @@ class String {
 	bool operator==(StringView) const;
 	bool operator==(const char *) const;
 
-	[[nodiscard]] ErrorOr<void> resize(size_type, char = '\0');
-	[[nodiscard]] ErrorOr<void> reserve(size_type);
+	ErrorOr<void> resize(size_type, char = '\0');
+	ErrorOr<void> reserve(size_type);
 
 	StringView sv() const;
 
@@ -66,10 +66,10 @@ class String {
 	const char *data() const;
 
   private:
-	[[nodiscard]] ErrorOr<void> ensure_capacity(size_type);
+	ErrorOr<void> ensure_capacity(size_type);
 
-	[[nodiscard]] ErrorOr<void> copy_impl(StringView);
-	void                        move_impl(String &&);
+	ErrorOr<void> copy_impl(StringView);
+	void          move_impl(String &&);
 
   private:
 	char     *m_data = nullptr;
