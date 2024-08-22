@@ -29,8 +29,8 @@ class Shell {
   private:
 	void                       rerender_buffer() const;
 	FROG::Vector<FROG::String> parse_arguments(FROG::StringView) const;
-	void process_command(const FROG::Vector<FROG::String> &);
-	void key_event_callback(Input::KeyEvent);
+	void                       process_command(const FROG::Vector<FROG::String> &);
+	void                       key_event_callback(Input::KeyEvent);
 
   private:
 	TTY                       *m_tty;

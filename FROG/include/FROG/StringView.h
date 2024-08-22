@@ -58,8 +58,7 @@ inline FROG::StringView operator""_sv(const char *str, FROG::StringView::size_ty
 
 namespace FROG::Formatter {
 
-template <typename F>
-void print_argument_impl(F putc, const StringView &sv, const ValueFormat &) {
+template <typename F> void print_argument_impl(F putc, const StringView &sv, const ValueFormat &) {
 	for (StringView::size_type i = 0; i < sv.size(); i++)
 		putc(sv[i]);
 }

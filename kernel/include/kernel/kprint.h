@@ -16,5 +16,4 @@
 #include <kernel/TTY.h>
 
 #define kprint(...) FROG::Formatter::print(TTY::putchar_current, __VA_ARGS__)
-#define kprintln(...) \
-	FROG::Formatter::println(TTY::putchar_current, __VA_ARGS__)
+#define kprintln(...) FROG::Formatter::println(TTY::putchar_current, __VA_ARGS__)

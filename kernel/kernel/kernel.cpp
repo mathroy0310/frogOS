@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/22 11:37:08 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/22 11:53:28 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,8 +52,7 @@ ParsedCommandLine ParseCommandLine() {
 	const char *current = g_kernel_cmdline;
 	while (true) {
 		if (!*current || *current == ' ' || *current == '\t') {
-			if (current - start == 6 && memcmp(start, "noapic", 6) == 0)
-				result.force_pic = true;
+			if (current - start == 6 && memcmp(start, "noapic", 6) == 0) result.force_pic = true;
 			if (current - start == 8 && memcmp(start, "noserial", 8) == 0)
 				result.disable_serial = true;
 			if (!*current) break;
@@ -121,8 +120,7 @@ extern "C" void kernel_main() {
 	Scheduler::initialize();
 	Scheduler &scheduler = Scheduler::get();
 	MUST(scheduler.add_thread(FROG::Function<void()>([] { DiskIO::initialize(); })));
-	MUST(
-	    scheduler.add_thread(FROG::Function<void()>([tty1] { Shell(tty1).run(); })));
+	MUST(scheduler.add_thread(FROG::Function<void()>([tty1] { Shell(tty1).run(); })));
 	// scheduler.add_thread(FROG::Function<void()>([tty1] { print_logo(); }));
 	scheduler.start();
 	ASSERT(false);

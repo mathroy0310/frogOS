@@ -28,8 +28,7 @@ class String {
 	String(StringView);
 	~String();
 
-	template <typename... Args>
-	static String formatted(const char *format, const Args &...args);
+	template <typename... Args> static String formatted(const char *format, const Args &...args);
 
 	String &operator=(const String &);
 	String &operator=(String &&);
@@ -77,8 +76,7 @@ class String {
 	size_type m_size = 0;
 };
 
-template <typename... Args>
-String String::formatted(const char *format, const Args &...args) {
+template <typename... Args> String String::formatted(const char *format, const Args &...args) {
 	String result;
 	FROG::Formatter::print([&](char c) { result.push_back(c); }, format, args...);
 	return result;
@@ -88,8 +86,7 @@ String String::formatted(const char *format, const Args &...args) {
 
 namespace FROG::Formatter {
 
-template <typename F>
-void print_argument_impl(F putc, const String &string, const ValueFormat &) {
+template <typename F> void print_argument_impl(F putc, const String &string, const ValueFormat &) {
 	for (String::size_type i = 0; i < string.size(); i++)
 		putc(string[i]);
 }

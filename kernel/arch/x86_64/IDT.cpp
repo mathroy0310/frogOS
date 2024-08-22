@@ -17,8 +17,7 @@
 #include <kernel/kmalloc.h>
 
 #define REGISTER_ISR_HANDLER(i) register_interrupt_handler(i, isr##i)
-#define REGISTER_IRQ_HANDLER(i) \
-	register_interrupt_handler(IRQ_VECTOR_BASE + i, irq##i)
+#define REGISTER_IRQ_HANDLER(i) register_interrupt_handler(IRQ_VECTOR_BASE + i, irq##i)
 
 namespace IDT {
 
@@ -124,8 +123,7 @@ extern "C" void cpp_irq_handler(uint64_t irq) {
 		dprintln("no handler for irq 0x{2H}\n", irq);
 	}
 
-	if (irq != PIT_IRQ)
-		InterruptController::get().eoi(irq);
+	if (irq != PIT_IRQ) InterruptController::get().eoi(irq);
 }
 
 static void flush_idt() { asm volatile("lidt %0" ::"m"(s_idtr)); }
@@ -141,9 +139,7 @@ static void register_interrupt_handler(uint8_t index, void (*handler)()) {
 	descriptor.flags = 0x8E;
 }
 
-void register_irq_handler(uint8_t irq, void (*handler)()) {
-	s_irq_handlers[irq] = handler;
-}
+void register_irq_handler(uint8_t irq, void (*handler)()) { s_irq_handlers[irq] = handler; }
 
 extern "C" void isr0();
 extern "C" void isr1();

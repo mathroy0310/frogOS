@@ -35,13 +35,13 @@ static constexpr uintptr_t s_kmalloc_end = s_kmalloc_base + s_kmalloc_size;
 static constexpr uintptr_t s_kmalloc_eternal_base = s_kmalloc_end;
 static constexpr size_t    s_kmalloc_eternal_size = 1 * MB;
 static constexpr uintptr_t s_kmalloc_eternal_end = s_kmalloc_eternal_base + s_kmalloc_eternal_size;
-static uintptr_t s_kmalloc_eternal_ptr = s_kmalloc_eternal_base;
+static uintptr_t           s_kmalloc_eternal_ptr = s_kmalloc_eternal_base;
 
 static constexpr size_t s_kmalloc_default_align = alignof(max_align_t);
 static constexpr size_t s_kmalloc_chunk_size = s_kmalloc_default_align;
 static constexpr size_t s_kmalloc_chunks_per_size = sizeof(size_t) * 8 / s_kmalloc_chunk_size;
 static constexpr size_t s_kmalloc_total_chunks = s_kmalloc_size / s_kmalloc_chunk_size;
-static uint8_t s_kmalloc_bitmap[s_kmalloc_total_chunks / 8]{0};
+static uint8_t          s_kmalloc_bitmap[s_kmalloc_total_chunks / 8]{0};
 
 static size_t s_kmalloc_free = s_kmalloc_size;
 static size_t s_kmalloc_used = 0;
@@ -74,8 +74,7 @@ void kmalloc_initialize() {
 	// Validate kmalloc memory
 	bool valid = false;
 	for (size_t i = 0; i < g_multiboot_info->mmap_length;) {
-		multiboot_memory_map_t *mmmt =
-		    (multiboot_memory_map_t *) (g_multiboot_info->mmap_addr + i);
+		multiboot_memory_map_t *mmmt = (multiboot_memory_map_t *) (g_multiboot_info->mmap_addr + i);
 
 		if (mmmt->type == 1) {
 			if (mmmt->base_addr <= s_kmalloc_base && s_kmalloc_eternal_end <= mmmt->base_addr + mmmt->length) {
@@ -104,8 +103,7 @@ void kmalloc_dump_info() {
 }
 
 void *kmalloc_eternal(size_t size) {
-	if (size_t rem = size % alignof(max_align_t))
-		size += alignof(max_align_t) - rem;
+	if (size_t rem = size % alignof(max_align_t)) size += alignof(max_align_t) - rem;
 	ASSERT(s_kmalloc_eternal_ptr + size < s_kmalloc_eternal_end);
 	void *result = (void *) s_kmalloc_eternal_ptr;
 	s_kmalloc_eternal_ptr += size;

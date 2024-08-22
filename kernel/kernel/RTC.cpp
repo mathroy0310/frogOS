@@ -81,13 +81,11 @@ FROG::Time get_current_time() {
 	}
 
 	// Convert 12 hour clock to 24 hour clock if necessary
-	if (!(regB & 0x02) && (time.hour & 0x80))
-		time.hour = ((time.hour & 0x7F) + 12) % 24;
+	if (!(regB & 0x02) && (time.hour & 0x80)) time.hour = ((time.hour & 0x7F) + 12) % 24;
 
 	// Calculate the full 4 digit year
 	time.year += (CURRENT_YEAR / 100) * 100;
-	if (time.year < CURRENT_YEAR)
-		time.year += 100;
+	if (time.year < CURRENT_YEAR) time.year += 100;
 
 	return time;
 }

@@ -42,10 +42,10 @@ class PATADevice final : public ATADevice {
   public:
 	PATADevice(uint16_t io_base, uint16_t ctl_base, uint8_t slave_bit)
 	    : ATADevice(io_base, ctl_base, slave_bit) {}
-        
-    virtual uint32_t sector_size() const override { return m_sector_words * 2; }
+
+	virtual uint32_t    sector_size() const override { return m_sector_words * 2; }
 	virtual const char *type() const override { return "PATA"; }
-	virtual bool read(uint32_t lba, uint32_t sector_count, uint8_t *buffer) override;
+	virtual bool        read(uint32_t lba, uint32_t sector_count, uint8_t *buffer) override;
 
   protected:
 	virtual bool initialize() override;
@@ -57,8 +57,8 @@ class PATADevice final : public ATADevice {
 	void flush();
 
   private:
-	bool m_lba_48 = false;
-    uint32_t m_sector_words = 256;
+	bool     m_lba_48 = false;
+	uint32_t m_sector_words = 256;
 };
 
 } // namespace Kernel

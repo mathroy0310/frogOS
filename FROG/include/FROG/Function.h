@@ -26,13 +26,11 @@ template <typename Ret, typename... Args> class Function<Ret(Args...)> {
 		static_assert(sizeof(CallablePointer) <= m_size);
 		new (m_storage) CallablePointer(function);
 	}
-	template <typename Own>
-	Function(Ret (Own::*function)(Args...), Own *owner) {
+	template <typename Own> Function(Ret (Own::*function)(Args...), Own *owner) {
 		static_assert(sizeof(CallableMember<Own>) <= m_size);
 		new (m_storage) CallableMember<Own>(function, owner);
 	}
-	template <typename Own>
-	Function(Ret (Own::*function)(Args...) const, const Own *owner) {
+	template <typename Own> Function(Ret (Own::*function)(Args...) const, const Own *owner) {
 		static_assert(sizeof(CallableMemberConst<Own>) <= m_size);
 		new (m_storage) CallableMemberConst<Own>(function, owner);
 	}
@@ -69,9 +67,7 @@ template <typename Ret, typename... Args> class Function<Ret(Args...)> {
 	struct CallablePointer : public CallableBase {
 		CallablePointer(Ret (*function)(Args...)) : m_function(function) {}
 
-		virtual Ret call(Args... args) override {
-			return m_function(forward<Args>(args)...);
-		}
+		virtual Ret call(Args... args) override { return m_function(forward<Args>(args)...); }
 
 	  private:
 		Ret (*m_function)(Args...) = nullptr;
@@ -106,9 +102,7 @@ template <typename Ret, typename... Args> class Function<Ret(Args...)> {
 	template <typename Lambda> struct CallableLambda : public CallableBase {
 		CallableLambda(Lambda lambda) : m_lambda(lambda) {}
 
-		virtual Ret call(Args... args) override {
-			return m_lambda(forward<Args>(args)...);
-		}
+		virtual Ret call(Args... args) override { return m_lambda(forward<Args>(args)...); }
 
 	  private:
 		Lambda m_lambda;

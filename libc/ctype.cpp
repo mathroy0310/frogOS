@@ -38,6 +38,4 @@ int isspace(int c) {
 
 int isupper(int c) { return 'A' <= c && c <= 'Z'; }
 
-int isxdigit(int c) {
-	return isdigit(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
-}
+int isxdigit(int c) { return isdigit(c) || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F'); }

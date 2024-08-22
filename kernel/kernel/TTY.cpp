@@ -34,9 +34,7 @@
 
 template <typename T> inline constexpr T max(T a, T b) { return a > b ? a : b; }
 template <typename T> inline constexpr T min(T a, T b) { return a < b ? a : b; }
-template <typename T> inline constexpr T clamp(T x, T a, T b) {
-	return x < a ? a : x > b ? b : x;
-}
+template <typename T> inline constexpr T clamp(T x, T a, T b) { return x < a ? a : x > b ? b : x; }
 
 static TTY *s_tty = nullptr;
 
@@ -59,8 +57,7 @@ void TTY::set_cursor_position(uint32_t x, uint32_t y) {
 	static uint32_t last_x = -1;
 	static uint32_t last_y = -1;
 
-	if (last_x != uint32_t(-1) && last_y != uint32_t(-1))
-		render_from_buffer(last_x, last_y);
+	if (last_x != uint32_t(-1) && last_y != uint32_t(-1)) render_from_buffer(last_x, last_y);
 	m_terminal_driver->set_cursor_position(x, y);
 	last_x = m_column = x;
 	last_y = m_row = y;

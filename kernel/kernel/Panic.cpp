@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <kernel/Panic.h>
 #include <kernel/Debug.h>
+#include <kernel/Panic.h>
 
 namespace Kernel {
 

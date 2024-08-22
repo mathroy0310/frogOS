@@ -122,58 +122,52 @@ static FROG::Function<void(MouseButtonEvent)> s_mouse_button_event_callback;
 static FROG::Function<void(MouseMoveEvent)>   s_mouse_move_event_callback;
 
 static const char *s_key_to_utf8_lower[]{
-    nullptr, nullptr, "0",     "1",     "2",     "3",     "4",     "5",
-    "6",     "7",     "8",     "9",     "a",     "b",     "c",     "d",
-    "e",     "f",     "g",     "h",     "i",     "j",     "k",     "l",
-    "m",     "n",     "o",     "p",     "q",     "r",     "s",     "t",
-    "u",     "v",     "w",     "x",     "y",     "z",
+    nullptr, nullptr, "0",     "1",     "2",     "3",     "4",     "5",     "6",     "7",
+    "8",     "9",     "a",     "b",     "c",     "d",     "e",     "f",     "g",     "h",
+    "i",     "j",     "k",     "l",     "m",     "n",     "o",     "p",     "q",     "r",
+    "s",     "t",     "u",     "v",     "w",     "x",     "y",     "z",
 
-    ",",     ":",     ".",     ";",     "-",     "_",     "'",     "*",
-    "^",     "~",     "!",     "?",     "\"",    "#",     "%",     "&",
-    "/",     "\\",    "+",     "=",     "(",     ")",     "[",     "]",
-    "{",     "}",     "$",     "£",     "€",     "¤",     "\n",    " ",
-    "\t",    nullptr, "<",     ">",     "´",     "`",     "§",     "½",
-    "@",     "|",     nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-
-    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-    nullptr, nullptr,
-
-    "0",     "1",     "2",     "3",     "4",     "5",     "6",     "7",
-    "8",     "9",     ",",     "+",     "*",     "/",     "-",     "\n",
-
-    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-
-    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+    ",",     ":",     ".",     ";",     "-",     "_",     "'",     "*",     "^",     "~",
+    "!",     "?",     "\"",    "#",     "%",     "&",     "/",     "\\",    "+",     "=",
+    "(",     ")",     "[",     "]",     "{",     "}",     "$",     "£",     "€",     "¤",
+    "\n",    " ",     "\t",    nullptr, "<",     ">",     "´",     "`",     "§",     "½",
+    "@",     "|",     nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, nullptr,
+
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+
+    "0",     "1",     "2",     "3",     "4",     "5",     "6",     "7",     "8",     "9",
+    ",",     "+",     "*",     "/",     "-",     "\n",
+
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr,
 };
 static_assert(sizeof(s_key_to_utf8_lower) == (int) Key::Count * sizeof(*s_key_to_utf8_lower));
 
 static const char *s_key_to_utf8_upper[]{
-    nullptr, nullptr, "0",     "1",     "2",     "3",     "4",     "5",
-    "6",     "7",     "8",     "9",     "A",     "B",     "C",     "D",
-    "E",     "F",     "G",     "H",     "I",     "J",     "K",     "L",
-    "M",     "N",     "O",     "P",     "Q",     "R",     "S",     "T",
-    "U",     "V",     "W",     "X",     "Y",     "Z",
+    nullptr, nullptr, "0",     "1",     "2",     "3",     "4",     "5",     "6",     "7",
+    "8",     "9",     "A",     "B",     "C",     "D",     "E",     "F",     "G",     "H",
+    "I",     "J",     "K",     "L",     "M",     "N",     "O",     "P",     "Q",     "R",
+    "S",     "T",     "U",     "V",     "W",     "X",     "Y",     "Z",
 
-    ",",     ":",     ".",     ";",     "-",     "_",     "'",     "*",
-    "^",     "~",     "!",     "?",     "\"",    "#",     "%",     "&",
-    "/",     "\\",    "+",     "=",     "(",     ")",     "[",     "]",
-    "{",     "}",     "$",     "£",     "€",     "¤",     "\n",    " ",
-    "\t",    nullptr, "<",     ">",     "´",     "`",     "§",     "½",
-    "@",     "|",     nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-
-    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-    nullptr, nullptr,
-
-    "0",     "1",     "2",     "3",     "4",     "5",     "6",     "7",
-    "8",     "9",     ",",     "+",     "*",     "/",     "-",     "\n",
-
-    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-
-    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+    ",",     ":",     ".",     ";",     "-",     "_",     "'",     "*",     "^",     "~",
+    "!",     "?",     "\"",    "#",     "%",     "&",     "/",     "\\",    "+",     "=",
+    "(",     ")",     "[",     "]",     "{",     "}",     "$",     "£",     "€",     "¤",
+    "\n",    " ",     "\t",    nullptr, "<",     ">",     "´",     "`",     "§",     "½",
+    "@",     "|",     nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, nullptr,
+
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+
+    "0",     "1",     "2",     "3",     "4",     "5",     "6",     "7",     "8",     "9",
+    ",",     "+",     "*",     "/",     "-",     "\n",
+
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr,
 };
 static_assert(sizeof(s_key_to_utf8_upper) == (int) Key::Count * sizeof(*s_key_to_utf8_upper));
 
@@ -185,9 +179,7 @@ static uint8_t wait_and_read() {
 	return IO::inb(I8042_DATA_PORT);
 }
 
-static void i8042_controller_command(uint8_t command) {
-	IO::outb(I8042_COMMAND_REGISTER, command);
-}
+static void i8042_controller_command(uint8_t command) { IO::outb(I8042_COMMAND_REGISTER, command); }
 
 static void i8042_controller_command(uint8_t command, uint8_t data) {
 	IO::outb(I8042_COMMAND_REGISTER, command);
@@ -217,8 +209,7 @@ static void i8042_handle_byte(uint8_t target, uint8_t raw) {
 
 	if (!s_command_queue.empty()) {
 		auto &command = s_command_queue.front();
-		if (command.target == target && command._sent && !command._done)
-			waiting_response = true;
+		if (command.target == target && command._sent && !command._done) waiting_response = true;
 	}
 
 	if (target == TARGET_KEYBOARD) {
@@ -226,13 +217,11 @@ static void i8042_handle_byte(uint8_t target, uint8_t raw) {
 			auto &command = s_command_queue.front();
 
 			if (raw == I8042_KB_RESEND) {
-				dprintln("PS/2 Keyboard: Resend 0x{H}",
-				         command._sent == 2 ? command.data : command.command);
+				dprintln("PS/2 Keyboard: Resend 0x{H}", command._sent == 2 ? command.data : command.command);
 				command._sent--;
 			} else if (raw == I8042_KB_ACK) {
 				command._ack++;
-				if (command.resp_cnt == 0)
-					command._done = (command._ack >= (1 + command.has_data));
+				if (command.resp_cnt == 0) command._done = (command._ack >= (1 + command.has_data));
 			} else if (raw == 0x00) {
 				dprintln("\e[33mKey detection error or internal buffer "
 				         "overrun\e[m");
@@ -244,8 +233,7 @@ static void i8042_handle_byte(uint8_t target, uint8_t raw) {
 				s_command_queue.pop();
 			} else {
 				s_command_response[s_command_response_index++] = raw;
-				if (s_command_response_index >= command.resp_cnt)
-					command._done = true;
+				if (s_command_response_index >= command.resp_cnt) command._done = true;
 			}
 		} else {
 			s_keyboard_key_buffer[s_keyboard_key_buffer_size++] = raw;
@@ -257,12 +245,10 @@ static void i8042_handle_byte(uint8_t target, uint8_t raw) {
 
 			if (raw == I8042_MOUSE_ACK) {
 				command._ack++;
-				if (command.resp_cnt == 0)
-					command._done = (command._ack >= (1 + command.has_data));
+				if (command.resp_cnt == 0) command._done = (command._ack >= (1 + command.has_data));
 			} else {
 				s_command_response[s_command_response_index++] = raw;
-				if (s_command_response_index >= command.resp_cnt)
-					command._done = true;
+				if (s_command_response_index >= command.resp_cnt) command._done = true;
 			}
 		} else {
 			s_mouse_data_buffer[s_mouse_data_buffer_index++] = raw;
@@ -273,8 +259,7 @@ static void i8042_handle_byte(uint8_t target, uint8_t raw) {
 					bool right = s_mouse_data_buffer[0] & (1 << 1);
 					bool middle = s_mouse_data_buffer[0] & (1 << 2);
 
-					if (left)
-						MUST(s_mouse_button_event_queue.push({.button = MouseButton::Left}));
+					if (left) MUST(s_mouse_button_event_queue.push({.button = MouseButton::Left}));
 					if (right)
 						MUST(s_mouse_button_event_queue.push({.button = MouseButton::Right}));
 					if (middle)
@@ -305,20 +290,17 @@ void update() {
 		if (command._sent == 0 && command._ack == 0) {
 			command._sent++;
 			if (!i8042_command(command.target, command.command))
-				Kernel::panic("PS/2 command oof {}, 0x{2H}", command.target,
-				              command.command);
+				Kernel::panic("PS/2 command oof {}, 0x{2H}", command.target, command.command);
 		}
 
 		if (command._sent == 1 && command._ack == 1 && command.has_data) {
 			command._sent++;
 			if (!i8042_command(command.target, command.data))
-				Kernel::panic("PS/2 data oof {}, 0x{2H}", command.target,
-				              command.data);
+				Kernel::panic("PS/2 data oof {}, 0x{2H}", command.target, command.data);
 		}
 
 		if (command._sent > 0 && PIT::ms_since_boot() > s_command_sent + 1000) {
-			kprintln("PS/2 command 0x{2H} timed out on {}", command.command,
-			         command.target);
+			kprintln("PS/2 command 0x{2H} timed out on {}", command.command, command.target);
 			// Discard command on timeout?
 			command._done = true;
 			command.target = 0;
@@ -362,8 +344,7 @@ void update() {
 	}
 
 	while (!s_key_event_queue.empty()) {
-		if (s_key_event_callback)
-			s_key_event_callback(s_key_event_queue.front());
+		if (s_key_event_callback) s_key_event_callback(s_key_event_queue.front());
 		s_key_event_queue.pop();
 	}
 

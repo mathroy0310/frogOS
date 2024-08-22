@@ -104,13 +104,9 @@ template <typename T> ErrorOr<void> Queue<T>::push(T &&value) {
 	return {};
 }
 
-template <typename T> ErrorOr<void> Queue<T>::push(const T &value) {
-	return push(move(T(value)));
-}
+template <typename T> ErrorOr<void> Queue<T>::push(const T &value) { return push(move(T(value))); }
 
-template <typename T>
-template <typename... Args>
-ErrorOr<void> Queue<T>::emplace(Args &&...args) {
+template <typename T> template <typename... Args> ErrorOr<void> Queue<T>::emplace(Args &&...args) {
 	TRY(ensure_capacity(m_size + 1));
 	new (m_data + m_size) T(forward<Args>(args)...);
 	m_size++;
@@ -136,9 +132,7 @@ template <typename T> void Queue<T>::clear() {
 
 template <typename T> bool Queue<T>::empty() const { return m_size == 0; }
 
-template <typename T> typename Queue<T>::size_type Queue<T>::size() const {
-	return m_size;
-}
+template <typename T> typename Queue<T>::size_type Queue<T>::size() const { return m_size; }
 
 template <typename T> const T &Queue<T>::front() const {
 	ASSERT(m_size > 0);
@@ -154,8 +148,7 @@ template <typename T> ErrorOr<void> Queue<T>::ensure_capacity(size_type size) {
 	if (m_capacity > size) return {};
 	size_type new_cap = FROG::Math::max<size_type>(size, m_capacity * 3 / 2);
 	T        *new_data = (T *) FROG::allocator(new_cap * sizeof(T));
-	if (new_data == nullptr)
-		return Error::from_string("Queue: Could not allocate memory");
+	if (new_data == nullptr) return Error::from_string("Queue: Could not allocate memory");
 	for (size_type i = 0; i < m_size; i++) {
 		new (new_data + i) T(move(m_data[i]));
 		m_data[i].~T();

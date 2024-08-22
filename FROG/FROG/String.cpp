@@ -170,8 +170,7 @@ ErrorOr<void> String::ensure_capacity(size_type size) {
 	if (m_capacity >= size) return {};
 	size_type new_cap = FROG::Math::max<size_type>(size, m_capacity * 3 / 2);
 	void     *new_data = FROG::allocator(new_cap);
-	if (new_data == nullptr)
-		return Error::from_string("String: Could not allocate memory");
+	if (new_data == nullptr) return Error::from_string("String: Could not allocate memory");
 	if (m_data) memcpy(new_data, m_data, m_size + 1);
 	FROG::deallocator(m_data);
 	m_data = (char *) new_data;

@@ -38,9 +38,7 @@ template <typename T> class Unique {
 	FROG_NON_COPYABLE(Unique);
 
   public:
-	template <typename... Args> Unique(const Args &...args) {
-		m_pointer = new T(args...);
-	}
+	template <typename... Args> Unique(const Args &...args) { m_pointer = new T(args...); }
 
 	~Unique() { delete m_pointer; }
 
@@ -118,8 +116,7 @@ template <typename T> class RefCounted {
 	}
 
   private:
-	RefCounted(T *pointer, int32_t *count)
-	    : m_pointer(pointer), m_count(count) {
+	RefCounted(T *pointer, int32_t *count) : m_pointer(pointer), m_count(count) {
 		ASSERT(!pointer == !count);
 	}
 

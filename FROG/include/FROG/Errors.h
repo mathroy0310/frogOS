@@ -61,23 +61,16 @@ class Error {
 
 template <typename T> class [[nodiscard]] ErrorOr {
   public:
-	ErrorOr(const T &value) : m_has_error(false) {
-		m_data = (void *) new T(value);
-	}
-	ErrorOr(const Error &error) : m_has_error(true) {
-		m_data = (void *) new Error(error);
-	}
-	template <typename S>
-	ErrorOr(const ErrorOr<S> &other) : ErrorOr(other.get_error()) {}
+	ErrorOr(const T &value) : m_has_error(false) { m_data = (void *) new T(value); }
+	ErrorOr(const Error &error) : m_has_error(true) { m_data = (void *) new Error(error); }
+	template <typename S> ErrorOr(const ErrorOr<S> &other) : ErrorOr(other.get_error()) {}
 	~ErrorOr() {
 		is_error() ? (delete reinterpret_cast<Error *>(m_data)) : (delete reinterpret_cast<T *>(m_data));
 	}
 
 	bool         is_error() const { return m_has_error; }
-	const Error &get_error() const {
-		return *reinterpret_cast<Error *>(m_data);
-	}
-	T &value() { return *reinterpret_cast<T *>(m_data); }
+	const Error &get_error() const { return *reinterpret_cast<Error *>(m_data); }
+	T           &value() { return *reinterpret_cast<T *>(m_data); }
 
   private:
 	bool  m_has_error = false;
@@ -102,8 +95,7 @@ template <> class [[nodiscard]] ErrorOr<void> {
 } // namespace FROG
 
 namespace FROG::Formatter {
-template <typename F>
-void print_argument_impl(F putc, const Error &error, const ValueFormat &) {
+template <typename F> void print_argument_impl(F putc, const Error &error, const ValueFormat &) {
 	if (error.get_error_code() == 0xFF)
 		print(putc, error.get_message());
 	else

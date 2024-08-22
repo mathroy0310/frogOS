@@ -20,8 +20,7 @@ namespace FROG {
 
 StringView::StringView() {}
 
-StringView::StringView(const String &other)
-    : StringView(other.data(), other.size()) {}
+StringView::StringView(const String &other) : StringView(other.data(), other.size()) {}
 
 StringView::StringView(const char *string, size_type len) {
 	if (len == size_type(-1)) len = strlen(string);

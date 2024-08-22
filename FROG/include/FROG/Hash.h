@@ -43,9 +43,7 @@ template <integral T> struct hash<T> {
 };
 
 template <pointer T> struct hash<T> {
-	constexpr hash_t operator()(T val) const {
-		return hash<uintptr_t>()((uintptr_t) val);
-	}
+	constexpr hash_t operator()(T val) const { return hash<uintptr_t>()((uintptr_t) val); }
 };
 
 } // namespace FROG

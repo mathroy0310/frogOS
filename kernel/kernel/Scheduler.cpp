@@ -48,8 +48,7 @@ void Scheduler::reschedule() {
 	m_last_reschedule = current_time;
 
 	for (Thread &thread : m_threads)
-		if (thread.state() == Thread::State::Sleeping)
-			thread.set_state(Thread::State::Paused);
+		if (thread.state() == Thread::State::Sleeping) thread.set_state(Thread::State::Paused);
 
 	switch_thread();
 }
@@ -76,14 +75,12 @@ void Scheduler::switch_thread() {
 	} else {
 		current.set_rsp(rsp);
 		current.set_rip(rip);
-		if (current.state() != Thread::State::Sleeping)
-			current.set_state(Thread::State::Paused);
+		if (current.state() != Thread::State::Sleeping) current.set_state(Thread::State::Paused);
 	}
 
 	auto next_iterator = m_current_iterator;
 	if (++next_iterator == m_threads.end()) next_iterator = ++m_threads.begin();
-	if (next_iterator->state() == Thread::State::Sleeping)
-		next_iterator = m_threads.begin();
+	if (next_iterator->state() == Thread::State::Sleeping) next_iterator = m_threads.begin();
 	Thread &next = *next_iterator;
 
 	m_current_iterator = next_iterator;

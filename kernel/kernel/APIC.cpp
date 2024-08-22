@@ -273,9 +273,11 @@ APIC *APIC::create() {
 	for (auto &processor : apic->m_processors) {
 		dprintln("Processor{}", processor.processor_id);
 		dprintln("  lapic id: {}", processor.apic_id);
-		dprintln("  status:   {}", (processor.flags & Processor::Flags::Enabled) ? "enabled" :
-		                           (processor.flags & Processor::Flags::OnlineCapable) ? "can be enabled" :
-		                                                                                 "disabled");
+		dprintln("  status:   {}", (processor.flags & Processor::Flags::Enabled)       ? "enabled" :
+		                           (processor.flags & Processor::Flags::OnlineCapable) ? "can be "
+		                                                                                 "enabled" :
+		                                                                                 "disable"
+		                                                                                 "d");
 	}
 #endif
 

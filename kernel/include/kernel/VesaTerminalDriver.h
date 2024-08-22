@@ -21,9 +21,7 @@ class VesaTerminalDriver final : public TerminalDriver {
 	~VesaTerminalDriver();
 
 	virtual uint32_t width() const override { return m_width / m_font.Width; }
-	virtual uint32_t height() const override {
-		return m_height / m_font.Height;
-	}
+	virtual uint32_t height() const override { return m_height / m_font.Height; }
 
 	virtual void putchar_at(uint16_t, uint32_t, uint32_t, Color, Color) override;
 	virtual void clear(Color) override;

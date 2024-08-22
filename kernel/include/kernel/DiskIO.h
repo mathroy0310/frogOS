@@ -33,9 +33,9 @@ class DiskDevice {
 	virtual bool initialize() = 0;
 	bool         initialize_partitions();
 
-	virtual bool read(uint32_t lba, uint32_t sector_count, uint8_t *buffer) = 0;
-    virtual uint32_t sector_size() const = 0;
-    
+	virtual bool     read(uint32_t lba, uint32_t sector_count, uint8_t *buffer) = 0;
+	virtual uint32_t sector_size() const = 0;
+
   private:
 	FROG::Vector<Partition> m_partitions;
 };

@@ -31,8 +31,7 @@ VesaTerminalDriver *VesaTerminalDriver::create() {
 			dprintln("Unsupported bpp {}", framebuffer.bpp);
 			return nullptr;
 		}
-		dprintln("Graphics Mode {}x{} ({} bpp)", framebuffer.width, framebuffer.height,
-		         framebuffer.bpp);
+		dprintln("Graphics Mode {}x{} ({} bpp)", framebuffer.width, framebuffer.height, framebuffer.bpp);
 	} else if (framebuffer.type == MULTIBOOT_FRAMEBUFFER_TYPE_TEXT) {
 		dprintln("Text Mode is currently not supported");
 		return nullptr;
@@ -43,9 +42,8 @@ VesaTerminalDriver *VesaTerminalDriver::create() {
 
 	MMU::get().allocate_range(framebuffer.addr, framebuffer.pitch * framebuffer.height);
 
-	auto *driver =
-	    new VesaTerminalDriver(framebuffer.width, framebuffer.height,
-	                           framebuffer.pitch, framebuffer.bpp, framebuffer.addr, font);
+	auto *driver = new VesaTerminalDriver(framebuffer.width, framebuffer.height, framebuffer.pitch,
+	                                      framebuffer.bpp, framebuffer.addr, font);
 	driver->set_cursor_position(0, 0);
 	driver->clear(TerminalColor::BLACK);
 	return driver;
@@ -116,9 +114,8 @@ void VesaTerminalDriver::clear(Color color) {
 void VesaTerminalDriver::set_cursor_position(uint32_t x, uint32_t y) {
 	ASSERT(m_font.Height == 16 && m_font.Width == 8);
 	constexpr uint8_t cursor[] = {
-	    ________, ________, ________, ________, ________, ________,
-	    ________, ________, ________, ________, ________, ________,
-	    ________, XXXXXXXX, XXXXXXXX, ________,
+	    ________, ________, ________, ________, ________, ________, ________, ________,
+	    ________, ________, ________, ________, ________, XXXXXXXX, XXXXXXXX, ________,
 	};
 
 	x *= m_font.Width;

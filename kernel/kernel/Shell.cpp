@@ -23,10 +23,8 @@
 
 #include <ctype.h>
 
-#define TTY_PRINT(...) \
-	Formatter::print([this](char c) { m_tty->putchar(c); }, __VA_ARGS__)
-#define TTY_PRINTLN(...) \
-	Formatter::println([this](char c) { m_tty->putchar(c); }, __VA_ARGS__)
+#define TTY_PRINT(...) Formatter::print([this](char c) { m_tty->putchar(c); }, __VA_ARGS__)
+#define TTY_PRINTLN(...) Formatter::println([this](char c) { m_tty->putchar(c); }, __VA_ARGS__)
 
 namespace Kernel {
 using namespace FROG;
@@ -265,10 +263,8 @@ void Shell::rerender_buffer() const {
 
 static uint32_t get_last_lenght(StringView sv) {
 	if (sv.size() >= 2 && ((uint8_t) sv[sv.size() - 2] >> 5) == 0b110) return 2;
-	if (sv.size() >= 3 && ((uint8_t) sv[sv.size() - 3] >> 4) == 0b1110)
-		return 3;
-	if (sv.size() >= 4 && ((uint8_t) sv[sv.size() - 4] >> 3) == 0b11110)
-		return 4;
+	if (sv.size() >= 3 && ((uint8_t) sv[sv.size() - 3] >> 4) == 0b1110) return 3;
+	if (sv.size() >= 4 && ((uint8_t) sv[sv.size() - 4] >> 3) == 0b11110) return 4;
 	return Math::min<uint32_t>(sv.size(), 1);
 }
 
@@ -301,8 +297,7 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 		if (m_cursor_pos.col > 0) {
 			TTY_PRINT("\e[D{} ", current_buffer.sv().substring(m_cursor_pos.index));
 
-			uint32_t len =
-			    get_last_lenght(current_buffer.sv().substring(0, m_cursor_pos.index));
+			uint32_t len = get_last_lenght(current_buffer.sv().substring(0, m_cursor_pos.index));
 			m_cursor_pos.index -= len;
 			current_buffer.erase(m_cursor_pos.index, len);
 			m_cursor_pos.col--;
@@ -336,8 +331,7 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 
 	case Input::Key::Left:
 		if (m_cursor_pos.index > 0) {
-			uint32_t len =
-			    get_last_lenght(current_buffer.sv().substring(0, m_cursor_pos.index));
+			uint32_t len = get_last_lenght(current_buffer.sv().substring(0, m_cursor_pos.index));
 			m_cursor_pos.index -= len;
 			m_cursor_pos.col--;
 		}
@@ -345,8 +339,7 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 
 	case Input::Key::Right:
 		if (m_cursor_pos.index < current_buffer.size()) {
-			uint32_t len =
-			    get_next_lenght(current_buffer.sv().substring(m_cursor_pos.index));
+			uint32_t len = get_next_lenght(current_buffer.sv().substring(m_cursor_pos.index));
 			m_cursor_pos.index += len;
 			m_cursor_pos.col++;
 		}

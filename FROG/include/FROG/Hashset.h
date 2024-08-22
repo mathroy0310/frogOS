@@ -41,9 +41,7 @@ template <typename T, typename HASH = hash<T>> class HashSet {
 	void          remove(const T &);
 	void          clear();
 
-	const_iterator begin() const {
-		return const_iterator(this, m_buckets.begin());
-	}
+	const_iterator begin() const { return const_iterator(this, m_buckets.begin()); }
 	const_iterator end() const { return const_iterator(this, m_buckets.end()); }
 
 	bool contains(const T &) const;
@@ -118,13 +116,11 @@ HashSet<T, HASH> &HashSet<T, HASH>::operator=(HashSet<T, HASH> &&other) {
 	return *this;
 }
 
-template <typename T, typename HASH>
-ErrorOr<void> HashSet<T, HASH>::insert(const T &key) {
+template <typename T, typename HASH> ErrorOr<void> HashSet<T, HASH>::insert(const T &key) {
 	return insert(move(T(key)));
 }
 
-template <typename T, typename HASH>
-ErrorOr<void> HashSet<T, HASH>::insert(T &&key) {
+template <typename T, typename HASH> ErrorOr<void> HashSet<T, HASH>::insert(T &&key) {
 	if (!empty() && get_bucket(key).contains(key)) return {};
 
 	TRY(rebucket(m_size + 1));
@@ -133,8 +129,7 @@ ErrorOr<void> HashSet<T, HASH>::insert(T &&key) {
 	return {};
 }
 
-template <typename T, typename HASH>
-void HashSet<T, HASH>::remove(const T &key) {
+template <typename T, typename HASH> void HashSet<T, HASH>::remove(const T &key) {
 	if (empty()) return;
 	Vector<T> &bucket = get_bucket(key);
 	for (size_type i = 0; i < bucket.size(); i++) {
@@ -151,8 +146,7 @@ template <typename T, typename HASH> void HashSet<T, HASH>::clear() {
 	m_size = 0;
 }
 
-template <typename T, typename HASH>
-bool HashSet<T, HASH>::contains(const T &key) const {
+template <typename T, typename HASH> bool HashSet<T, HASH>::contains(const T &key) const {
 	if (empty()) return false;
 	return get_bucket(key).contains(key);
 }
@@ -162,16 +156,13 @@ typename HashSet<T, HASH>::size_type HashSet<T, HASH>::size() const {
 	return m_size;
 }
 
-template <typename T, typename HASH> bool HashSet<T, HASH>::empty() const {
-	return m_size == 0;
-}
+template <typename T, typename HASH> bool HashSet<T, HASH>::empty() const { return m_size == 0; }
 
 template <typename T, typename HASH>
 ErrorOr<void> HashSet<T, HASH>::rebucket(size_type bucket_count) {
 	if (m_buckets.size() >= bucket_count) return {};
 
-	size_type new_bucket_count =
-	    FROG::Math::max<size_type>(bucket_count, m_buckets.size() * 3 / 2);
+	size_type new_bucket_count = FROG::Math::max<size_type>(bucket_count, m_buckets.size() * 3 / 2);
 	Vector<Vector<T>> new_buckets;
 	if (new_buckets.resize(new_bucket_count).is_error())
 		return Error::from_string("HashSet: Could not allocate memory");
@@ -190,8 +181,7 @@ ErrorOr<void> HashSet<T, HASH>::rebucket(size_type bucket_count) {
 	return {};
 }
 
-template <typename T, typename HASH>
-Vector<T> &HashSet<T, HASH>::get_bucket(const T &key) {
+template <typename T, typename HASH> Vector<T> &HashSet<T, HASH>::get_bucket(const T &key) {
 	ASSERT(!m_buckets.empty());
 	size_type index = HASH()(key) % m_buckets.size();
 	return m_buckets[index];
@@ -222,14 +212,12 @@ HashSetIterator<T, HASH> HashSetIterator<T, HASH>::operator++(int) {
 	return temp;
 }
 
-template <typename T, typename HASH>
-const T &HashSetIterator<T, HASH>::operator*() const {
+template <typename T, typename HASH> const T &HashSetIterator<T, HASH>::operator*() const {
 	ASSERT(m_owner && m_current_bucket && m_current_key);
 	return *m_current_key;
 }
 
-template <typename T, typename HASH>
-const T *HashSetIterator<T, HASH>::operator->() const {
+template <typename T, typename HASH> const T *HashSetIterator<T, HASH>::operator->() const {
 	return &**this;
 }
 
@@ -247,13 +235,11 @@ bool HashSetIterator<T, HASH>::operator!=(const HashSetIterator<T, HASH> &other)
 template <typename T, typename HASH>
 HashSetIterator<T, HASH>::HashSetIterator(const HashSet<T, HASH> *owner, Vector<Vector<T>>::const_iterator bucket)
     : m_owner(owner), m_current_bucket(bucket) {
-	if (m_current_bucket != m_owner->m_buckets.end())
-		m_current_key = m_current_bucket->begin();
+	if (m_current_bucket != m_owner->m_buckets.end()) m_current_key = m_current_bucket->begin();
 	find_next();
 }
 
-template <typename T, typename HASH>
-void HashSetIterator<T, HASH>::find_next() {
+template <typename T, typename HASH> void HashSetIterator<T, HASH>::find_next() {
 	ASSERT(m_owner && m_current_bucket);
 	while (m_current_bucket != m_owner->m_buckets.end()) {
 		if (m_current_key && m_current_key != m_current_bucket->end()) return;

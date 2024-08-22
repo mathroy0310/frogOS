@@ -12,12 +12,12 @@
 
 #pragma once
 
-#define FROG_NON_COPYABLE(class)    \
+#define FROG_NON_COPYABLE(class)   \
   private:                         \
 	class(const class &) = delete; \
 	class &operator=(const class &) = delete
 
 #define FROG_NON_MOVABLE(class) \
-  private:                     \
-	class(class &&) = delete;  \
+  private:                      \
+	class(class &&) = delete;   \
 	class &operator=(class &&) = delete

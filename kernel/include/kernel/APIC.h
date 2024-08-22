@@ -52,7 +52,7 @@ class APIC final : public InterruptController {
 
   private:
 	FROG::Vector<Processor> m_processors;
-	uintptr_t              m_local_apic = 0;
+	uintptr_t               m_local_apic = 0;
 	FROG::Vector<IOAPIC>    m_io_apics;
-	uint8_t                m_irq_overrides[0x100]{};
+	uint8_t                 m_irq_overrides[0x100]{};
 };

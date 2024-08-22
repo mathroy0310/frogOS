@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-
 #include <FROG/Errors.h>
 
 #include <stddef.h>
@@ -50,8 +49,7 @@ template <typename T, size_t S> Array<T, S>::Array(const T &value) {
 		m_data[i] = value;
 }
 
-template <typename T, size_t S>
-const T &Array<T, S>::operator[](size_type index) const {
+template <typename T, size_t S> const T &Array<T, S>::operator[](size_type index) const {
 	ASSERT(index < S);
 	return m_data[index];
 }

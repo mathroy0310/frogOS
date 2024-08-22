@@ -39,14 +39,12 @@ template <typename T> class Vector {
 	Vector<T> &operator=(Vector<T> &&);
 	Vector<T> &operator=(const Vector<T> &);
 
-	[[nodiscard]] ErrorOr<void> push_back(T &&);
-	[[nodiscard]] ErrorOr<void> push_back(const T &);
-	template <typename... Args>
-	[[nodiscard]] ErrorOr<void> emplace_back(Args &&...);
-	template <typename... Args>
-	[[nodiscard]] ErrorOr<void> emplace(size_type, Args &&...);
-	[[nodiscard]] ErrorOr<void> insert(size_type, T &&);
-	[[nodiscard]] ErrorOr<void> insert(size_type, const T &);
+	[[nodiscard]] ErrorOr<void>                             push_back(T &&);
+	[[nodiscard]] ErrorOr<void>                             push_back(const T &);
+	template <typename... Args> [[nodiscard]] ErrorOr<void> emplace_back(Args &&...);
+	template <typename... Args> [[nodiscard]] ErrorOr<void> emplace(size_type, Args &&...);
+	[[nodiscard]] ErrorOr<void>                             insert(size_type, T &&);
+	[[nodiscard]] ErrorOr<void>                             insert(size_type, const T &);
 
 	iterator       begin() { return iterator(m_data); }
 	const_iterator begin() const { return const_iterator(m_data); }
@@ -134,12 +132,8 @@ template <typename T, bool CONST> class VectorIterator {
 		return m_data;
 	}
 
-	bool operator==(const VectorIterator<T, CONST> &other) const {
-		return m_data == other.m_data;
-	}
-	bool operator!=(const VectorIterator<T, CONST> &other) const {
-		return !(*this == other);
-	}
+	bool operator==(const VectorIterator<T, CONST> &other) const { return m_data == other.m_data; }
+	bool operator!=(const VectorIterator<T, CONST> &other) const { return !(*this == other); }
 
 	operator bool() const { return m_data; }
 
@@ -239,8 +233,7 @@ ErrorOr<void> Vector<T>::emplace(size_type index, Args &&...args) {
 	return {};
 }
 
-template <typename T>
-ErrorOr<void> Vector<T>::insert(size_type index, T &&value) {
+template <typename T> ErrorOr<void> Vector<T>::insert(size_type index, T &&value) {
 	ASSERT(index <= m_size);
 	TRY(ensure_capacity(m_size + 1));
 	if (index < m_size) {
@@ -255,8 +248,7 @@ ErrorOr<void> Vector<T>::insert(size_type index, T &&value) {
 	return {};
 }
 
-template <typename T>
-ErrorOr<void> Vector<T>::insert(size_type index, const T &value) {
+template <typename T> ErrorOr<void> Vector<T>::insert(size_type index, const T &value) {
 	return insert(move(T(value)), index);
 }
 
@@ -337,12 +329,9 @@ template <typename T> ErrorOr<void> Vector<T>::reserve(size_type size) {
 
 template <typename T> bool Vector<T>::empty() const { return m_size == 0; }
 
-template <typename T> typename Vector<T>::size_type Vector<T>::size() const {
-	return m_size;
-}
+template <typename T> typename Vector<T>::size_type Vector<T>::size() const { return m_size; }
 
-template <typename T>
-typename Vector<T>::size_type Vector<T>::capacity() const {
+template <typename T> typename Vector<T>::size_type Vector<T>::capacity() const {
 	return m_capacity;
 }
 
@@ -350,8 +339,7 @@ template <typename T> ErrorOr<void> Vector<T>::ensure_capacity(size_type size) {
 	if (m_capacity >= size) return {};
 	size_type new_cap = FROG::Math::max<size_type>(size, m_capacity * 3 / 2);
 	T        *new_data = (T *) FROG::allocator(new_cap * sizeof(T));
-	if (new_data == nullptr)
-		return Error::from_string("Vector: Could not allocate memory");
+	if (new_data == nullptr) return Error::from_string("Vector: Could not allocate memory");
 	for (size_type i = 0; i < m_size; i++) {
 		new (new_data + i) T(move(m_data[i]));
 		m_data[i].~T();

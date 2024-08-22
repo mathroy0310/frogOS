@@ -115,16 +115,14 @@ template <typename T, bool CONST> class LinkedListIterator {
 	friend class LinkedListIterator<T, !CONST>;
 };
 
-template <typename T>
-LinkedList<T> &LinkedList<T>::operator=(const LinkedList<T> &other) {
+template <typename T> LinkedList<T> &LinkedList<T>::operator=(const LinkedList<T> &other) {
 	clear();
 	for (const T &elem : other)
 		MUST(push_back(elem));
 	return *this;
 }
 
-template <typename T>
-LinkedList<T> &LinkedList<T>::operator=(LinkedList<T> &&other) {
+template <typename T> LinkedList<T> &LinkedList<T>::operator=(LinkedList<T> &&other) {
 	clear();
 	m_data = other.m_data;
 	m_last = other.m_last;
@@ -143,13 +141,11 @@ template <typename T> ErrorOr<void> LinkedList<T>::push_back(T &&value) {
 	return insert(end(), move(value));
 }
 
-template <typename T>
-ErrorOr<void> LinkedList<T>::insert(iterator iter, const T &value) {
+template <typename T> ErrorOr<void> LinkedList<T>::insert(iterator iter, const T &value) {
 	return insert(iter, move(T(value)));
 }
 
-template <typename T>
-ErrorOr<void> LinkedList<T>::insert(iterator iter, T &&value) {
+template <typename T> ErrorOr<void> LinkedList<T>::insert(iterator iter, T &&value) {
 	Node *next = iter.m_past_end ? nullptr : iter.m_current;
 	Node *prev = next ? next->prev : m_last;
 	Node *new_node = TRY(allocate_node());
@@ -238,18 +234,15 @@ template <typename T> bool LinkedList<T>::contains(const T &value) const {
 	}
 }
 
-template <typename T>
-typename LinkedList<T>::size_type LinkedList<T>::size() const {
+template <typename T> typename LinkedList<T>::size_type LinkedList<T>::size() const {
 	return m_size;
 }
 
 template <typename T> bool LinkedList<T>::empty() const { return m_size == 0; }
 
-template <typename T>
-ErrorOr<typename LinkedList<T>::Node *> LinkedList<T>::allocate_node() const {
+template <typename T> ErrorOr<typename LinkedList<T>::Node *> LinkedList<T>::allocate_node() const {
 	Node *node = (Node *) FROG::allocator(sizeof(Node));
-	if (node == nullptr)
-		return Error::from_string("LinkedList: Could not allocate memory");
+	if (node == nullptr) return Error::from_string("LinkedList: Could not allocate memory");
 	return node;
 }
 
@@ -305,8 +298,7 @@ enable_if_t<ENABLE, T &> LinkedListIterator<T, CONST>::operator*() {
 	return m_current->value;
 }
 
-template <typename T, bool CONST>
-const T &LinkedListIterator<T, CONST>::operator*() const {
+template <typename T, bool CONST> const T &LinkedListIterator<T, CONST>::operator*() const {
 	ASSERT(m_current);
 	return m_current->value;
 }
@@ -318,8 +310,7 @@ enable_if_t<ENABLE, T *> LinkedListIterator<T, CONST>::operator->() {
 	return &m_current->value;
 }
 
-template <typename T, bool CONST>
-const T *LinkedListIterator<T, CONST>::operator->() const {
+template <typename T, bool CONST> const T *LinkedListIterator<T, CONST>::operator->() const {
 	ASSERT(m_current);
 	return &m_current->value;
 }
@@ -335,8 +326,7 @@ bool LinkedListIterator<T, CONST>::operator!=(const LinkedListIterator<T, CONST>
 	return !(*this == other);
 }
 
-template <typename T, bool CONST>
-LinkedListIterator<T, CONST>::operator bool() const {
+template <typename T, bool CONST> LinkedListIterator<T, CONST>::operator bool() const {
 	return m_current;
 }
 

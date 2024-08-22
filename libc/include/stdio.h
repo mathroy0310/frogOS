@@ -18,8 +18,8 @@
 
 __BEGIN_DECLS
 
-int printf(const char* __restrict, ...);
+int printf(const char *__restrict, ...);
 int putchar(int);
-int puts(const char*);
+int puts(const char *);
 
 __END_DECLS
