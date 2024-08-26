@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/26 15:54:18 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/26 16:11:25 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -255,26 +255,14 @@ void Shell::process_command(const Vector<String> &arguments) {
 
 		FROG::StringView path = (arguments.size() == 2) ? arguments[1].sv() : "/";
 		if (path.front() != '/') return TTY_PRINTLN("ls currently works only with absolute paths");
-		path = path.substring(1);
 
-		auto directory = VirtualFileSystem::get().root_inode();
-		ASSERT(directory->ifdir());
-
-		if (arguments.size() == 2) {
-			auto path_parts = MUST(arguments[1].sv().split('/'));
-			for (auto part : path_parts) {
-				auto inode_or_error = directory->directory_find(part);
-				if (inode_or_error.is_error())
-					return TTY_PRINTLN("{}", inode_or_error.get_error().get_message());
-				directory = inode_or_error.value();
-				if (!directory->ifdir())
-					return TTY_PRINTLN("expected argument to be path to directory");
-			}
-		}
+		auto directory_or_error = VirtualFileSystem::get().from_absolute_path(path);
+		if (directory_or_error.is_error()) return TTY_PRINTLN("{}", directory_or_error.error());
+		auto directory = directory_or_error.release_value();
+			ASSERT(directory->ifdir());
 
 		auto inodes_or_error = directory->directory_inodes();
-		if (inodes_or_error.is_error())
-			return TTY_PRINTLN("{}", inodes_or_error.get_error().get_message());
+		if (inodes_or_error.is_error()) return TTY_PRINTLN("{}", inodes_or_error.error());
 		auto &inodes = inodes_or_error.value();
 
 		auto mode_string = [](Inode::Mode mode) {
@@ -295,30 +283,24 @@ void Shell::process_command(const Vector<String> &arguments) {
 		TTY_PRINTLN("/{}", path);
 		for (auto &inode : inodes)
 			if (inode->ifdir())
-				TTY_PRINTLN(" {} {7} \e[34m{}\e[m", mode_string(inode->mode()), inode->size(), inode->name());
+				TTY_PRINTLN("  {} {7} \e[34m{}\e[m", mode_string(inode->mode()), inode->size(),
+				            inode->name());
 		for (auto &inode : inodes)
 			if (!inode->ifdir())
-				TTY_PRINTLN(" {} {7} {}", mode_string(inode->mode()), inode->size(), inode->name());
+				TTY_PRINTLN("  {} {7} {}", mode_string(inode->mode()), inode->size(), inode->name());
 	} else if (arguments.front() == "cat") {
 		if (!VirtualFileSystem::is_initialized()) return TTY_PRINTLN("VFS not initialized :(");
 
 		if (arguments.size() > 2) return TTY_PRINTLN("usage: 'cat path'");
 
-		auto file = VirtualFileSystem::get().root_inode();
-
-		auto path_parts = MUST(arguments[1].sv().split('/'));
-		for (auto part : path_parts) {
-			auto inode_or_error = file->directory_find(part);
-			if (inode_or_error.is_error())
-				return TTY_PRINTLN("{}", inode_or_error.get_error().get_message());
-			file = inode_or_error.value();
-		}
+		auto file_or_error = VirtualFileSystem::get().from_absolute_path(arguments[1]);
+		if (file_or_error.is_error()) return TTY_PRINTLN("{}", file_or_error.error());
+		auto file = file_or_error.release_value();
 
 		auto data_or_error = file->read_all();
-		if (data_or_error.is_error())
-			return TTY_PRINTLN("{}", data_or_error.get_error().get_message());
+		if (data_or_error.is_error()) return TTY_PRINTLN("{}", data_or_error.error());
+		auto data = data_or_error.release_value();
 
-		auto &data = data_or_error.value();
 		TTY_PRINTLN("{}", FROG::StringView((const char *) data.data(), data.size()));
 	} else {
 		TTY_PRINTLN("unrecognized command '{}'", arguments.front());

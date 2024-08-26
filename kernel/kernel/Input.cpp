@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   Input.cpp                                    ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 13:38:25 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 00:14:05 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Input.cpp                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 13:38:25 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/26 16:06:38 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -469,7 +469,7 @@ static void keyboard_new_key() {
 
 	if (key != Key::INVALID) {
 		auto error_or = s_key_event_queue.push({.key = key, .modifiers = modifiers, .pressed = pressed});
-		if (error_or.is_error()) dwarnln("{}", error_or.get_error());
+		if (error_or.is_error()) dwarnln("{}", error_or.error());
 	}
 	s_keyboard_key_buffer_size -= index + 1;
 	memmove(s_keyboard_key_buffer, s_keyboard_key_buffer + index, s_keyboard_key_buffer_size);
