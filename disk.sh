@@ -79,6 +79,11 @@ menuentry "frog-os (no apic, no serial)" {
       set gfxpayload=keep
 	multiboot /boot/frog-os.kernel noapic noserial
 }
+
+menuentry "Exit" {
+      halt
+}
+
 '  | sudo tee ${MOUNT_DIR}/boot/grub/grub.cfg
 
 sudo umount $MOUNT_DIR
