@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 15:49:22 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/26 15:49:42 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/26 16:00:06 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ template <typename Key, typename T, typename HASH = FROG::hash<Key>> class HashM
 	const T &operator[](const Key &) const;
 
 	bool contains(const Key &) const;
-    
+
 	bool      empty() const;
 	size_type size() const;
 
@@ -83,6 +83,7 @@ template <typename Key, typename T, typename HASH>
 HashMap<Key, T, HASH> &HashMap<Key, T, HASH>::operator=(const HashMap<Key, T, HASH> &other) {
 	clear();
 	m_buckets = other.m_buckets;
+	m_size = other.m_size;
 	return *this;
 }
 
