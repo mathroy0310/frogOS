@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:49 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/22 11:48:05 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/26 16:18:27 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,6 +55,7 @@ class String {
 
 	ErrorOr<void> resize(size_type, char = '\0');
 	ErrorOr<void> reserve(size_type);
+	ErrorOr<void> shrink_to_fit();
 
 	StringView sv() const;
 

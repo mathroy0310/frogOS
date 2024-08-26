@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:46 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/22 11:47:52 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/26 16:20:04 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,9 @@ template <typename T> class Queue {
 	ErrorOr<void>                             push(T &&);
 	ErrorOr<void>                             push(const T &);
 	template <typename... Args> ErrorOr<void> emplace(Args &&...);
+
+	ErrorOr<void> reserve(size_type);
+	ErrorOr<void> shrink_to_fit();
 
 	void pop();
 	void clear();
@@ -113,6 +116,22 @@ template <typename T> template <typename... Args> ErrorOr<void> Queue<T>::emplac
 	return {};
 }
 
+template <typename T> ErrorOr<void> Queue<T>::reserve(size_type size) {
+	TRY(ensure_capacity(size));
+	return {};
+}
+
+template <typename T> ErrorOr<void> Queue<T>::shrink_to_fit() {
+	size_type temp = m_capacity;
+	m_capacity = 0;
+	auto error_or = ensure_capacity(m_size);
+	if (error_or.is_error()) {
+		m_capacity = temp;
+		return error_or;
+	}
+	return {};
+}
+
 template <typename T> void Queue<T>::pop() {
 	ASSERT(m_size > 0);
 	for (size_type i = 0; i < m_size - 1; i++)
@@ -146,7 +165,7 @@ template <typename T> T &Queue<T>::front() {
 
 template <typename T> ErrorOr<void> Queue<T>::ensure_capacity(size_type size) {
 	if (m_capacity > size) return {};
-	size_type new_cap = FROG::Math::max<size_type>(size, m_capacity * 3 / 2);
+	size_type new_cap = FROG::Math::max<size_type>(size, m_capacity * 2);
 	T        *new_data = (T *) FROG::allocator(new_cap * sizeof(T));
 	if (new_data == nullptr) return Error::from_string("Queue: Could not allocate memory");
 	for (size_type i = 0; i < m_size; i++) {

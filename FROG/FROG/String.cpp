@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   String.cpp                                   ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 01:16:29 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 00:10:48 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   String.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 01:16:29 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/26 16:20:04 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -156,6 +156,17 @@ ErrorOr<void> String::reserve(size_type size) {
 	return {};
 }
 
+ErrorOr<void> String::shrink_to_fit() {
+	size_type temp = m_capacity;
+	m_capacity = 0;
+	auto error_or = ensure_capacity(m_size);
+	if (error_or.is_error()) {
+		m_capacity = temp;
+		return error_or;
+	}
+	return {};
+}
+
 StringView String::sv() const { return StringView(*this); }
 
 bool String::empty() const { return m_size == 0; }
@@ -168,7 +179,7 @@ const char *String::data() const { return m_data; }
 
 ErrorOr<void> String::ensure_capacity(size_type size) {
 	if (m_capacity >= size) return {};
-	size_type new_cap = FROG::Math::max<size_type>(size, m_capacity * 3 / 2);
+	size_type new_cap = FROG::Math::max<size_type>(size, m_capacity * 2);
 	void     *new_data = FROG::allocator(new_cap);
 	if (new_data == nullptr) return Error::from_string("String: Could not allocate memory");
 	if (m_data) memcpy(new_data, m_data, m_size + 1);

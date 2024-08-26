@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/18 00:24:15 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/22 11:46:44 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/26 16:20:04 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,8 @@ template <typename T, typename HASH = hash<T>> class HashSet {
 	ErrorOr<void> insert(T &&);
 	void          remove(const T &);
 	void          clear();
+
+	ErrorOr<void> reserve(size_type);
 
 	const_iterator begin() const { return const_iterator(this, m_buckets.begin()); }
 	const_iterator end() const { return const_iterator(this, m_buckets.end()); }
@@ -146,6 +148,11 @@ template <typename T, typename HASH> void HashSet<T, HASH>::clear() {
 	m_size = 0;
 }
 
+template <typename T, typename HASH> ErrorOr<void> HashSet<T, HASH>::reserve(size_type size) {
+	TRY(rebucket(size));
+	return {};
+}
+
 template <typename T, typename HASH> bool HashSet<T, HASH>::contains(const T &key) const {
 	if (empty()) return false;
 	return get_bucket(key).contains(key);
@@ -162,7 +169,7 @@ template <typename T, typename HASH>
 ErrorOr<void> HashSet<T, HASH>::rebucket(size_type bucket_count) {
 	if (m_buckets.size() >= bucket_count) return {};
 
-	size_type new_bucket_count = FROG::Math::max<size_type>(bucket_count, m_buckets.size() * 3 / 2);
+	size_type new_bucket_count = FROG::Math::max<size_type>(bucket_count, m_buckets.size() * 2);
 	Vector<Vector<T>> new_buckets;
 	if (new_buckets.resize(new_bucket_count).is_error())
 		return Error::from_string("HashSet: Could not allocate memory");
