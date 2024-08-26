@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/19 00:03:35 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/19 00:09:13 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/26 14:23:06 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ class PATADevice final : public ATADevice {
 
 	virtual uint32_t    sector_size() const override { return m_sector_words * 2; }
 	virtual const char *type() const override { return "PATA"; }
-	virtual bool        read(uint32_t lba, uint32_t sector_count, uint8_t *buffer) override;
+	virtual bool        read_sectors(uint32_t lba, uint32_t sector_count, uint8_t *buffer) override;
 
   protected:
 	virtual bool initialize() override;

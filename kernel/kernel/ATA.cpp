@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/19 00:05:44 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/19 00:14:02 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/26 14:26:28 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,7 +132,7 @@ bool PATADevice::initialize() {
 	return true;
 }
 
-bool PATADevice::read(uint32_t lba, uint32_t sector_count, uint8_t *buffer) {
+bool PATADevice::read_sectors(uint32_t lba, uint32_t sector_count, uint8_t *buffer) {
 	return read_lba28(lba, sector_count, buffer);
 }
 

@@ -44,6 +44,8 @@ sudo cp -r sysroot/* ${MOUNT_DIR}/
 
 sudo grub-install --no-floppy --target=i386-pc --modules="normal ext2 multiboot" --boot-directory=${MOUNT_DIR}/boot $LOOP_DEV
 
+sudo cp frogbg.jpg ${MOUNT_DIR}/boot/grub/background.jpg
+
 echo -e '
 set timeout=5
 set default=0
@@ -51,16 +53,30 @@ set default=0
 set color_normal=light-gray/black
 set color_highlight=light-green/green
 
+if loadfont /boot/grub/fonts/unicode.pf2; then
+    set gfxmode=auto
+    insmod gfxterm
+    insmod vbe
+    terminal_output gfxterm
+fi
+
+insmod jpeg
+background_image /boot/grub/background.jpg
+
 menuentry "frog-os" {
+      set gfxpayload=keep
 	multiboot /boot/frog-os.kernel
 }
 menuentry "frog-os (no serial)" {
+      set gfxpayload=keep
 	multiboot /boot/frog-os.kernel noserial
 }
 menuentry "frog-os (no apic)" {
+      set gfxpayload=keep
 	multiboot /boot/frog-os.kernel noapic
 }
 menuentry "frog-os (no apic, no serial)" {
+      set gfxpayload=keep
 	multiboot /boot/frog-os.kernel noapic noserial
 }
 '  | sudo tee ${MOUNT_DIR}/boot/grub/grub.cfg

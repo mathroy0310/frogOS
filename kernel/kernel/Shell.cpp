@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/22 11:42:53 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/26 14:31:20 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,8 @@
 #include <kernel/RTC.h>
 #include <kernel/Scheduler.h>
 #include <kernel/Shell.h>
+
+#include <kernel/FS/VirtualFileSystem.h>
 
 #include <ctype.h>
 
@@ -145,22 +147,20 @@ void Shell::process_command(const Vector<String> &arguments) {
 	if (arguments.empty()) {
 	} else if (arguments.front() == "date") {
 		if (arguments.size() != 1) {
-			TTY_PRINTLN("'date' does not support command line arguments");
-			return;
+			return TTY_PRINTLN("'date' does not support command line arguments");
 		}
 		auto time = RTC::get_current_time();
 		TTY_PRINTLN("{}", time);
 	} else if (arguments.front() == "echo") {
 		if (arguments.size() > 1) {
-			TTY_PRINT("{}", arguments[1]);
+			return TTY_PRINT("{}", arguments[1]);
 			for (size_t i = 2; i < arguments.size(); i++)
 				TTY_PRINT(" {}", arguments[i]);
 		}
 		TTY_PRINTLN("");
 	} else if (arguments.front() == "clear") {
 		if (arguments.size() != 1) {
-			TTY_PRINTLN("'clear' does not support command line arguments");
-			return;
+			return TTY_PRINTLN("'clear' does not support command line arguments");
 		}
 		m_tty->clear();
 		m_tty->set_cursor_position(0, 0);
@@ -194,21 +194,18 @@ void Shell::process_command(const Vector<String> &arguments) {
 			;
 	} else if (arguments.front() == "memory") {
 		if (arguments.size() != 1) {
-			TTY_PRINTLN("'memory' does not support command line arguments");
-			return;
+			return TTY_PRINTLN("'memory' does not support command line arguments");
 		}
 		kmalloc_dump_info();
 	} else if (arguments.front() == "sleep") {
 		if (arguments.size() != 1) {
-			TTY_PRINTLN("'sleep' does not support command line arguments");
-			return;
+			return TTY_PRINTLN("'sleep' does not support command line arguments");
 		}
 		PIT::sleep(5000);
 		TTY_PRINTLN("done");
 	} else if (arguments.front() == "cpuinfo") {
 		if (arguments.size() != 1) {
-			TTY_PRINTLN("'cpuinfo' does not support command line arguments");
-			return;
+			return TTY_PRINTLN("'cpuinfo' does not support command line arguments");
 		}
 
 		uint32_t ecx, edx;
@@ -227,8 +224,7 @@ void Shell::process_command(const Vector<String> &arguments) {
 		if (!first) TTY_PRINTLN("");
 	} else if (arguments.front() == "random") {
 		if (arguments.size() != 1) {
-			TTY_PRINTLN("'random' does not support command line arguments");
-			return;
+			return TTY_PRINTLN("'random' does not support command line arguments");
 		}
 		uint32_t ecx, edx;
 		CPUID::get_features(ecx, edx);
@@ -244,14 +240,49 @@ void Shell::process_command(const Vector<String> &arguments) {
 		}
 	} else if (arguments.front() == "reboot") {
 		if (arguments.size() != 1) {
-			TTY_PRINTLN("'reboot' does not support command line arguments");
-			return;
+			return TTY_PRINTLN("'reboot' does not support command line arguments");
 		}
 		uint8_t good = 0x02;
 		while (good & 0x02)
 			good = IO::inb(0x64);
 		IO::outb(0x64, 0xFE);
-		asm volatile("cli; hlt");
+		asm volatile("cli\n\t"
+		             "hlt");
+	} else if (arguments.front() == "ls") {
+		if (!VirtualFileSystem::is_initialized()) return TTY_PRINTLN("VFS not initialized :(");
+
+		if (arguments.size() > 2) return TTY_PRINTLN("usage: 'ls [path]'");
+
+		FROG::StringView path = (arguments.size() == 2) ? arguments[1].sv() : "/";
+		if (path.front() != '/') return TTY_PRINTLN("ls currently works only with absolute paths");
+		path = path.substring(1);
+
+		auto directory = VirtualFileSystem::get().root_inode();
+		ASSERT(directory->is_directory());
+
+		if (arguments.size() == 2) {
+			auto path_parts = MUST(arguments[1].sv().split('/'));
+			for (auto part : path_parts) {
+				auto inode_or_error = directory->directory_find(part);
+				if (inode_or_error.is_error())
+					return TTY_PRINTLN("{}", inode_or_error.get_error().get_message());
+				directory = inode_or_error.value();
+				if (!directory->is_directory())
+					return TTY_PRINTLN("expected argument to be path to directory");
+			}
+		}
+
+		auto inodes_or_error = directory->directory_inodes();
+		if (inodes_or_error.is_error())
+			return TTY_PRINTLN("{}", inodes_or_error.get_error().get_message());
+		auto &inodes = inodes_or_error.value();
+
+		TTY_PRINTLN("/{}", path);
+		for (auto &inode : inodes)
+			if (inode->is_directory())
+				TTY_PRINTLN("  {7} \e[34m{}\e[m", inode->size(), inode->name());
+		for (auto &inode : inodes)
+			if (!inode->is_directory()) TTY_PRINTLN("  {7} {}", inode->size(), inode->name());
 	} else {
 		TTY_PRINTLN("unrecognized command '{}'", arguments.front());
 	}

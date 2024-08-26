@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/05 01:34:45 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/08/19 00:01:46 by maroy            ###   ########.fr        #
+#    Updated: 2024/08/26 14:22:50 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -50,6 +50,8 @@ kernel/CPUID.o					\
 kernel/Debug.o 					\
 kernel/DiskIO.o					\
 kernel/font.o					\
+kernel/FS/Ext2.o				\
+kernel/FS/VirtualFileSystem.o	\
 kernel/Input.o					\
 kernel/InterruptController.o	\
 kernel/kernel.o					\
@@ -107,6 +109,7 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 always:
 	mkdir -p $(BUILDDIR)/$(ARCHDIR)
 	mkdir -p $(BUILDDIR)/kernel
+	mkdir -p $(BUILDDIR)/kernel/FS
 
 clean:
 	rm -rf $(BUILDDIR)
