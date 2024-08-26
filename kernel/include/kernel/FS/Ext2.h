@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:24:57 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/26 14:26:07 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/26 15:38:53 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -135,9 +135,12 @@ class Ext2Inode : public Inode {
 
 	virtual FROG::StringView name() const override { return m_name; }
 
-	virtual FROG::ErrorOr<FROG::Vector<uint8_t>>                 read_all() const override;
-	virtual FROG::ErrorOr<FROG::Vector<FROG::RefCounted<Inode>>> directory_inodes() const override;
-	virtual FROG::ErrorOr<FROG::RefCounted<Inode>> directory_find(FROG::StringView) const override;
+	virtual FROG::ErrorOr<FROG::Vector<uint8_t>>                 read_all() override;
+	virtual FROG::ErrorOr<FROG::Vector<FROG::RefCounted<Inode>>> directory_inodes() override;
+	virtual FROG::ErrorOr<FROG::RefCounted<Inode>> directory_find(FROG::StringView) override;
+
+  private:
+	FROG::ErrorOr<void> for_each_block(FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> &);
 
   private:
 	Ext2Inode() {}

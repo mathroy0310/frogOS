@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/26 14:31:20 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/26 15:40:22 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -283,6 +283,27 @@ void Shell::process_command(const Vector<String> &arguments) {
 				TTY_PRINTLN("  {7} \e[34m{}\e[m", inode->size(), inode->name());
 		for (auto &inode : inodes)
 			if (!inode->is_directory()) TTY_PRINTLN("  {7} {}", inode->size(), inode->name());
+	} else if (arguments.front() == "cat") {
+		if (!VirtualFileSystem::is_initialized()) return TTY_PRINTLN("VFS not initialized :(");
+
+		if (arguments.size() > 2) return TTY_PRINTLN("usage: 'cat path'");
+
+		auto file = VirtualFileSystem::get().root_inode();
+
+		auto path_parts = MUST(arguments[1].sv().split('/'));
+		for (auto part : path_parts) {
+			auto inode_or_error = file->directory_find(part);
+			if (inode_or_error.is_error())
+				return TTY_PRINTLN("{}", inode_or_error.get_error().get_message());
+			file = inode_or_error.value();
+		}
+
+		auto data_or_error = file->read_all();
+		if (data_or_error.is_error())
+			return TTY_PRINTLN("{}", data_or_error.get_error().get_message());
+
+		auto &data = data_or_error.value();
+		TTY_PRINTLN("{}", FROG::StringView((const char *) data.data(), data.size()));
 	} else {
 		TTY_PRINTLN("unrecognized command '{}'", arguments.front());
 	}
