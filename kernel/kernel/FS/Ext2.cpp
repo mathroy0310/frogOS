@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:18 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/26 15:39:50 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/26 15:52:14 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,7 +88,7 @@ enum ReservedInodes {
 
 enum InodeMode {
 	// -- file format --
-	IFSOKC = 0xC000,
+	IFSOCK = 0xC000,
 	IFLNK = 0xA000,
 	IFREG = 0x8000,
 	IFBLK = 0x6000,
@@ -136,10 +136,6 @@ enum InodeFlags {
 };
 
 } // namespace Ext2::Enum
-
-bool Ext2Inode::is_directory() const { return m_inode.mode & Ext2::Enum::IFDIR; }
-
-bool Ext2Inode::is_regular_file() const { return m_inode.mode & Ext2::Enum::IFREG; }
 
 FROG::ErrorOr<void> Ext2Inode::for_each_block(FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> &func) {
 	uint32_t data_blocks_left = m_inode.blocks / (2 << m_fs->superblock().log_block_size);
@@ -206,7 +202,7 @@ FROG::ErrorOr<void> Ext2Inode::for_each_block(FROG::Function<FROG::ErrorOr<bool>
 }
 
 FROG::ErrorOr<FROG::Vector<uint8_t>> Ext2Inode::read_all() {
-	if (is_directory()) return FROG::Error::from_string("Inode is a directory");
+	if (ifdir()) return FROG::Error::from_string("Inode is a directory");
 
 	FROG::Vector<uint8_t> data_buffer;
 	TRY(data_buffer.resize(m_inode.size));
@@ -229,7 +225,7 @@ FROG::ErrorOr<FROG::Vector<uint8_t>> Ext2Inode::read_all() {
 }
 
 FROG::ErrorOr<FROG::RefCounted<Inode>> Ext2Inode::directory_find(FROG::StringView file_name) {
-	if (!is_directory()) return FROG::Error::from_string("Inode is not a directory");
+	if (!ifdir()) return FROG::Error::from_string("Inode is not a directory");
 
 	FROG::RefCounted<Inode> result;
 	FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> function([&](const FROG::Vector<uint8_t> &block_data) -> FROG::ErrorOr<bool> {
@@ -254,7 +250,7 @@ FROG::ErrorOr<FROG::RefCounted<Inode>> Ext2Inode::directory_find(FROG::StringVie
 }
 
 FROG::ErrorOr<FROG::Vector<FROG::RefCounted<Inode>>> Ext2Inode::directory_inodes() {
-	if (!is_directory()) return FROG::Error::from_string("Inode is not a directory");
+	if (!ifdir()) return FROG::Error::from_string("Inode is not a directory");
 
 	FROG::Vector<FROG::RefCounted<Inode>> inodes;
 	FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> function([&](const FROG::Vector<uint8_t> &block_data) -> FROG::ErrorOr<bool> {

@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:24:57 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/26 15:38:53 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/26 15:50:40 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,12 +126,11 @@ class Ext2FS;
 
 class Ext2Inode : public Inode {
   public:
-	virtual bool is_directory() const override;
-	virtual bool is_regular_file() const override;
-
 	virtual uint16_t uid() const override { return m_inode.uid; }
 	virtual uint16_t gid() const override { return m_inode.gid; }
 	virtual uint32_t size() const override { return m_inode.size; }
+
+	virtual Mode mode() const override { return {.mode = m_inode.mode}; }
 
 	virtual FROG::StringView name() const override { return m_name; }
 
