@@ -44,7 +44,7 @@ sudo cp -r sysroot/* ${MOUNT_DIR}/
 
 sudo grub-install --no-floppy --target=i386-pc --modules="normal ext2 multiboot" --boot-directory=${MOUNT_DIR}/boot $LOOP_DEV
 
-sudo cp frogbg.jpg ${MOUNT_DIR}/boot/grub/background.jpg
+sudo cp assets/frogbg.jpg ${MOUNT_DIR}/boot/grub/background.jpg
 
 echo -e '
 set timeout=5
