@@ -1,17 +1,18 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   TerminalDriver.h                             ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/12 02:57:05 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 00:19:04 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   TerminalDriver.h                                   :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/12 02:57:05 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/27 02:21:26 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
+#include <kernel/Font.h>
 #include <stdint.h>
 
 class TerminalDriver {
@@ -27,6 +28,7 @@ class TerminalDriver {
 	};
 
   public:
+	TerminalDriver() : m_font(MUST(Kernel::Font::prefs())) {}
 	virtual ~TerminalDriver() {}
 
 	virtual uint32_t width() const = 0;
@@ -36,6 +38,12 @@ class TerminalDriver {
 	virtual void clear(Color) = 0;
 
 	virtual void set_cursor_position(uint32_t, uint32_t) = 0;
+
+	void                set_font(const Kernel::Font &font) { m_font = font; };
+	const Kernel::Font &font() const { return m_font; }
+
+  private:
+	Kernel::Font m_font;
 };
 
 namespace TerminalColor {

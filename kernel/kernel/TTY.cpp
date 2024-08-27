@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   TTY.cpp                                      ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 11:58:57 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 00:21:58 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   TTY.cpp                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 11:58:57 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/27 02:17:53 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,13 @@ void TTY::set_cursor_position(uint32_t x, uint32_t y) {
 	m_terminal_driver->set_cursor_position(x, y);
 	last_x = m_column = x;
 	last_y = m_row = y;
+}
+
+void TTY::set_font(const Kernel::Font &font) {
+	m_terminal_driver->set_font(font);
+	for (uint32_t y = 0; y < m_height; y++)
+		for (uint32_t x = 0; x < m_width; x++)
+			render_from_buffer(x, y);
 }
 
 static uint16_t handle_unicode(uint8_t ch) {

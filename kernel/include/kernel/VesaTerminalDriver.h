@@ -1,27 +1,26 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   VesaTerminalDriver.h                         ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/12 03:02:40 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 00:17:47 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   VesaTerminalDriver.h                               :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/12 03:02:40 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/27 02:30:10 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <kernel/TerminalDriver.h>
-#include <kernel/font.h>
 
 class VesaTerminalDriver final : public TerminalDriver {
   public:
 	static VesaTerminalDriver *create();
 	~VesaTerminalDriver();
 
-	virtual uint32_t width() const override { return m_width / m_font.Width; }
-	virtual uint32_t height() const override { return m_height / m_font.Height; }
+	virtual uint32_t width() const override { return m_width / font().width(); }
+	virtual uint32_t height() const override { return m_height / font().height(); }
 
 	virtual void putchar_at(uint16_t, uint32_t, uint32_t, Color, Color) override;
 	virtual void clear(Color) override;
@@ -29,18 +28,17 @@ class VesaTerminalDriver final : public TerminalDriver {
 	virtual void set_cursor_position(uint32_t, uint32_t) override;
 
   private:
-	VesaTerminalDriver(uint32_t width, uint32_t height, uint32_t pitch, uint8_t bpp, uintptr_t address, bitmap_font font)
-	    : m_width(width), m_height(height), m_pitch(pitch), m_bpp(bpp), m_address(address), m_font(font) {}
+	VesaTerminalDriver(uint32_t width, uint32_t height, uint32_t pitch, uint8_t bpp, uintptr_t address)
+	    : m_width(width), m_height(height), m_pitch(pitch), m_bpp(bpp), m_address(address) {}
 
 	void set_pixel(uint32_t, Color);
 
   private:
-	uint32_t    m_width = 0;
-	uint32_t    m_height = 0;
-	uint32_t    m_pitch = 0;
-	uint8_t     m_bpp = 0;
-	uintptr_t   m_address = 0;
-	bitmap_font m_font;
+	uint32_t  m_width = 0;
+	uint32_t  m_height = 0;
+	uint32_t  m_pitch = 0;
+	uint8_t   m_bpp = 0;
+	uintptr_t m_address = 0;
 
 	static constexpr Color s_cursor_color = TerminalColor::BRIGHT_WHITE;
 };

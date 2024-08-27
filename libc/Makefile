@@ -1,12 +1,12 @@
 # **************************************************************************** #
-#                                                              _               #
-#                                                  __   ___.--'_\`.            #
-#    Makefile                                     ( _\`.' -   'o\` )           #
-#                                                 _\\.'_'      _.-'            #
-#    By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`             #
-#                                                 \\_'-`---'\\__,              #
-#    Created: 2024/08/04 11:38:17 by mathroy0310   \`        `-\\              #
-#    Updated: 2024/08/09 13:36:38 by mathroy0310    `                          #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2024/08/04 11:38:17 by mathroy0310       #+#    #+#              #
+#    Updated: 2024/08/27 02:24:32 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -52,6 +52,8 @@ string/memcmp.o		\
 string/memcpy.o		\
 string/memmove.o	\
 string/memset.o		\
+string/strcmp.o 	\
+string/strncmp.o 	\
 string/strcpy.o		\
 string/strlen.o		\
 string/strncpy.o	\

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   TTY.h                                        ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/09 02:32:58 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:44:33 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   TTY.h                                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/09 02:32:58 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/27 02:16:18 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ class TTY {
 	void write(const char *data, size_t size);
 	void write_string(const char *data);
 	void set_cursor_position(uint32_t x, uint32_t y);
+	void set_font(const Kernel::Font&);
 
 	uint32_t height() const { return m_height; }
 	uint32_t width() const { return m_width; }

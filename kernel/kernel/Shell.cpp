@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/26 16:11:25 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/27 02:17:41 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -259,7 +259,7 @@ void Shell::process_command(const Vector<String> &arguments) {
 		auto directory_or_error = VirtualFileSystem::get().from_absolute_path(path);
 		if (directory_or_error.is_error()) return TTY_PRINTLN("{}", directory_or_error.error());
 		auto directory = directory_or_error.release_value();
-			ASSERT(directory->ifdir());
+		ASSERT(directory->ifdir());
 
 		auto inodes_or_error = directory->directory_inodes();
 		if (inodes_or_error.is_error()) return TTY_PRINTLN("{}", inodes_or_error.error());
@@ -302,6 +302,16 @@ void Shell::process_command(const Vector<String> &arguments) {
 		auto data = data_or_error.release_value();
 
 		TTY_PRINTLN("{}", FROG::StringView((const char *) data.data(), data.size()));
+	} else if (arguments.front() == "loadfont") {
+		if (!VirtualFileSystem::is_initialized()) return TTY_PRINTLN("VFS not initialized :(");
+
+		if (arguments.size() != 2) return TTY_PRINTLN("usage: 'loadfont font_path'");
+
+		auto font_or_error = Font::load(arguments[1]);
+		if (font_or_error.is_error()) return TTY_PRINTLN("{}", font_or_error.error());
+		auto font = font_or_error.release_value();
+
+		m_tty->set_font(font);
 	} else {
 		TTY_PRINTLN("unrecognized command '{}'", arguments.front());
 	}

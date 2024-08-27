@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/22 11:53:28 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/27 02:23:24 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,7 +107,7 @@ extern "C" void kernel_main() {
 	TerminalDriver *terminal_driver = VesaTerminalDriver::create();
 	ASSERT(terminal_driver);
 	dprintln("VESA initialized");
-	tty1 = new TTY(terminal_driver);
+	TTY *tty1 = new TTY(terminal_driver);
 
 	InterruptController::initialize(cmdline.force_pic);
 	dprintln("Interrupt controller initialized");
@@ -119,8 +119,21 @@ extern "C" void kernel_main() {
 
 	Scheduler::initialize();
 	Scheduler &scheduler = Scheduler::get();
-	MUST(scheduler.add_thread(FROG::Function<void()>([] { DiskIO::initialize(); })));
-	MUST(scheduler.add_thread(FROG::Function<void()>([tty1] { Shell(tty1).run(); })));
+	MUST(scheduler.add_thread(FROG::Function<void()>([terminal_driver] {
+		DiskIO::initialize();
+		dprintln("Disk IO initialized");
+
+		auto font_or_error = Font::load("/usr/share/fonts/zap-ext-vga16.psf");
+		if (font_or_error.is_error())
+			dprintln("{}", font_or_error.error());
+		else
+			terminal_driver->set_font(font_or_error.release_value());
+	})));
+	MUST(scheduler.add_thread(FROG::Function<void()>([tty1] {
+		Shell *shell = new Shell(tty1);
+		ASSERT(shell);
+		shell->run();
+	})));
 	// scheduler.add_thread(FROG::Function<void()>([tty1] { print_logo(); }));
 	scheduler.start();
 	ASSERT(false);
