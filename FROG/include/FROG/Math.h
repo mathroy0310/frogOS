@@ -6,14 +6,14 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 09:48:11 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/26 16:03:44 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/27 01:50:54 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <FROG/Traits.h>
-
+#include <stddef.h>
 #include <stdint.h>
 
 namespace FROG::Math {
@@ -38,5 +38,12 @@ template <integral T> inline constexpr T gcd(T a, T b) {
 template <integral T> inline constexpr T lcm(T a, T b) { return a / gcd(a, b) * b; }
 
 template <integral T> inline constexpr T div_round_up(T a, T b) { return (a + b - 1) / b; }
+
+template <integral T> inline constexpr T little_endian_to_host(const uint8_t *bytes) {
+	T result = 0;
+	for (size_t i = 0; i < sizeof(T); i++)
+		result |= (T) bytes[i] << (i * 8);
+	return result;
+}
 
 } // namespace FROG::Math
