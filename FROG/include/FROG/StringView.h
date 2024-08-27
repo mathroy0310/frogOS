@@ -6,9 +6,11 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:17:09 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/22 11:48:16 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/27 02:29:36 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#pragma once
 
 #include <FROG/Formatter.h>
 #include <FROG/ForwardList.h>
