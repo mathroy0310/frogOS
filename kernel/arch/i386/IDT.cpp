@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/22 11:19:37 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/27 01:43:39 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,7 +140,7 @@ found:
 }
 
 extern "C" void handle_irq_common();
-asm(".globl handle_irq_common;"
+asm (".globl handle_irq_common;"
     "handle_irq_common:"
     "pusha;"
     "pushw %ds;"
@@ -153,7 +153,8 @@ asm(".globl handle_irq_common;"
     "popw %es;"
     "popw %ds;"
     "popa;"
-    "iret;");
+    "iret;"
+);
 
 static void flush_idt() { asm volatile("lidt %0" ::"m"(s_idtr)); }
 
@@ -176,7 +177,7 @@ void register_irq_handler(uint8_t irq, void (*f)()) {
 void initialize() {
 	constexpr size_t idt_size = 0x100 * sizeof(GateDescriptor);
 
-	s_idt = (GateDescriptor *) kmalloc_eternal(idt_size);
+	s_idt = (GateDescriptor*)kmalloc(idt_size);
 	memset(s_idt, 0x00, idt_size);
 
 	s_idtr.offset = s_idt;
