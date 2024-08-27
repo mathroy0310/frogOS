@@ -1,29 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   putchar.cpp                                        :+:      :+:    :+:   */
+/*   strncmp.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/08/04 00:30:17 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/27 02:28:03 by maroy            ###   ########.fr       */
+/*   Created: 2024/08/27 02:25:12 by maroy             #+#    #+#             */
+/*   Updated: 2024/08/27 02:25:13 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdio.h>
+#include <string.h>
 
-#if defined(__is_libk)
-	#include <kernel/Panic.h>
-#else
-	#include <stdlib.h>
-#endif
-
-int putchar(int c)
-{
-#if defined(__is_libk)
-	Kernel::panic("Please use kprint() instead of stdio");
-#else
-	abort();
-#endif
-	return c;
+int strncmp(const char *s1, const char *s2, size_t n) {
+	const unsigned char *u1 = (unsigned char *) s1;
+	const unsigned char *u2 = (unsigned char *) s2;
+	for (; --n && *u1 && *u2; u1++, u2++)
+		if (*u1 != *u2) break;
+	return *u1 - *u2;
 }

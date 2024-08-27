@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   string.h                                     ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 01:33:24 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/04 01:33:25 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   string.h                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/04 01:33:24 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/27 02:24:49 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,9 @@ void  *memcpy(void *__restrict, const void *__restrict, size_t);
 void  *memmove(void *, const void *, size_t);
 void  *memset(void *, int, size_t);
 size_t strlen(const char *);
+
+int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, size_t);
 
 char *strcpy(char *__restrict, const char *__restrict);
 char *strncpy(char *__restrict, const char *__restrict, size_t);
