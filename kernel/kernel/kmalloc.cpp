@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 23:25:14 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/27 01:41:56 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/27 01:54:13 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,16 @@
 #include <kernel/kprint.h>
 #include <kernel/multiboot.h>
 
+#include <kernel/LockGuard.h>
+#include <kernel/SpinLock.h>
+
 #include <stdint.h>
 
 #define MB (1 << 20)
 
 static constexpr size_t s_kmalloc_min_align = alignof(max_align_t);
+
+static Kernel::SpinLock s_lock;
 
 struct kmalloc_node {
 	void set_align(ptrdiff_t align) { m_align = align; }
@@ -170,7 +175,7 @@ void kmalloc_initialize() {
 }
 
 void kmalloc_dump_info() {
-	kprintln("kmalloc:         0x{8H}->0x{8H}", s_kmalloc_info.base, s_kmalloc_info.end);
+	kprintln("kmalloc: 				0x{8H}->0x{8H}", s_kmalloc_info.base, s_kmalloc_info.end);
 	kprintln("  used: 0x{8H}", s_kmalloc_info.used);
 	kprintln("  free: 0x{8H}", s_kmalloc_info.free);
 
@@ -181,6 +186,8 @@ void kmalloc_dump_info() {
 }
 
 static void *kmalloc_fixed() {
+	Kernel::LockGuard guard(s_lock);
+
 	auto &info = s_kmalloc_fixed_info;
 
 	if (!info.free_list_head) return nullptr;
@@ -196,8 +203,11 @@ static void *kmalloc_fixed() {
 		info.free_list_head = info.node_at(info.free_list_head->prev);
 		info.free_list_head->next = kmalloc_fixed_info::node::invalid;
 	} else {
+		derrorln("removing free list, allocated {}", info.used);
 		info.free_list_head = nullptr;
 	}
+	node->prev = kmalloc_fixed_info::node::invalid;
+	node->next = kmalloc_fixed_info::node::invalid;
 
 	// move the node to the top of used nodes
 	if (info.used_list_head) {
@@ -213,6 +223,8 @@ static void *kmalloc_fixed() {
 }
 
 static void *kmalloc_impl(size_t size, size_t align) {
+	Kernel::LockGuard guard(s_lock);
+
 	ASSERT(align % s_kmalloc_min_align == 0);
 
 	auto &info = s_kmalloc_info;
@@ -260,7 +272,11 @@ static void *kmalloc_impl(size_t size, size_t align) {
 	return nullptr;
 }
 
-void *kmalloc(size_t size) { return kmalloc(size, s_kmalloc_min_align); }
+void *kmalloc(size_t size) {
+	void *res = kmalloc(size, s_kmalloc_min_align);
+	if (res == nullptr) dwarnln("could not allocate {} bytes", size);
+	return res;
+}
 
 void *kmalloc(size_t size, size_t align) {
 	kmalloc_info &info = s_kmalloc_info;
@@ -283,6 +299,8 @@ void *kmalloc(size_t size, size_t align) {
 }
 
 void kfree(void *address) {
+	Kernel::LockGuard guard(s_lock);
+
 	if (address == nullptr) return;
 
 	uintptr_t address_uint = (uintptr_t) address;
@@ -322,7 +340,8 @@ void kfree(void *address) {
 		auto &info = s_kmalloc_info;
 
 		auto *node = info.from_address(address);
-		ASSERT(node && node->data() == (uintptr_t) address);
+		ASSERT(node);
+		ASSERT(node->data() == (uintptr_t)address);
 		ASSERT(node->used());
 
 		ptrdiff_t size = node->size_no_align();

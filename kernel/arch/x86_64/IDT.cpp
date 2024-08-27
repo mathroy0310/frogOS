@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/27 01:42:24 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/27 01:51:55 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,6 +193,7 @@ extern "C" void irq15();
 
 void initialize() {
 	s_idt = (GateDescriptor*)kmalloc(0x100 * sizeof(GateDescriptor));
+	ASSERT(s_idt);
 	memset(s_idt, 0x00, 0x100 * sizeof(GateDescriptor));
 
 	s_idtr.offset = (uint64_t) s_idt;

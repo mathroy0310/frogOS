@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/27 01:43:39 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/27 01:51:42 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -178,6 +178,7 @@ void initialize() {
 	constexpr size_t idt_size = 0x100 * sizeof(GateDescriptor);
 
 	s_idt = (GateDescriptor*)kmalloc(idt_size);
+	ASSERT(s_idt);
 	memset(s_idt, 0x00, idt_size);
 
 	s_idtr.offset = s_idt;
