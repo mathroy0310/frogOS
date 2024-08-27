@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 15:49:22 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/26 16:20:04 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/27 01:50:05 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,13 +60,13 @@ template <typename Key, typename T, typename HASH = FROG::hash<Key>> class HashM
 	};
 
   private:
-	ErrorOr<void>        rebucket(size_type);
-	Vector<Entry>       &get_bucket(const Key &);
-	const Vector<Entry> &get_bucket(const Key &) const;
+	ErrorOr<void>            rebucket(size_type);
+	LinkedList<Entry>       &get_bucket(const Key &);
+	const LinkedList<Entry> &get_bucket(const Key &) const;
 
   private:
-	Vector<Vector<Entry>> m_buckets;
-	size_type             m_size = 0;
+	Vector<LinkedList<Entry>> m_buckets;
+	size_type                 m_size = 0;
 };
 
 template <typename Key, typename T, typename HASH>
@@ -185,7 +185,7 @@ ErrorOr<void> HashMap<Key, T, HASH>::rebucket(size_type bucket_count) {
 	if (m_buckets.size() >= bucket_count) return {};
 
 	size_type new_bucket_count = FROG::Math::max<size_type>(bucket_count, m_buckets.size() * 2);
-	Vector<Vector<Entry>> new_buckets;
+	Vector<LinkedList<Entry>> new_buckets;
 	if (new_buckets.resize(new_bucket_count).is_error())
 		return Error::from_string("HashMap: Could not allocate memory");
 
@@ -204,14 +204,14 @@ ErrorOr<void> HashMap<Key, T, HASH>::rebucket(size_type bucket_count) {
 }
 
 template <typename Key, typename T, typename HASH>
-Vector<typename HashMap<Key, T, HASH>::Entry> &HashMap<Key, T, HASH>::get_bucket(const Key &key) {
+LinkedList<typename HashMap<Key, T, HASH>::Entry>& HashMap<Key, T, HASH>::get_bucket(const Key& key) {
 	ASSERT(!m_buckets.empty());
 	auto index = HASH()(key) % m_buckets.size();
 	return m_buckets[index];
 }
 
 template <typename Key, typename T, typename HASH>
-const Vector<typename HashMap<Key, T, HASH>::Entry> &HashMap<Key, T, HASH>::get_bucket(const Key &key) const {
+const LinkedList<typename HashMap<Key, T, HASH>::Entry>& HashMap<Key, T, HASH>::get_bucket(const Key& key) const {
 	ASSERT(!m_buckets.empty());
 	auto index = HASH()(key) % m_buckets.size();
 	return m_buckets[index];
