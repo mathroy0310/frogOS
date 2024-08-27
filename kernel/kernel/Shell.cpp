@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/27 02:17:41 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/27 02:41:50 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,7 +153,7 @@ void Shell::process_command(const Vector<String> &arguments) {
 		TTY_PRINTLN("{}", time);
 	} else if (arguments.front() == "echo") {
 		if (arguments.size() > 1) {
-			return TTY_PRINT("{}", arguments[1]);
+			TTY_PRINT("{}", arguments[1]);
 			for (size_t i = 2; i < arguments.size(); i++)
 				TTY_PRINT(" {}", arguments[i]);
 		}
@@ -280,7 +280,7 @@ void Shell::process_command(const Vector<String> &arguments) {
 			return (const char *) buffer;
 		};
 
-		TTY_PRINTLN("/{}", path);
+		TTY_PRINTLN("{}", path);
 		for (auto &inode : inodes)
 			if (inode->ifdir())
 				TTY_PRINTLN("  {} {7} \e[34m{}\e[m", mode_string(inode->mode()), inode->size(),
@@ -291,7 +291,7 @@ void Shell::process_command(const Vector<String> &arguments) {
 	} else if (arguments.front() == "cat") {
 		if (!VirtualFileSystem::is_initialized()) return TTY_PRINTLN("VFS not initialized :(");
 
-		if (arguments.size() > 2) return TTY_PRINTLN("usage: 'cat path'");
+		if (arguments.size() != 2) return TTY_PRINTLN("usage: 'cat path'");
 
 		auto file_or_error = VirtualFileSystem::get().from_absolute_path(arguments[1]);
 		if (file_or_error.is_error()) return TTY_PRINTLN("{}", file_or_error.error());
