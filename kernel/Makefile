@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/05 01:34:45 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/08/28 01:18:58 by maroy            ###   ########.fr        #
+#    Updated: 2024/08/28 01:45:16 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -45,11 +45,9 @@ KERNEL_OBJS=					\
 $(KERNEL_ARCH_OBJS)				\
 font/prefs.o  					\
 kernel/APIC.o					\
-kernel/ATA.o					\
 kernel/build_libc.o				\
 kernel/CPUID.o					\
 kernel/Debug.o 					\
-kernel/DiskIO.o					\
 kernel/Font.o					\
 kernel/FS/Ext2.o				\
 kernel/FS/VirtualFileSystem.o	\
@@ -57,7 +55,7 @@ kernel/Input.o					\
 kernel/InterruptController.o	\
 kernel/kernel.o					\
 kernel/kmalloc.o				\
-kernel/PCI.o 1					\
+kernel/PCI.o 					\
 kernel/PIC.o					\
 kernel/PIT.o					\
 kernel/RTC.o					\
@@ -66,6 +64,8 @@ kernel/Serial.o					\
 kernel/Shell.o					\
 kernel/SpinLock.o 				\
 kernel/SSP.o					\
+kernel/Storage/ATAController.o	\
+kernel/Storage/StorageDevice.o	\
 kernel/Thread.o 				\
 kernel/TTY.o					\
 kernel/VesaTerminalDriver.o		\
@@ -115,6 +115,7 @@ always:
 	mkdir -p $(BUILDDIR)/$(ARCHDIR)
 	mkdir -p $(BUILDDIR)/kernel
 	mkdir -p $(BUILDDIR)/kernel/FS
+	mkdir -p $(BUILDDIR)/kernel/Storage
 	mkdir -p $(BUILDDIR)/font
 
 clean:

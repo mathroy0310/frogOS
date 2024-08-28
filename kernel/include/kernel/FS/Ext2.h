@@ -6,13 +6,13 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:24:57 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/26 15:50:40 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/28 01:28:10 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 #include <FROG/String.h>
-#include <kernel/DiskIO.h>
+#include <kernel/Storage/StorageDevice.h>
 #include <kernel/FS/FileSystem.h>
 
 namespace Kernel {
@@ -156,12 +156,12 @@ class Ext2Inode : public Inode {
 
 class Ext2FS : public FileSystem {
   public:
-	static FROG::ErrorOr<Ext2FS *> create(DiskDevice::Partition &);
+	static FROG::ErrorOr<Ext2FS*> create(StorageDevice::Partition&);
 
 	virtual const FROG::RefCounted<Inode> root_inode() const override { return m_root_inode; }
 
   private:
-	Ext2FS(DiskDevice::Partition &partition) : m_partition(partition) {}
+	Ext2FS(StorageDevice::Partition &partition) : m_partition(partition) {}
 
 	FROG::ErrorOr<void> initialize_superblock();
 	FROG::ErrorOr<void> initialize_block_group_descriptors();
@@ -175,7 +175,7 @@ class Ext2FS : public FileSystem {
 	const Ext2::Inode &ext2_root_inode() const;
 
   private:
-	DiskDevice::Partition &m_partition;
+	StorageDevice::Partition &m_partition;
 
 	FROG::RefCounted<Inode> m_root_inode;
 

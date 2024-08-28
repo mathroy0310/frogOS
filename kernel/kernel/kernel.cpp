@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/27 02:23:24 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/28 01:48:01 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,13 +14,14 @@
 #include <FROG/StringView.h>
 #include <FROG/Vector.h>
 #include <kernel/Debug.h>
-#include <kernel/DiskIO.h>
+#include <kernel/FS/VirtualFileSystem.h>
 #include <kernel/GDT.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
 #include <kernel/Input.h>
 #include <kernel/InterruptController.h>
 #include <kernel/MMU.h>
+#include <kernel/PCI.h>
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
 #include <kernel/RTC.h>
@@ -114,14 +115,20 @@ extern "C" void kernel_main() {
 
 	PIT::initialize();
 	dprintln("PIT initialized");
-	if (!Input::initialize()) return;
-	dprintln("8042 initialized");
+
+	if (!PCI::initialize()) Kernel::panic("Could not initialize PCI");
+	dprintln("PCI initialized");
+
+	if (!Input::initialize()) Kernel::panic("Could not initialize Input drivers");
+	dprintln("Input initialized");
 
 	Scheduler::initialize();
 	Scheduler &scheduler = Scheduler::get();
 	MUST(scheduler.add_thread(FROG::Function<void()>([terminal_driver] {
-		DiskIO::initialize();
-		dprintln("Disk IO initialized");
+		if (auto error = VirtualFileSystem::initialize(); error.is_error()) {
+			derrorln("{}", error.error());
+			return;
+		}
 
 		auto font_or_error = Font::load("/usr/share/fonts/zap-ext-vga16.psf");
 		if (font_or_error.is_error())

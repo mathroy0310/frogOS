@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:18 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/26 15:52:14 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/28 01:32:55 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -233,7 +233,7 @@ FROG::ErrorOr<FROG::RefCounted<Inode>> Ext2Inode::directory_find(FROG::StringVie
 		uintptr_t entry_addr = (uintptr_t) block_data.data();
 		while (entry_addr < block_data_end) {
 			Ext2::LinkedDirectoryEntry *entry = (Ext2::LinkedDirectoryEntry *) entry_addr;
-			FROG::StringView             entry_name = FROG::StringView(entry->name, entry->name_len);
+			FROG::StringView            entry_name = FROG::StringView(entry->name, entry->name_len);
 			if (entry->inode && file_name == entry_name) {
 				Ext2::Inode asked_inode = TRY(m_fs->read_inode(entry->inode));
 				result = FROG::RefCounted<Inode>(new Ext2Inode(m_fs, FROG::move(asked_inode), entry_name));
@@ -260,7 +260,7 @@ FROG::ErrorOr<FROG::Vector<FROG::RefCounted<Inode>>> Ext2Inode::directory_inodes
 			Ext2::LinkedDirectoryEntry *entry = (Ext2::LinkedDirectoryEntry *) entry_addr;
 			if (entry->inode) {
 				FROG::StringView entry_name = FROG::StringView(entry->name, entry->name_len);
-				Ext2::Inode     current_inode = TRY(m_fs->read_inode(entry->inode));
+				Ext2::Inode      current_inode = TRY(m_fs->read_inode(entry->inode));
 				auto ref_counted_inode = FROG::RefCounted<Inode>(new Ext2Inode(m_fs, FROG::move(current_inode), entry_name));
 				TRY(inodes.push_back(FROG::move(ref_counted_inode)));
 			}
@@ -274,7 +274,7 @@ FROG::ErrorOr<FROG::Vector<FROG::RefCounted<Inode>>> Ext2Inode::directory_inodes
 	return inodes;
 }
 
-FROG::ErrorOr<Ext2FS *> Ext2FS::create(DiskDevice::Partition &partition) {
+FROG::ErrorOr<Ext2FS *> Ext2FS::create(StorageDevice::Partition &partition) {
 	Ext2FS *ext2fs = new Ext2FS(partition);
 	if (ext2fs == nullptr) return FROG::Error::from_string("Could not allocate Ext2FS");
 	TRY(ext2fs->initialize_superblock());
@@ -297,8 +297,7 @@ FROG::ErrorOr<void> Ext2FS::initialize_superblock() {
 		uint32_t lba = 1024 / sector_size;
 		uint32_t sector_count = 1024 / sector_size;
 
-		if (!m_partition.read_sectors(lba, sector_count, superblock_buffer))
-			return FROG::Error::from_string("Could not read from partition");
+		TRY(m_partition.read_sectors(lba, sector_count, superblock_buffer));
 
 		memcpy(&m_superblock, superblock_buffer, sizeof(Ext2::Superblock));
 	}
@@ -348,12 +347,11 @@ FROG::ErrorOr<void> Ext2FS::initialize_block_group_descriptors() {
 	uint8_t *block_group_descriptor_table_buffer = (uint8_t *) kmalloc(block_group_descriptor_table_sector_count * sector_size);
 	if (block_group_descriptor_table_buffer == nullptr)
 		return FROG::Error::from_string("Could not allocate memory for block group descriptor "
-		                               "table");
+		                                "table");
 	FROG::ScopeGuard _(
 	    [block_group_descriptor_table_buffer] { kfree(block_group_descriptor_table_buffer); });
 
-	if (!m_partition.read_sectors(block_group_descriptor_table_block * sectors_per_block, block_group_descriptor_table_sector_count, block_group_descriptor_table_buffer))
-		return FROG::Error::from_string("Could not read from partition");
+	TRY(m_partition.read_sectors(block_group_descriptor_table_block * sectors_per_block, block_group_descriptor_table_sector_count, block_group_descriptor_table_buffer));
 
 	TRY(m_block_group_descriptors.resize(number_of_block_groups));
 
@@ -409,9 +407,8 @@ FROG::ErrorOr<FROG::Vector<uint8_t>> Ext2FS::read_block(uint32_t block) {
 
 	FROG::Vector<uint8_t> block_buffer;
 	TRY(block_buffer.resize(block_size));
-
-	if (!m_partition.read_sectors(block * sectors_per_block, sectors_per_block, block_buffer.data()))
-		return FROG::Error::from_string("Could not read from partition");
+	
+	TRY(m_partition.read_sectors(block * sectors_per_block, sectors_per_block, block_buffer.data()));
 
 	return block_buffer;
 }

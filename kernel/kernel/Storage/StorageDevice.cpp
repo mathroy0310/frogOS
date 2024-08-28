@@ -1,23 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   DiskIO.cpp                                         :+:      :+:    :+:   */
+/*   StorageDevice.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/08/26 14:26:38 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/26 14:26:45 by maroy            ###   ########.fr       */
+/*   Created: 2024/08/28 01:35:28 by maroy             #+#    #+#             */
+/*   Updated: 2024/08/28 01:35:33 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/ScopeGuard.h>
 #include <FROG/StringView.h>
-#include <kernel/ATA.h>
-#include <kernel/DiskIO.h>
 #include <kernel/FS/Ext2.h>
 #include <kernel/FS/VirtualFileSystem.h>
-
-#include <kernel/kprint.h>
+#include <kernel/PCI.h>
+#include <kernel/Storage/StorageDevice.h>
 
 #define ATA_DEVICE_PRIMARY 0x1F0
 #define ATA_DEVICE_SECONDARY 0x170
@@ -72,7 +70,8 @@ uint32_t crc32_table[256] = {
     0xA00AE278, 0xD70DD2EE, 0x4E048354, 0x3903B3C2, 0xA7672661, 0xD06016F7, 0x4969474D, 0x3E6E77DB,
     0xAED16A4A, 0xD9D65ADC, 0x40DF0B66, 0x37D83BF0, 0xA9BCAE53, 0xDEBB9EC5, 0x47B2CF7F, 0x30B5FFE9,
     0xBDBDF21C, 0xCABAC28A, 0x53B39330, 0x24B4A3A6, 0xBAD03605, 0xCDD70693, 0x54DE5729, 0x23D967BF,
-    0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94, 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D};
+    0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94, 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D,
+};
 
 static uint32_t crc32_checksum(const uint8_t *data, size_t count) {
 	uint32_t crc32 = 0xFFFFFFFF;
@@ -83,25 +82,11 @@ static uint32_t crc32_checksum(const uint8_t *data, size_t count) {
 	return crc32 ^ 0xFFFFFFFF;
 }
 
-template <typename T> static T little_endian_to_host(const uint8_t *data) {
-	T result = 0;
-	for (size_t i = 0; i < sizeof(T); i++)
-		result |= data[i] << (8 * i);
-	return result;
-}
-
-template <typename T> static T big_endian_to_host(const uint8_t *data) {
-	T result = 0;
-	for (size_t i = 0; i < sizeof(T); i++)
-		result |= data[i] << (8 * (sizeof(T) - i - 1));
-	return result;
-}
-
 static GUID parse_guid(const uint8_t *guid) {
 	GUID result;
-	result.data1 = big_endian_to_host<uint32_t>(guid + 0);
-	result.data2 = big_endian_to_host<uint16_t>(guid + 4);
-	result.data3 = big_endian_to_host<uint16_t>(guid + 6);
+	result.data1 = FROG::Math::big_endian_to_host<uint32_t>(guid + 0);
+	result.data2 = FROG::Math::big_endian_to_host<uint16_t>(guid + 4);
+	result.data3 = FROG::Math::big_endian_to_host<uint16_t>(guid + 6);
 	memcpy(result.data4, guid + 8, 8);
 	return result;
 }
@@ -128,106 +113,79 @@ static GPTHeader parse_gpt_header(const FROG::Vector<uint8_t> &lba1) {
 	memset(&header, 0, sizeof(header));
 
 	memcpy(header.signature, lba1.data(), 8);
-	header.revision = little_endian_to_host<uint32_t>(lba1.data() + 8);
-	header.size = little_endian_to_host<uint32_t>(lba1.data() + 12);
-	header.crc32 = little_endian_to_host<uint32_t>(lba1.data() + 16);
-	header.my_lba = little_endian_to_host<uint64_t>(lba1.data() + 24);
-	header.first_lba = little_endian_to_host<uint64_t>(lba1.data() + 40);
-	header.last_lba = little_endian_to_host<uint64_t>(lba1.data() + 48);
+	header.revision = FROG::Math::little_endian_to_host<uint32_t>(lba1.data() + 8);
+	header.size = FROG::Math::little_endian_to_host<uint32_t>(lba1.data() + 12);
+	header.crc32 = FROG::Math::little_endian_to_host<uint32_t>(lba1.data() + 16);
+	header.my_lba = FROG::Math::little_endian_to_host<uint64_t>(lba1.data() + 24);
+	header.first_lba = FROG::Math::little_endian_to_host<uint64_t>(lba1.data() + 40);
+	header.last_lba = FROG::Math::little_endian_to_host<uint64_t>(lba1.data() + 48);
 	header.guid = parse_guid(lba1.data() + 56);
-	header.partition_entry_lba = little_endian_to_host<uint64_t>(lba1.data() + 72);
-	header.partition_entry_count = little_endian_to_host<uint32_t>(lba1.data() + 80);
-	header.partition_entry_size = little_endian_to_host<uint32_t>(lba1.data() + 84);
-	header.partition_entry_array_crc32 = little_endian_to_host<uint32_t>(lba1.data() + 88);
+	header.partition_entry_lba = FROG::Math::little_endian_to_host<uint64_t>(lba1.data() + 72);
+	header.partition_entry_count = FROG::Math::little_endian_to_host<uint32_t>(lba1.data() + 80);
+	header.partition_entry_size = FROG::Math::little_endian_to_host<uint32_t>(lba1.data() + 84);
+	header.partition_entry_array_crc32 = FROG::Math::little_endian_to_host<uint32_t>(lba1.data() + 88);
 	return header;
 }
 
-bool DiskDevice::initialize_partitions() {
+static void utf8_encode(const uint16_t *codepoints, size_t count, char *out) {
+	uint32_t len = 0;
+	while (*codepoints && count--) {
+		uint16_t cp = *codepoints;
+		if (cp < 128) {
+			out[len++] = cp & 0x7F;
+		} else if (cp < 2048) {
+			out[len++] = 0xC0 | ((cp >> 0x6) & 0x1F);
+			out[len++] = 0x80 | (cp & 0x3F);
+		} else {
+			out[len++] = 0xE0 | ((cp >> 0xC) & 0x0F);
+			out[len++] = 0x80 | ((cp >> 0x6) & 0x3F);
+			out[len++] = 0x80 | (cp & 0x3F);
+		}
+		codepoints++;
+	}
+	out[len] = 0;
+}
+
+FROG::ErrorOr<void> StorageDevice::initialize_partitions() {
 	FROG::Vector<uint8_t> lba1(sector_size());
-	if (!read_sectors(1, 1, lba1.data())) return false;
+	TRY(read_sectors(1, 1, lba1.data()));
 
 	GPTHeader header = parse_gpt_header(lba1);
-	if (!is_valid_gpt_header(header, sector_size())) {
-		dprintln("invalid gpt header");
-		return false;
-	}
+	if (!is_valid_gpt_header(header, sector_size()))
+		return FROG::Error::from_string("Invalid GPT header");
 
 	uint32_t size = header.partition_entry_count * header.partition_entry_size;
 	if (uint32_t remainder = size % sector_size()) size += sector_size() - remainder;
 
 	FROG::Vector<uint8_t> entry_array(size);
-	if (!read_sectors(header.partition_entry_lba, size / sector_size(), entry_array.data()))
-		return false;
+	TRY(read_sectors(header.partition_entry_lba, size / sector_size(), entry_array.data()));
 
-	if (!is_valid_gpt_crc32(header, lba1, entry_array)) {
-		dprintln("invalid crc3 in gpt header");
-		return false;
-	}
+	if (!is_valid_gpt_crc32(header, lba1, entry_array))
+		return FROG::Error::from_string("Invalid crc3 in the GPT header");
 
 	for (uint32_t i = 0; i < header.partition_entry_count; i++) {
 		uint8_t *partition_data = entry_array.data() + header.partition_entry_size * i;
-		MUST(m_partitions.emplace_back(*this, parse_guid(partition_data + 0), parse_guid(partition_data + 16), little_endian_to_host<uint64_t>(partition_data + 32), little_endian_to_host<uint64_t>(partition_data + 40), little_endian_to_host<uint64_t>(partition_data + 48), (const char *) (partition_data + 56)));
+
+		char utf8_name[36 * 3 + 1]; // 36 16-bit codepoints + nullbyte
+		utf8_encode((uint16_t *) (partition_data + 56), header.partition_entry_size - 56, utf8_name);
+
+		MUST(m_partitions.emplace_back(*this, parse_guid(partition_data + 0), parse_guid(partition_data + 16), FROG::Math::little_endian_to_host<uint64_t>(partition_data + 32), FROG::Math::little_endian_to_host<uint64_t>(partition_data + 40), FROG::Math::little_endian_to_host<uint64_t>(partition_data + 48), utf8_name));
 	}
 
-	return true;
+	return {};
 }
 
-static DiskIO *s_instance = nullptr;
-
-bool DiskIO::initialize() {
-	ASSERT(s_instance == nullptr);
-	s_instance = new DiskIO();
-
-#if 1
-	for (DiskDevice *device : s_instance->m_devices) {
-		for (auto &partition : device->partitions()) {
-			if (!partition.is_used()) continue;
-
-			if (memcmp(&partition.type(), "\x0F\xC6\x3D\xAF\x84\x83\x47\x72\x8E\x79\x3D\x69\xD8\x47\x7D\xE4", 16) == 0) {
-				auto ext2fs = MUST(Ext2FS::create(partition));
-				VirtualFileSystem::initialize(ext2fs->root_inode());
-			}
-		}
-	}
-#endif
-
-	return true;
-}
-
-DiskIO &DiskIO::get() {
-	ASSERT(s_instance);
-	return *s_instance;
-}
-
-DiskIO::DiskIO() {
-	try_add_device(ATADevice::create(ATA_DEVICE_PRIMARY, ATA_DEVICE_PRIMARY + 0x206, 0));
-	try_add_device(ATADevice::create(ATA_DEVICE_PRIMARY, ATA_DEVICE_PRIMARY + 0x206, ATA_DEVICE_SLAVE_BIT));
-	try_add_device(ATADevice::create(ATA_DEVICE_SECONDARY, ATA_DEVICE_SECONDARY + 0x206, 0));
-	try_add_device(ATADevice::create(ATA_DEVICE_SECONDARY, ATA_DEVICE_SECONDARY + 0x206, ATA_DEVICE_SLAVE_BIT));
-}
-
-void DiskIO::try_add_device(DiskDevice *device) {
-	if (!device) return;
-	if (!device->initialize()) {
-		delete device;
-		return;
-	}
-	if (!device->initialize_partitions()) {
-		delete device;
-		return;
-	}
-	MUST(m_devices.push_back(device));
-}
-
-DiskDevice::Partition::Partition(DiskDevice &device, const GUID &type, const GUID &guid, uint64_t start, uint64_t end, uint64_t attr, const char *name)
+StorageDevice::Partition::Partition(StorageDevice &device, const GUID &type, const GUID &guid, uint64_t start, uint64_t end, uint64_t attr, const char *name)
     : m_device(device), m_type(type), m_guid(guid), m_lba_start(start), m_lba_end(end), m_attributes(attr) {
 	memcpy(m_name, name, sizeof(m_name));
 }
 
-bool DiskDevice::Partition::read_sectors(uint32_t lba, uint32_t sector_count, uint8_t *buffer) {
+FROG::ErrorOr<void> StorageDevice::Partition::read_sectors(uint64_t lba, uint8_t sector_count, uint8_t *buffer) {
 	const uint32_t sectors_in_partition = m_lba_end - m_lba_start;
-	ASSERT(lba + sector_count < sectors_in_partition);
-	return m_device.read_sectors(m_lba_start + lba, sector_count, buffer);
+	if (lba + sector_count > sectors_in_partition)
+		return FROG::Error::from_string("Attempted to read outside of the partition boundaries");
+	TRY(m_device.read_sectors(m_lba_start + lba, sector_count, buffer));
+	return {};
 }
 
 } // namespace Kernel
