@@ -22,8 +22,8 @@
 	.skip 20
 
 	.long 0
+	.long 1280
 	.long 800
-	.long 600
 	.long 32
 
 .section .bss, "aw", @nobits

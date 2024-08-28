@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 23:00:36 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/22 11:37:08 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/28 02:10:43 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,8 @@ namespace Kernel {
 
 static Scheduler *s_instance = nullptr;
 
-extern "C" void start_thread(uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3, uintptr_t rsp, uintptr_t rip);
-extern "C" void      continue_thread(uintptr_t rsp, uintptr_t rip);
+extern "C" void start_thread(const FROG::Function<void()> *function, uintptr_t rsp, uintptr_t rip);
+extern "C" void continue_thread(uintptr_t rsp, uintptr_t rip);
 extern "C" uintptr_t read_rip();
 
 void Scheduler::initialize() {
@@ -38,6 +38,15 @@ Scheduler &Scheduler::get() {
 }
 
 const Thread &Scheduler::current_thread() const { return *m_current_iterator; }
+
+FROG::ErrorOr<void> Scheduler::add_thread(const FROG::Function<void()> &function) {
+	uintptr_t flags;
+	asm volatile("pushf; pop %0" : "=r"(flags));
+	asm volatile("cli");
+	TRY(m_threads.emplace_back(function));
+	if (flags & (1 << 9)) asm volatile("sti");
+	return {};
+}
 
 void Scheduler::reschedule() {
 	ASSERT(InterruptController::get().is_in_service(PIT_IRQ));
@@ -88,7 +97,7 @@ void Scheduler::switch_thread() {
 	switch (next.state()) {
 	case Thread::State::NotStarted:
 		next.set_state(Thread::State::Running);
-		start_thread(next.args()[0], next.args()[1], next.args()[2], next.args()[3], next.rsp(), next.rip());
+		start_thread(next.function(), next.rsp(), next.rip());
 		break;
 	case Thread::State::Paused:
 		next.set_state(Thread::State::Running);
@@ -121,8 +130,7 @@ void Scheduler::start() {
 	ASSERT(current.state() == Thread::State::NotStarted);
 	current.set_state(Thread::State::Running);
 
-	const uintptr_t *args = current.args();
-	start_thread(args[0], args[1], args[2], args[3], current.rsp(), current.rip());
+	start_thread(current.function(), current.rsp(), current.rip());
 
 	ASSERT(false);
 }

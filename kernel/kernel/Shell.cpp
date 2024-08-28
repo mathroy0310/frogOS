@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/28 01:20:28 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/28 02:11:39 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,21 +174,15 @@ void Shell::process_command(const Vector<String> &arguments) {
 	} else if (arguments.front() == "thread") {
 		static SpinLock s_thread_spinlock;
 
-		// NOTE: This is a workaround to pass values as copies to threads.
-		//       I have only implemented passing integer and pointers.
-		//       We don't continue execution until the thread has unlocked
-		//       the spinlock.
 		s_thread_spinlock.lock();
-		MUST(Scheduler::get().add_thread(Function<void(const Vector<String> *)>([this](const Vector<String> *args_ptr) {
-			                                 auto args = *args_ptr;
-			                                 s_thread_spinlock.unlock();
 
-			                                 args.remove(0);
-			                                 PIT::sleep(5000);
-
-			                                 process_command(args);
-		                                 }),
-		                                 &arguments));
+		MUST(Scheduler::get().add_thread(Function<void()>([this, &arguments] {
+			auto args = arguments;
+			args.remove(0);
+			s_thread_spinlock.unlock();
+			PIT::sleep(5000);
+			process_command(args);
+		})));
 
 		while (s_thread_spinlock.is_locked())
 			;
