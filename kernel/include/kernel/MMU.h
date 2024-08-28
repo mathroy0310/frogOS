@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   MMU.h                                        ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/09 11:44:09 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 00:15:56 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   MMU.h                                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/09 11:44:09 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/28 01:51:56 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,14 +17,21 @@
 
 class MMU {
   public:
+	enum Flags : uint8_t {
+		Present = 1,
+		ReadWrite = 2,
+		UserSupervisor = 4,
+	};
+
+  public:
 	static void initialize();
 	static MMU &get();
 
 	MMU();
 	~MMU();
 
-	void allocate_page(uintptr_t);
-	void allocate_range(uintptr_t, ptrdiff_t);
+	void allocate_page(uintptr_t, uint8_t);
+	void allocate_range(uintptr_t, ptrdiff_t, uint8_t);
 
 	void unallocate_page(uintptr_t);
 	void unallocate_range(uintptr_t, ptrdiff_t);
