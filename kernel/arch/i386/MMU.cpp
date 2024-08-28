@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 11:42:54 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/28 02:04:56 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/28 02:07:06 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,9 +75,11 @@ MMU::MMU() {
 
 void MMU::allocate_page(uintptr_t address, uint8_t flags) {
 #if MMU_DEBUG_PRINT
-	dprintln("AllocatePage(0x{8H})", address & PAGE_MASK);
+	dprintln("AllocatePage(0x{8H})", address);
 #endif
 	ASSERT(flags & Flags::Present);
+
+	address &= PAGE_MASK;
 
 	uint32_t pdpte = (address & 0xC0000000) >> 30;
 	uint32_t pde = (address & 0x3FE00000) >> 21;
@@ -91,9 +93,9 @@ void MMU::allocate_page(uintptr_t address, uint8_t flags) {
 	page_directory[pde] |= flags;
 
 	uint64_t *page_table = (uint64_t *) (page_directory[pde] & PAGE_MASK);
-	page_table[pte] = (address & PAGE_MASK) | Flags::ReadWrite | Flags::Present;
+	page_table[pte] = address | flags;
 
-	asm volatile("invlpg (%0)" ::"r"(address & PAGE_MASK) : "memory");
+	asm volatile("invlpg (%0)" ::"r"(address) : "memory");
 }
 
 void MMU::allocate_range(uintptr_t address, ptrdiff_t size, uint8_t flags) {
