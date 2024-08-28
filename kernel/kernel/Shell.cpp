@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/27 02:41:50 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/28 01:20:28 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ void Shell::set_prompt(StringView prompt) {
 void Shell::run() {
 	TTY_PRINT("{}", m_prompt);
 	for (;;) {
-		asm volatile("hlt");
+		Scheduler::get().set_current_thread_sleeping();
 		Input::update();
 	}
 }
@@ -259,7 +259,7 @@ void Shell::process_command(const Vector<String> &arguments) {
 		auto directory_or_error = VirtualFileSystem::get().from_absolute_path(path);
 		if (directory_or_error.is_error()) return TTY_PRINTLN("{}", directory_or_error.error());
 		auto directory = directory_or_error.release_value();
-		ASSERT(directory->ifdir());
+		if (!directory->ifdir()) return TTY_PRINTLN("Given path does not point to a directory");
 
 		auto inodes_or_error = directory->directory_inodes();
 		if (inodes_or_error.is_error()) return TTY_PRINTLN("{}", inodes_or_error.error());

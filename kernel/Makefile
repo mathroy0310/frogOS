@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/05 01:34:45 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/08/27 02:33:16 by maroy            ###   ########.fr        #
+#    Updated: 2024/08/28 01:18:58 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -57,6 +57,7 @@ kernel/Input.o					\
 kernel/InterruptController.o	\
 kernel/kernel.o					\
 kernel/kmalloc.o				\
+kernel/PCI.o 1					\
 kernel/PIC.o					\
 kernel/PIT.o					\
 kernel/RTC.o					\
