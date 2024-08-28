@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 11:42:54 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/28 01:54:50 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/28 02:04:56 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@
 
 static MMU *s_instance = nullptr;
 
-void MMU::intialize() {
+void MMU::initialize() {
 	ASSERT(s_instance == nullptr);
 	s_instance = new MMU();
 }

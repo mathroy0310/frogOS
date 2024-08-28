@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/28 01:48:01 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/28 02:03:51 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,6 +98,9 @@ extern "C" void kernel_main() {
 
 	kmalloc_initialize();
 	dprintln("kmalloc initialized");
+
+	GDT::initialize();
+	dprintln("GDT initialized");
 
 	IDT::initialize();
 	dprintln("IDT initialized");

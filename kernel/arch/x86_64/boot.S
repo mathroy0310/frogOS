@@ -10,18 +10,6 @@
 .set PG_READ_WRITE,	1<<1
 .set PG_PAGE_SIZE,	1<<7
 
-# GDT access byte
-.set GDT_A_A,	1<<40
-.set GDT_A_RW,	1<<41
-.set GDT_A_DC,	1<<42
-.set GDT_A_E,	1<<43
-.set GDT_A_S,	1<<44
-.set GDT_A_DPL,	1<<45
-.set GDT_A_P,	1<<47
-# GDT flags
-.set GDT_F_L,	1<<53
-.set GDT_F_DB,	1<<54
-.set GDT_F_G,	1<<55
 
 .code32
 
@@ -40,9 +28,11 @@
 
 .section .bss, "aw", @nobits
  	# Create stack
-	stack_bottom:
+	.global g_boot_stack_bottom
+	g_boot_stack_bottom:
 		.skip 16384
-	stack_top:
+	.global g_boot_stack_top
+	g_boot_stack_top:
 
 	.global g_kernel_cmdline
 	g_kernel_cmdline:
@@ -54,7 +44,7 @@
 	# 0 MiB -> 1 MiB: bootloader stuff
 	# 1 MiB -> 2 MiB: kernel
 	# 2 MiB -> 3 MiB: kmalloc
-	# 3 MiB -> 4 MiB: kmalloc_eternal
+	# 3 MiB -> 4 MiB: kmalloc_fixed
 	.align 4096
 	boot_pml4:
 		.skip 512 * 8
@@ -72,9 +62,12 @@ g_multiboot_info:
 g_multiboot_magic:
 	.skip 8
 
+.section .text, "a"
+
 boot_gdt:
-	.quad 0																											# null descriptor
-	.quad (GDT_F_G | GDT_F_L ) | (GDT_A_P | (0 * GDT_A_DPL) | GDT_A_S | GDT_A_E | GDT_A_RW) | (0xF << 48 | 0xFFFF)	# kernel code
+	.quad 0x0000000000000000 # null descriptor
+	.quad 0x00AF9A000000FFFF # kernel code
+	.quad 0x00AF92000000FFFF # kernel data
 boot_gdtr:
 	.short . - boot_gdt - 1
 	.quad boot_gdt
@@ -171,7 +164,7 @@ initialize_paging:
 .type _start, @function
 _start:
 	# Initialize stack and multiboot info
-	movl $stack_top, %esp
+	movl $g_boot_stack_top, %esp
 	movl %eax, g_multiboot_magic
 	movl %ebx, g_multiboot_info
 
@@ -188,7 +181,7 @@ _start:
 .code64
 long_mode:
 	# clear segment registers
-	movw $0x00, %ax
+	movw $0x10, %ax
 	movw %ax, %ss
 	movw %ax, %ds
 	movw %ax, %es
