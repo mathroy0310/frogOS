@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:17:04 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 15:26:33 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:45:03 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -430,13 +430,13 @@ namespace FROG::Formatter
 {
 
 	template<typename F, typename T>
-	void print_argument_impl(F putc, const Vector<T>& vector, const ValueFormat& format)
+	void print_argument(F putc, const Vector<T>& vector, const ValueFormat& format)
 	{
 		putc('[');
 		for (typename Vector<T>::size_type i = 0; i < vector.size(); i++)
 		{
 			if (i != 0) putc(',');
-			print_argument_impl(putc, vector[i], format);
+			print_argument(putc, vector[i], format);
 		}
 		putc(']');
 	}

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   Time.h                                       ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 01:17:07 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/09 09:05:10 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Time.h                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 01:17:07 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/30 17:46:59 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ struct Time {
 
 namespace FROG::Formatter {
 
-template <typename F> void print_argument_impl(F putc, const Time &time, const ValueFormat &) {
+template <typename F> void print_argument(F putc, const Time &time, const ValueFormat &) {
 	constexpr const char *week_days[]{"", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 	constexpr const char *months[]{"",    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};

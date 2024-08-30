@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:17:09 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/27 02:29:36 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:44:55 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ inline FROG::StringView operator""_sv(const char *str, FROG::StringView::size_ty
 
 namespace FROG::Formatter {
 
-template <typename F> void print_argument_impl(F putc, const StringView &sv, const ValueFormat &) {
+template <typename F> void print_argument(F putc, const StringView &sv, const ValueFormat &) {
 	for (StringView::size_type i = 0; i < sv.size(); i++)
 		putc(sv[i]);
 }

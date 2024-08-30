@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:49 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/26 16:18:27 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:44:49 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,7 +87,7 @@ template <typename... Args> String String::formatted(const char *format, const A
 
 namespace FROG::Formatter {
 
-template <typename F> void print_argument_impl(F putc, const String &string, const ValueFormat &) {
+template <typename F> void print_argument(F putc, const String &string, const ValueFormat &) {
 	for (String::size_type i = 0; i < string.size(); i++)
 		putc(string[i]);
 }

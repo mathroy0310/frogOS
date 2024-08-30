@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:28:06 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:44:18 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,7 +128,7 @@ template <> class [[nodiscard]] ErrorOr<void> {
 } // namespace FROG
 
 namespace FROG::Formatter {
-template <typename F> void print_argument_impl(F putc, const Error &error, const ValueFormat &) {
+template <typename F> void print_argument(F putc, const Error &error, const ValueFormat &) {
 	if (error.get_error_code() == 0xFF)
 		print(putc, error.get_message());
 	else
