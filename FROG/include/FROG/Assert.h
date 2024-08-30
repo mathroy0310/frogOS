@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 16:00:38 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/28 01:13:28 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:00:11 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,5 +20,7 @@
 	} while (false)
 #define ASSERT_NOT_REACHED() Kernel::panic("ASSERT_NOT_REACHED() failed")
 #else
-#error "NOT IMPLEMENTED"
+#include <assert.h>
+#define ASSERT(cond) assert((cond) && "ASSERT(" #cond ") failed")
+#define ASSERT_NOT_REACHED() assert(false && "ASSERT_NOT_REACHED() failed")
 #endif

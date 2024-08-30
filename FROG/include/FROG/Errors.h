@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 15:24:08 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:00:31 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,12 @@
 		e.release_value();                                \
 	})
 #else
-#error "NOT IMPLEMENTED"
+#define MUST(expr)             \
+	({                         \
+		auto e = expr;         \
+		assert(!e.is_error()); \
+		e.release_value();     \
+	})
 #endif
 
 #define TRY(expr)                                   \

@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 20:47:11 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 15:25:36 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:03:33 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -208,22 +208,22 @@ template <typename T> void LinkedList<T>::clear() {
 
 template <typename T> const T &LinkedList<T>::back() const {
 	ASSERT(!empty());
-	return *const_iterator(m_last);
+	return *const_iterator(m_last, false);
 }
 
 template <typename T> T &LinkedList<T>::back() {
 	ASSERT(!empty());
-	return *iterator(m_last);
+	return *iterator(m_last, false);
 }
 
 template <typename T> const T &LinkedList<T>::front() const {
 	ASSERT(!empty());
-	return *const_iterator(m_data);
+	return *const_iterator(m_data, false);
 }
 
 template <typename T> T &LinkedList<T>::front() {
 	ASSERT(!empty());
-	return *iterator(m_data);
+	return *iterator(m_data, false);
 }
 
 template <typename T> bool LinkedList<T>::contains(const T &value) const {

@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/30 15:32:07 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 15:32:08 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 15:59:42 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,27 +16,34 @@
 int errno = 0;
 
 char *strerror(int error) {
+	static char buffer[100];
+	buffer[0] = 0;
+
 	switch (error) {
 	case ENOMEM:
-		return "Cannot allocate memory";
+		strcpy(buffer, "Cannot allocate memory");
+		break;
 	case EINVAL:
-		return "Invalid argument";
+		strcpy(buffer, "Invalid argument");
+		break;
 	case EISDIR:
-		return "Is a directory";
+		strcpy(buffer, "Is a directory");
+		break;
 	case ENOTDIR:
-		return "Not a directory";
+		strcpy(buffer, "Not a directory");
+		break;
 	case ENOENT:
-		return "No such file or directory";
+		strcpy(buffer, "No such file or directory");
+		break;
 	case EIO:
+		strcpy(buffer, "Input/output error");
 		return "Input/output error";
 	default:
+		// FIXME: sprintf
+		// sprintf(buffer, "Unknown error %d", error);
+		strcpy(buffer, "Unknown error");
+		errno = EINVAL;
 		break;
 	}
-
-	// FIXME: sprintf
-	// static char buffer[26];
-	// sprintf(buffer, "Unknown error %d", error);
-	// return buffer;
-	errno = EINVAL;
-	return "Unknown error";
+	return buffer;
 }

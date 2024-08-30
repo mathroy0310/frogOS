@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 23:25:14 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/27 01:54:13 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:10:28 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -272,6 +272,11 @@ static void *kmalloc_impl(size_t size, size_t align) {
 	return nullptr;
 }
 
+static constexpr bool is_power_of_two(size_t value) {
+	if (value == 0) return false;
+	return (value & (value - 1)) == 0;
+}
+
 void *kmalloc(size_t size) {
 	void *res = kmalloc(size, s_kmalloc_min_align);
 	if (res == nullptr) dwarnln("could not allocate {} bytes", size);
@@ -279,18 +284,14 @@ void *kmalloc(size_t size) {
 }
 
 void *kmalloc(size_t size, size_t align) {
-	kmalloc_info &info = s_kmalloc_info;
+	const kmalloc_info &info = s_kmalloc_info;
 
 	if (size == 0 || size >= info.size) return nullptr;
 
 	ASSERT(align);
 
-	if (align % s_kmalloc_min_align) {
-		size_t new_align = FROG::Math::lcm(align, s_kmalloc_min_align);
-		dwarnln("Asked to align to {}, aliging to {} instead", align, new_align);
-		align = new_align;
-	}
-
+	ASSERT(is_power_of_two(align));
+	
 	// if the size fits into fixed node, we will try to use that since it is faster
 	if (align == s_kmalloc_min_align && size < sizeof(kmalloc_fixed_info::node::data))
 		if (void *result = kmalloc_fixed()) return result;
@@ -341,7 +342,7 @@ void kfree(void *address) {
 
 		auto *node = info.from_address(address);
 		ASSERT(node);
-		ASSERT(node->data() == (uintptr_t)address);
+		ASSERT(node->data() == (uintptr_t) address);
 		ASSERT(node->used());
 
 		ptrdiff_t size = node->size_no_align();
