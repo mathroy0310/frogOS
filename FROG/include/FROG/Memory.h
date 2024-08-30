@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 23:35:30 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 15:26:04 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 15:57:14 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,6 @@
 namespace FROG {
 #if defined(__is_kernel)
 static constexpr void *(&allocator)(size_t) = kmalloc;
-static constexpr void *(&allocator_align)(size_t, size_t) = kmalloc;
 static constexpr void (&deallocator)(void *) = kfree;
 #else
 static constexpr void *(&allocator)(size_t) = malloc;
