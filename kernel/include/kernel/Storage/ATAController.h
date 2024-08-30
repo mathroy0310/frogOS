@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 01:29:12 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/28 01:49:08 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:20:14 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 namespace Kernel {
 
 struct ATABus;
+class ATAController;
 
 class ATADevice : public StorageDevice {
   public:
@@ -42,8 +43,8 @@ class ATADevice : public StorageDevice {
 	uint64_t lba_count;
 	char     model[41];
 
-	ATABus *bus;
-	SpinLock         m_lock;
+	ATABus        *bus;
+	ATAController *controller;
 
 	friend class ATAController;
 };
@@ -68,9 +69,14 @@ class ATAController : public StorageController {
 	ATAController(const PCIDevice &device) : m_pci_device(device) {}
 	FROG::ErrorOr<void> initialize();
 
+	FROG::ErrorOr<void> read(ATADevice *, uint64_t, uint8_t, uint8_t *);
+
   private:
+	SpinLock         m_lock;
 	ATABus           m_buses[2];
 	const PCIDevice &m_pci_device;
+
+	friend class ATADevice;
 };
 
 } // namespace Kernel

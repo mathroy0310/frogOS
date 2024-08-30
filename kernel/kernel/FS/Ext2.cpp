@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:18 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 15:29:28 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:12:31 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -224,10 +224,10 @@ FROG::ErrorOr<FROG::Vector<uint8_t>> Ext2Inode::read_all() {
 	return data_buffer;
 }
 
-FROG::ErrorOr<FROG::RefCounted<Inode>> Ext2Inode::directory_find(FROG::StringView file_name) {
+FROG::ErrorOr<FROG::RefPtr<Inode>> Ext2Inode::directory_find(FROG::StringView file_name) {
 	if (!ifdir()) return FROG::Error::from_errno(ENOTDIR);
 
-	FROG::RefCounted<Inode> result;
+	FROG::RefPtr<Inode> result;
 	FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> function([&](const FROG::Vector<uint8_t> &block_data) -> FROG::ErrorOr<bool> {
 		uintptr_t block_data_end = (uintptr_t) block_data.data() + block_data.size();
 		uintptr_t entry_addr = (uintptr_t) block_data.data();
@@ -236,9 +236,8 @@ FROG::ErrorOr<FROG::RefCounted<Inode>> Ext2Inode::directory_find(FROG::StringVie
 			FROG::StringView            entry_name = FROG::StringView(entry->name, entry->name_len);
 			if (entry->inode && file_name == entry_name) {
 				Ext2Inode *inode = new Ext2Inode(m_fs, TRY(m_fs->read_inode(entry->inode)), entry_name);
-				if (inode == nullptr)
-					return FROG::Error::from_errno(ENOMEM);
-				result = TRY(FROG::RefCounted<Inode>::adopt(inode));
+				if (inode == nullptr) return FROG::Error::from_errno(ENOMEM);
+				result = FROG::RefPtr<Inode>::adopt(inode);
 				return false;
 			}
 			entry_addr += entry->rec_len;
@@ -251,10 +250,10 @@ FROG::ErrorOr<FROG::RefCounted<Inode>> Ext2Inode::directory_find(FROG::StringVie
 	return FROG::Error::from_errno(ENOENT);
 }
 
-FROG::ErrorOr<FROG::Vector<FROG::RefCounted<Inode>>> Ext2Inode::directory_inodes() {
+FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> Ext2Inode::directory_inodes() {
 	if (!ifdir()) return FROG::Error::from_string("Inode is not a directory");
 
-	FROG::Vector<FROG::RefCounted<Inode>> inodes;
+	FROG::Vector<FROG::RefPtr<Inode>> inodes;
 	FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> function([&](const FROG::Vector<uint8_t> &block_data) -> FROG::ErrorOr<bool> {
 		uintptr_t block_data_end = (uintptr_t) block_data.data() + block_data.size();
 		uintptr_t entry_addr = (uintptr_t) block_data.data();
@@ -265,9 +264,8 @@ FROG::ErrorOr<FROG::Vector<FROG::RefCounted<Inode>>> Ext2Inode::directory_inodes
 				Ext2::Inode      current_inode = TRY(m_fs->read_inode(entry->inode));
 
 				Ext2Inode *inode = new Ext2Inode(m_fs, FROG::move(current_inode), entry_name);
-				if (inode == nullptr)
-					return FROG::Error::from_errno(ENOMEM);
-				TRY(inodes.push_back(TRY(FROG::RefCounted<Inode>::adopt(inode))));
+				if (inode == nullptr) return FROG::Error::from_errno(ENOMEM);
+				TRY(inodes.push_back(FROG::RefPtr<Inode>::adopt(inode)));
 			}
 			entry_addr += entry->rec_len;
 		}
@@ -295,8 +293,7 @@ FROG::ErrorOr<void> Ext2FS::initialize_superblock() {
 	// Read superblock from disk
 	{
 		uint8_t *superblock_buffer = (uint8_t *) kmalloc(1024);
-		if (superblock_buffer == nullptr)
-			return FROG::Error::from_errno(ENOMEM);
+		if (superblock_buffer == nullptr) return FROG::Error::from_errno(ENOMEM);
 		FROG::ScopeGuard _([superblock_buffer] { kfree(superblock_buffer); });
 
 		uint32_t lba = 1024 / sector_size;
@@ -379,8 +376,8 @@ FROG::ErrorOr<void> Ext2FS::initialize_block_group_descriptors() {
 FROG::ErrorOr<void> Ext2FS::initialize_root_inode() {
 	Ext2Inode *root_inode = new Ext2Inode(this, TRY(read_inode(Ext2::Enum::ROOT_INO)), "");
 	if (root_inode == nullptr) return FROG::Error::from_errno(ENOMEM);
-	m_root_inode = TRY(FROG::RefCounted<Inode>::adopt(root_inode));
-	
+	m_root_inode = FROG::RefPtr<Inode>::adopt(root_inode);
+
 #if EXT2_DEBUG_PRINT
 	dprintln("root inode:");
 	dprintln("  created  {}", ext2_root_inode().ctime);

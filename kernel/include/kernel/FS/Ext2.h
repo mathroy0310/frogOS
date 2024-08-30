@@ -6,14 +6,16 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:24:57 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/28 01:28:10 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:15:43 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
+
 #include <FROG/String.h>
-#include <kernel/Storage/StorageDevice.h>
+#include <FROG/StringView.h>
 #include <kernel/FS/FileSystem.h>
+#include <kernel/Storage/StorageDevice.h>
 
 namespace Kernel {
 
@@ -134,9 +136,9 @@ class Ext2Inode : public Inode {
 
 	virtual FROG::StringView name() const override { return m_name; }
 
-	virtual FROG::ErrorOr<FROG::Vector<uint8_t>>                 read_all() override;
-	virtual FROG::ErrorOr<FROG::Vector<FROG::RefCounted<Inode>>> directory_inodes() override;
-	virtual FROG::ErrorOr<FROG::RefCounted<Inode>> directory_find(FROG::StringView) override;
+	virtual FROG::ErrorOr<FROG::Vector<uint8_t>>             read_all() override;
+	virtual FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> directory_inodes() override;
+	virtual FROG::ErrorOr<FROG::RefPtr<Inode>> directory_find(FROG::StringView) override;
 
   private:
 	FROG::ErrorOr<void> for_each_block(FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> &);
@@ -156,9 +158,9 @@ class Ext2Inode : public Inode {
 
 class Ext2FS : public FileSystem {
   public:
-	static FROG::ErrorOr<Ext2FS*> create(StorageDevice::Partition&);
+	static FROG::ErrorOr<Ext2FS *> create(StorageDevice::Partition &);
 
-	virtual const FROG::RefCounted<Inode> root_inode() const override { return m_root_inode; }
+	virtual const FROG::RefPtr<Inode> root_inode() const override { return m_root_inode; }
 
   private:
 	Ext2FS(StorageDevice::Partition &partition) : m_partition(partition) {}
@@ -177,7 +179,7 @@ class Ext2FS : public FileSystem {
   private:
 	StorageDevice::Partition &m_partition;
 
-	FROG::RefCounted<Inode> m_root_inode;
+	FROG::RefPtr<Inode> m_root_inode;
 
 	Ext2::Superblock                         m_superblock;
 	FROG::Vector<Ext2::BlockGroupDescriptor> m_block_group_descriptors;

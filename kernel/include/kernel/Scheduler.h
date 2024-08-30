@@ -6,46 +6,63 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 22:57:03 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/28 02:08:43 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:16:33 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include <FROG/Function.h>
 #include <FROG/LinkedList.h>
+#include <FROG/Memory.h>
 #include <kernel/Thread.h>
 
 namespace Kernel {
 
 class Scheduler {
-	FROG_NON_COPYABLE(Scheduler);
-	FROG_NON_MOVABLE(Scheduler);
-
   public:
-	static void       initialize();
-	static Scheduler &get();
+	static FROG::ErrorOr<void> initialize();
+	static Scheduler          &get();
 
-	const Thread &current_thread() const;
-
-	FROG::ErrorOr<void> add_thread(const FROG::Function<void()> &function);
-
-	void reschedule();
-	void set_current_thread_sleeping();
 	void start();
+	void reschedule();
 
-	static constexpr size_t ms_between_switch = 4;
+	FROG::ErrorOr<void> add_thread(FROG::RefPtr<Thread>);
+
+	void              set_current_thread_sleeping(uint64_t);
+	[[noreturn]] void set_current_thread_done();
 
   private:
-	Scheduler() {}
-	void switch_thread();
+	Scheduler() = default;
+
+	FROG::RefPtr<Thread> current_thread();
+
+	void               wake_threads();
+	[[nodiscard]] bool save_current_thread();
+	void               remove_and_advance_current_thread();
+	void               advance_current_thread();
+	[[noreturn]] void  execute_current_thread();
 
   private:
-	FROG::LinkedList<Thread>           m_threads;
-	FROG::LinkedList<Thread>::iterator m_current_iterator;
-	uint64_t                           m_last_reschedule = 0;
+	struct ActiveThread {
+		ActiveThread(const FROG::RefPtr<Thread> &thread) : thread(thread) {}
+		FROG::RefPtr<Thread> thread;
+		uint64_t             padding = 0;
+	};
 
-	friend class Thread;
+	struct SleepingThread {
+		SleepingThread(const FROG::RefPtr<Thread> &thread, uint64_t wake_time)
+		    : thread(thread), wake_time(wake_time) {}
+		FROG::RefPtr<Thread> thread;
+		uint64_t             wake_time;
+	};
+
+	FROG::RefPtr<Thread>             m_idle_thread;
+	FROG::LinkedList<ActiveThread>   m_active_threads;
+	FROG::LinkedList<SleepingThread> m_sleeping_threads;
+
+	FROG::LinkedList<ActiveThread>::iterator m_current_thread;
+
+	uint64_t m_last_reschedule = 0;
 };
 
 } // namespace Kernel

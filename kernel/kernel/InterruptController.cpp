@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   InterruptController.cpp                      ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/12 17:48:10 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 00:14:24 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   InterruptController.cpp                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/12 17:48:10 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/30 17:22:29 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,4 +32,11 @@ void InterruptController::initialize(bool force_pic) {
 	if (s_instance) return;
 	dprintln("Using PIC instead of APIC");
 	s_instance = PIC::create();
+}
+
+bool interrupts_enabled()
+{
+	uintptr_t flags;
+	asm volatile("pushf; pop %0" : "=r"(flags) :: "memory");
+	return flags & (1 << 9);
 }

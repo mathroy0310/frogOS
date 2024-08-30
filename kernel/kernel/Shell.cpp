@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 16:36:11 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:20:44 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ void Shell::set_prompt(StringView prompt) {
 void Shell::run() {
 	TTY_PRINT("{}", m_prompt);
 	for (;;) {
-		Scheduler::get().set_current_thread_sleeping();
+		PIT::sleep(1);
 		Input::update();
 	}
 }
@@ -176,13 +176,16 @@ void Shell::process_command(const Vector<String> &arguments) {
 
 		s_thread_spinlock.lock();
 
-		MUST(Scheduler::get().add_thread(Function<void()>([this, &arguments] {
+		auto thread_or_error = Thread::create([this, &arguments] {
 			auto args = arguments;
 			args.remove(0);
 			s_thread_spinlock.unlock();
 			PIT::sleep(5000);
 			process_command(args);
-		})));
+		});
+		if (thread_or_error.is_error()) return TTY_PRINTLN("{}", thread_or_error.error());
+
+		MUST(Scheduler::get().add_thread(thread_or_error.release_value()));
 
 		while (s_thread_spinlock.is_locked())
 			;

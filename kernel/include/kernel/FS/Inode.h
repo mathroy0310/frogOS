@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:25:42 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/26 15:51:07 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:12:31 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 
 namespace Kernel {
 
-class Inode {
+class Inode : public FROG::RefCounted<Inode> {
   public:
 	union Mode {
 		struct {
@@ -55,9 +55,9 @@ class Inode {
 
 	virtual FROG::StringView name() const = 0;
 
-	virtual FROG::ErrorOr<FROG::Vector<uint8_t>>                 read_all() = 0;
-	virtual FROG::ErrorOr<FROG::Vector<FROG::RefCounted<Inode>>> directory_inodes() = 0;
-	virtual FROG::ErrorOr<FROG::RefCounted<Inode>> directory_find(FROG::StringView) = 0;
+	virtual FROG::ErrorOr<FROG::Vector<uint8_t>>             read_all() = 0;
+	virtual FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> directory_inodes() = 0;
+	virtual FROG::ErrorOr<FROG::RefPtr<Inode>>               directory_find(FROG::StringView) = 0;
 };
 
 } // namespace Kernel

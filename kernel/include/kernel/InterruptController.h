@@ -1,18 +1,21 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   InterruptController.h                        ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/12 17:45:41 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:39:51 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   InterruptController.h                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/12 17:45:41 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/30 17:22:14 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <stdint.h>
+
+#define DISABLE_INTERRUPTS() asm volatile("cli")
+#define ENABLE_INTERRUPTS() asm volatile("sti")
 
 class InterruptController {
   public:
@@ -24,3 +27,5 @@ class InterruptController {
 	static void                 initialize(bool force_pic);
 	static InterruptController &get();
 };
+
+bool      interrupts_enabled();

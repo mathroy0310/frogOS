@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 16:36:55 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:23:45 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,9 +33,6 @@
 #include <kernel/kmalloc.h>
 #include <kernel/kprint.h>
 #include <kernel/multiboot.h>
-
-#define DISABLE_INTERRUPTS() asm volatile("cli")
-#define ENABLE_INTERRUPTS() asm volatile("sti")
 
 extern "C" const char g_kernel_cmdline[];
 
@@ -125,9 +122,10 @@ extern "C" void kernel_main() {
 	if (!Input::initialize()) Kernel::panic("Could not initialize Input drivers");
 	dprintln("Input initialized");
 
-	Scheduler::initialize();
+	MUST(Scheduler::initialize());
 	Scheduler &scheduler = Scheduler::get();
-	MUST(scheduler.add_thread(FROG::Function<void()>([terminal_driver] {
+
+	MUST(scheduler.add_thread(MUST(Thread::create([terminal_driver] {
 		if (auto error = VirtualFileSystem::initialize(); error.is_error()) {
 			derrorln("{}", error.error());
 			return;
@@ -138,12 +136,12 @@ extern "C" void kernel_main() {
 			dprintln("{}", font_or_error.error());
 		else
 			terminal_driver->set_font(font_or_error.release_value());
-	})));
-	MUST(scheduler.add_thread(FROG::Function<void()>([tty1] {
+	}))));
+	MUST(scheduler.add_thread(MUST(Thread::create([tty1] {
 		Shell *shell = new Shell(tty1);
 		ASSERT(shell);
 		shell->run();
-	})));
+	}))));
 	// scheduler.add_thread(FROG::Function<void()>([tty1] { print_logo(); }));
 	scheduler.start();
 	ASSERT(false);

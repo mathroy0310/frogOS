@@ -6,27 +6,19 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 23:25:14 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 16:28:06 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:24:58 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Errors.h>
-#include <FROG/Math.h>
+#include <kernel/CriticalScope.h>
 #include <kernel/kmalloc.h>
 #include <kernel/kprint.h>
 #include <kernel/multiboot.h>
 
-#include <kernel/LockGuard.h>
-#include <kernel/SpinLock.h>
-
-#include <stdint.h>
-
 #define MB (1 << 20)
 
 static constexpr size_t s_kmalloc_min_align = alignof(max_align_t);
-
-static Kernel::SpinLock s_general_lock;
-static Kernel::SpinLock s_fixed_lock;
 
 struct kmalloc_node {
 	void set_align(ptrdiff_t align) { m_align = align; }
@@ -187,8 +179,6 @@ void kmalloc_dump_info() {
 }
 
 static void *kmalloc_fixed() {
-	Kernel::LockGuard guard(s_fixed_lock);
-
 	auto &info = s_kmalloc_fixed_info;
 
 	if (!info.free_list_head) return nullptr;
@@ -224,8 +214,6 @@ static void *kmalloc_fixed() {
 }
 
 static void *kmalloc_impl(size_t size, size_t align) {
-	Kernel::LockGuard guard(s_general_lock);
-
 	ASSERT(align % s_kmalloc_min_align == 0);
 	ASSERT(size % s_kmalloc_min_align == 0);
 
@@ -292,6 +280,8 @@ void *kmalloc(size_t size, size_t align) {
 
 	ASSERT(is_power_of_two(align));
 
+	Kernel::CriticalScope critical;
+
 	// if the size fits into fixed node, we will try to use that since it is faster
 	if (align == s_kmalloc_min_align && size <= sizeof(kmalloc_fixed_info::node::data))
 		if (void *result = kmalloc_fixed()) return result;
@@ -307,8 +297,9 @@ void kfree(void *address) {
 	uintptr_t address_uint = (uintptr_t) address;
 	ASSERT(address_uint % s_kmalloc_min_align == 0);
 
+	Kernel::CriticalScope critical;
+
 	if (s_kmalloc_fixed_info.base <= address_uint && address_uint < s_kmalloc_fixed_info.end) {
-		Kernel::LockGuard guard(s_fixed_lock);
 
 		auto &info = s_kmalloc_fixed_info;
 		ASSERT(info.used_list_head);
@@ -340,7 +331,6 @@ void kfree(void *address) {
 		info.used -= sizeof(kmalloc_fixed_info::node);
 		info.free += sizeof(kmalloc_fixed_info::node);
 	} else if (s_kmalloc_info.base <= address_uint && address_uint < s_kmalloc_info.end) {
-		Kernel::LockGuard guard(s_general_lock);
 
 		auto &info = s_kmalloc_info;
 

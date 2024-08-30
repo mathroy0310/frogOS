@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 23:25:36 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/28 01:55:24 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:54:46 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ __attribute__((__noreturn__)) static void panic_impl(const char *file, int line,
 	derrorln(message, args...);
 	Debug::dump_stack_trace();
 	for (;;)
-		asm volatile("hlt");
+		PIT::sleep(1); 
 	__builtin_unreachable();
 }
 } // namespace detail

@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 23:12:13 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/28 02:13:19 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:23:29 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,10 @@ template <size_t size, typename T> static void write_to_stack(uintptr_t &rsp, co
 	memcpy((void *) rsp, (void *) &value, size);
 }
 
+FROG::ErrorOr<FROG::RefPtr<Thread>> Thread::create(const FROG::Function<void()> &function) {
+	return FROG::RefPtr<Thread>::create(function);
+}
+
 Thread::Thread(const FROG::Function<void()> &function) : m_tid(s_next_tid++), m_function(function) {
 	m_stack_base = kmalloc(thread_stack_size, PAGE_SIZE);
 	ASSERT(m_stack_base);
@@ -45,13 +49,14 @@ Thread::Thread(const FROG::Function<void()> &function) : m_tid(s_next_tid++), m_
 	write_to_stack<sizeof(void *)>(m_rsp, &Thread::on_exit);
 }
 
-Thread::~Thread() { kfree(m_stack_base); }
+Thread::~Thread() {
+	dprintln("thread {} destruct", tid());
+	kfree(m_stack_base);
+}
 
 void Thread::on_exit() {
-	asm volatile("cli");
-	m_state = State::Done;
-	Scheduler::get().switch_thread();
-	ASSERT(false);
+	Scheduler::get().set_current_thread_done();
+	ASSERT_NOT_REACHED();
 }
 
 } // namespace Kernel
