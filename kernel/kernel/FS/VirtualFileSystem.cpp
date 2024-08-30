@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:33 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 15:29:44 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:32:18 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,9 +37,9 @@ VirtualFileSystem &VirtualFileSystem::get() {
 FROG::ErrorOr<void> VirtualFileSystem::initialize_impl() {
 	// Initialize all storage controllers
 	for (auto &device : PCI::get().devices()) {
-		if (device.class_code != 0x01) continue;
+		if (device.class_code() != 0x01) continue;
 
-		switch (device.subclass) {
+		switch (device.subclass()) {
 		case 0x0:
 			dwarnln("unsupported SCSI Bus Controller");
 			break;

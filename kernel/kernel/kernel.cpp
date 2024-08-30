@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/28 02:03:51 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:36:55 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,6 +108,9 @@ extern "C" void kernel_main() {
 	MMU::initialize();
 	dprintln("MMU initialized");
 
+	PCI::initialize();
+	dprintln("PCI initialized");
+
 	TerminalDriver *terminal_driver = VesaTerminalDriver::create();
 	ASSERT(terminal_driver);
 	dprintln("VESA initialized");
@@ -118,9 +121,6 @@ extern "C" void kernel_main() {
 
 	PIT::initialize();
 	dprintln("PIT initialized");
-
-	if (!PCI::initialize()) Kernel::panic("Could not initialize PCI");
-	dprintln("PCI initialized");
 
 	if (!Input::initialize()) Kernel::panic("Could not initialize Input drivers");
 	dprintln("Input initialized");

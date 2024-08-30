@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 15:29:59 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:36:11 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -242,6 +242,12 @@ void Shell::process_command(const Vector<String> &arguments) {
 		IO::outb(0x64, 0xFE);
 		asm volatile("cli\n\t"
 		             "hlt");
+
+	} else if (arguments.front() == "lspci") {
+		if (arguments.size() != 1)
+			return TTY_PRINTLN("'lspci' does not support command line arguments");
+		for (auto &device : PCI::get().devices())
+			TTY_PRINTLN("{2H}:{2H}.{2H} {2H}", device.bus(), device.dev(), device.func(), device.class_code());
 	} else if (arguments.front() == "ls") {
 		if (!VirtualFileSystem::is_initialized()) return TTY_PRINTLN("VFS not initialized :(");
 

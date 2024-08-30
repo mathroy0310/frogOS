@@ -6,11 +6,10 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 01:19:41 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/28 01:19:46 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:35:30 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <kernel/Debug.h>
 #include <kernel/IO.h>
 #include <kernel/PCI.h>
 
@@ -22,14 +21,13 @@
 
 namespace Kernel {
 
-PCI *s_instance = nullptr;
+static PCI *s_instance = nullptr;
 
-bool PCI::initialize() {
+void PCI::initialize() {
 	ASSERT(s_instance == nullptr);
 	s_instance = new PCI();
 	ASSERT(s_instance);
 	s_instance->check_all_buses();
-	return !s_instance->m_devices.empty();
 }
 
 PCI &PCI::get() {
@@ -54,21 +52,18 @@ static uint8_t get_header_type(uint8_t bus, uint8_t dev, uint8_t func) {
 }
 
 void PCI::check_function(uint8_t bus, uint8_t dev, uint8_t func) {
-	uint32_t  type = read_config_dword(bus, dev, func, 0x08);
-	PCIDevice device{
-	    bus, dev, func, (uint8_t) (type >> 24), (uint8_t) (type >> 16),
-	};
-	MUST(m_devices.push_back(FROG::move(device)));
+	MUST(m_devices.emplace_back(bus, dev, func));
+	auto &device = m_devices.back();
+	if (device.class_code() == 0x06 && device.subclass() == 0x04) check_bus(device.read_byte(0x19));
 }
 
 void PCI::check_device(uint8_t bus, uint8_t dev) {
 	if (get_vendor_id(bus, dev, 0) == INVALID) return;
-	if (get_header_type(bus, dev, 0) & MULTI_FUNCTION) {
-		for (uint8_t func = 0; func < 8; func++)
+
+	check_function(bus, dev, 0);
+	if (get_header_type(bus, dev, 0) & MULTI_FUNCTION)
+		for (uint8_t func = 1; func < 8; func++)
 			if (get_vendor_id(bus, dev, func) != INVALID) check_function(bus, dev, func);
-	} else {
-		check_function(bus, dev, 0);
-	}
 }
 
 void PCI::check_bus(uint8_t bus) {
@@ -78,27 +73,34 @@ void PCI::check_bus(uint8_t bus) {
 
 void PCI::check_all_buses() {
 	if (get_header_type(0, 0, 0) & MULTI_FUNCTION) {
-		for (int func = 0; func < 8; func++)
-			if (get_vendor_id(0, 0, func) != INVALID) check_bus(func);
+		for (int func = 0; func < 8 && get_vendor_id(0, 0, func) != INVALID; func++)
+			check_bus(func);
 	} else {
 		check_bus(0);
 	}
 }
 
+PCIDevice::PCIDevice(uint8_t bus, uint8_t dev, uint8_t func)
+    : m_bus(bus), m_dev(dev), m_func(func) {
+	uint32_t type = read_word(0x0A);
+	m_class_code = (uint8_t) (type >> 8);
+	m_subclass = (uint8_t) (type);
+}
+
 uint32_t PCIDevice::read_dword(uint8_t offset) const {
 	ASSERT((offset & 0x03) == 0);
-	return read_config_dword(bus, dev, func, offset);
+	return read_config_dword(m_bus, m_dev, m_func, offset);
 }
 
 uint16_t PCIDevice::read_word(uint8_t offset) const {
 	ASSERT((offset & 0x01) == 0);
-	uint32_t dword = read_config_dword(bus, dev, func, offset & 0xFC);
-	return (uint16_t) (dword >> (offset & 0x03));
+	uint32_t dword = read_config_dword(m_bus, m_dev, m_func, offset & 0xFC);
+	return (uint16_t) (dword >> (8 * (offset & 0x03)));
 }
 
 uint8_t PCIDevice::read_byte(uint8_t offset) const {
-	uint32_t dword = read_config_dword(bus, dev, func, offset & 0xFC);
-	return (uint8_t) (dword >> (offset & 0x03));
+	uint32_t dword = read_config_dword(m_bus, m_dev, m_func, offset & 0xFC);
+	return (uint8_t) (dword >> (8 * (offset & 0x03)));
 }
 
 } // namespace Kernel
