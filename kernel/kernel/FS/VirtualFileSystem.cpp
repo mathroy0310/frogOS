@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:33 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/28 01:34:15 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 15:29:44 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ FROG::ErrorOr<void> VirtualFileSystem::initialize() {
 	ASSERT(s_instance == nullptr);
 	s_instance = new VirtualFileSystem();
 	if (s_instance == nullptr)
-		return FROG::Error::from_string("Could not allocate the Virtual File System");
+		return FROG::Error::from_errno(ENOMEM);
 	return s_instance->initialize_impl();
 }
 

@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:17:04 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/26 16:19:46 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 15:26:33 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -412,7 +412,7 @@ namespace FROG
 		size_type new_cap = FROG::Math::max<size_type>(size, m_capacity * 2);
 		T* new_data = (T*)FROG::allocator(new_cap * sizeof(T));
 		if (new_data == nullptr)
-			return Error::from_string("Vector: Could not allocate memory");
+			return Error::from_errno(ENOMEM);
 		for (size_type i = 0; i < m_size; i++)
 		{
 			new (new_data + i) T(move(m_data[i]));

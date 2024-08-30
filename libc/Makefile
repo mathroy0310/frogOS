@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/04 11:38:17 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/08/27 02:24:32 by maroy            ###   ########.fr        #
+#    Updated: 2024/08/30 15:31:22 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -53,9 +53,10 @@ string/memcpy.o		\
 string/memmove.o	\
 string/memset.o		\
 string/strcmp.o 	\
-string/strncmp.o 	\
 string/strcpy.o		\
+string/strerror.o   \
 string/strlen.o		\
+string/strncmp.o 	\
 string/strncpy.o	\
 string/strstr.o		\
  

@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/18 00:24:15 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/26 16:20:04 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 15:25:14 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,7 +172,7 @@ ErrorOr<void> HashSet<T, HASH>::rebucket(size_type bucket_count) {
 	size_type new_bucket_count = FROG::Math::max<size_type>(bucket_count, m_buckets.size() * 2);
 	Vector<Vector<T>> new_buckets;
 	if (new_buckets.resize(new_bucket_count).is_error())
-		return Error::from_string("HashSet: Could not allocate memory");
+		return Error::from_errno(ENOMEM);
 
 	// NOTE: We have to copy the old keys to the new keys and not move
 	//       since we might run out of memory half way through.
@@ -180,7 +180,7 @@ ErrorOr<void> HashSet<T, HASH>::rebucket(size_type bucket_count) {
 		for (T &key : bucket) {
 			size_type bucket_index = HASH()(key) % new_buckets.size();
 			if (new_buckets[bucket_index].push_back(key).is_error())
-				return Error::from_string("HashSet: Could not allocate memory");
+				return Error::from_errno(ENOMEM);
 		}
 	}
 

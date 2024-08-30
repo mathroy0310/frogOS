@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 01:34:53 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/28 01:46:45 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 15:30:42 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ namespace Kernel {
 FROG::ErrorOr<ATAController *> ATAController::create(const PCIDevice &device) {
 	ATAController *controller = new ATAController(device);
 	if (controller == nullptr)
-		return FROG::Error::from_string("Could not allocate memory for ATAController");
+		return FROG::Error::from_errno(ENOMEM);
 	TRY(controller->initialize());
 	return controller;
 }
@@ -231,7 +231,7 @@ FROG::ErrorOr<void> ATABus::wait(bool wait_drq) {
 
 	while (wait_drq && !(status & ATA_STATUS_DRQ)) {
 		if (status & ATA_STATUS_ERR) return error();
-		if (status & ATA_STATUS_DF) return FROG::Error::from_string("Device fault");
+		if (status & ATA_STATUS_DF) return FROG::Error::from_errno(EIO);
 		status = read(ATA_PORT_STATUS);
 	}
 

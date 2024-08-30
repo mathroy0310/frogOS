@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 20:47:11 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/22 11:47:27 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 15:25:36 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -242,7 +242,7 @@ template <typename T> bool LinkedList<T>::empty() const { return m_size == 0; }
 
 template <typename T> ErrorOr<typename LinkedList<T>::Node *> LinkedList<T>::allocate_node() const {
 	Node *node = (Node *) FROG::allocator(sizeof(Node));
-	if (node == nullptr) return Error::from_string("LinkedList: Could not allocate memory");
+	if (node == nullptr) return Error::from_errno(ENOMEM);
 	return node;
 }
 

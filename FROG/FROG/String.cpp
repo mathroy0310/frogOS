@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:29 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/26 16:20:04 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 15:23:37 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -181,7 +181,7 @@ ErrorOr<void> String::ensure_capacity(size_type size) {
 	if (m_capacity >= size) return {};
 	size_type new_cap = FROG::Math::max<size_type>(size, m_capacity * 2);
 	void     *new_data = FROG::allocator(new_cap);
-	if (new_data == nullptr) return Error::from_string("String: Could not allocate memory");
+	if (new_data == nullptr) return Error::from_errno(ENOMEM);
 	if (m_data) memcpy(new_data, m_data, m_size + 1);
 	FROG::deallocator(m_data);
 	m_data = (char *) new_data;

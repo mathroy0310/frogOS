@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:18 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/28 01:32:55 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 15:29:28 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -202,7 +202,7 @@ FROG::ErrorOr<void> Ext2Inode::for_each_block(FROG::Function<FROG::ErrorOr<bool>
 }
 
 FROG::ErrorOr<FROG::Vector<uint8_t>> Ext2Inode::read_all() {
-	if (ifdir()) return FROG::Error::from_string("Inode is a directory");
+	if (ifdir()) return FROG::Error::from_errno(EISDIR);
 
 	FROG::Vector<uint8_t> data_buffer;
 	TRY(data_buffer.resize(m_inode.size));
@@ -225,7 +225,7 @@ FROG::ErrorOr<FROG::Vector<uint8_t>> Ext2Inode::read_all() {
 }
 
 FROG::ErrorOr<FROG::RefCounted<Inode>> Ext2Inode::directory_find(FROG::StringView file_name) {
-	if (!ifdir()) return FROG::Error::from_string("Inode is not a directory");
+	if (!ifdir()) return FROG::Error::from_errno(ENOTDIR);
 
 	FROG::RefCounted<Inode> result;
 	FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> function([&](const FROG::Vector<uint8_t> &block_data) -> FROG::ErrorOr<bool> {
@@ -235,8 +235,10 @@ FROG::ErrorOr<FROG::RefCounted<Inode>> Ext2Inode::directory_find(FROG::StringVie
 			Ext2::LinkedDirectoryEntry *entry = (Ext2::LinkedDirectoryEntry *) entry_addr;
 			FROG::StringView            entry_name = FROG::StringView(entry->name, entry->name_len);
 			if (entry->inode && file_name == entry_name) {
-				Ext2::Inode asked_inode = TRY(m_fs->read_inode(entry->inode));
-				result = FROG::RefCounted<Inode>(new Ext2Inode(m_fs, FROG::move(asked_inode), entry_name));
+				Ext2Inode *inode = new Ext2Inode(m_fs, TRY(m_fs->read_inode(entry->inode)), entry_name);
+				if (inode == nullptr)
+					return FROG::Error::from_errno(ENOMEM);
+				result = TRY(FROG::RefCounted<Inode>::adopt(inode));
 				return false;
 			}
 			entry_addr += entry->rec_len;
@@ -246,7 +248,7 @@ FROG::ErrorOr<FROG::RefCounted<Inode>> Ext2Inode::directory_find(FROG::StringVie
 
 	TRY(for_each_block(function));
 	if (result) return result;
-	return FROG::Error::from_string("Could not find the asked inode");
+	return FROG::Error::from_errno(ENOENT);
 }
 
 FROG::ErrorOr<FROG::Vector<FROG::RefCounted<Inode>>> Ext2Inode::directory_inodes() {
@@ -261,8 +263,11 @@ FROG::ErrorOr<FROG::Vector<FROG::RefCounted<Inode>>> Ext2Inode::directory_inodes
 			if (entry->inode) {
 				FROG::StringView entry_name = FROG::StringView(entry->name, entry->name_len);
 				Ext2::Inode      current_inode = TRY(m_fs->read_inode(entry->inode));
-				auto ref_counted_inode = FROG::RefCounted<Inode>(new Ext2Inode(m_fs, FROG::move(current_inode), entry_name));
-				TRY(inodes.push_back(FROG::move(ref_counted_inode)));
+
+				Ext2Inode *inode = new Ext2Inode(m_fs, FROG::move(current_inode), entry_name);
+				if (inode == nullptr)
+					return FROG::Error::from_errno(ENOMEM);
+				TRY(inodes.push_back(TRY(FROG::RefCounted<Inode>::adopt(inode))));
 			}
 			entry_addr += entry->rec_len;
 		}
@@ -276,7 +281,7 @@ FROG::ErrorOr<FROG::Vector<FROG::RefCounted<Inode>>> Ext2Inode::directory_inodes
 
 FROG::ErrorOr<Ext2FS *> Ext2FS::create(StorageDevice::Partition &partition) {
 	Ext2FS *ext2fs = new Ext2FS(partition);
-	if (ext2fs == nullptr) return FROG::Error::from_string("Could not allocate Ext2FS");
+	if (ext2fs == nullptr) return FROG::Error::from_errno(ENOMEM);
 	TRY(ext2fs->initialize_superblock());
 	TRY(ext2fs->initialize_block_group_descriptors());
 	TRY(ext2fs->initialize_root_inode());
@@ -291,7 +296,7 @@ FROG::ErrorOr<void> Ext2FS::initialize_superblock() {
 	{
 		uint8_t *superblock_buffer = (uint8_t *) kmalloc(1024);
 		if (superblock_buffer == nullptr)
-			return FROG::Error::from_string("Could not allocate memory for superblocks");
+			return FROG::Error::from_errno(ENOMEM);
 		FROG::ScopeGuard _([superblock_buffer] { kfree(superblock_buffer); });
 
 		uint32_t lba = 1024 / sector_size;
@@ -372,7 +377,10 @@ FROG::ErrorOr<void> Ext2FS::initialize_block_group_descriptors() {
 }
 
 FROG::ErrorOr<void> Ext2FS::initialize_root_inode() {
-	m_root_inode = FROG::RefCounted<Inode>(new Ext2Inode(this, TRY(read_inode(Ext2::Enum::ROOT_INO)), ""));
+	Ext2Inode *root_inode = new Ext2Inode(this, TRY(read_inode(Ext2::Enum::ROOT_INO)), "");
+	if (root_inode == nullptr) return FROG::Error::from_errno(ENOMEM);
+	m_root_inode = TRY(FROG::RefCounted<Inode>::adopt(root_inode));
+	
 #if EXT2_DEBUG_PRINT
 	dprintln("root inode:");
 	dprintln("  created  {}", ext2_root_inode().ctime);
@@ -407,7 +415,7 @@ FROG::ErrorOr<FROG::Vector<uint8_t>> Ext2FS::read_block(uint32_t block) {
 
 	FROG::Vector<uint8_t> block_buffer;
 	TRY(block_buffer.resize(block_size));
-	
+
 	TRY(m_partition.read_sectors(block * sectors_per_block, sectors_per_block, block_buffer.data()));
 
 	return block_buffer;

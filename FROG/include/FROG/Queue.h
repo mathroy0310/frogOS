@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:46 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/26 16:20:04 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 15:26:16 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,7 +167,7 @@ template <typename T> ErrorOr<void> Queue<T>::ensure_capacity(size_type size) {
 	if (m_capacity > size) return {};
 	size_type new_cap = FROG::Math::max<size_type>(size, m_capacity * 2);
 	T        *new_data = (T *) FROG::allocator(new_cap * sizeof(T));
-	if (new_data == nullptr) return Error::from_string("Queue: Could not allocate memory");
+	if (new_data == nullptr) Error::from_errno(ENOMEM);
 	for (size_type i = 0; i < m_size; i++) {
 		new (new_data + i) T(move(m_data[i]));
 		m_data[i].~T();

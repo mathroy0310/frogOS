@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/28 01:17:40 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 15:24:08 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include <FROG/Formatter.h>
 #include <FROG/Variant.h>
 
+#include <errno.h>
 #include <string.h>
 
 #if defined(__is_kernel)
@@ -46,6 +47,14 @@ class Error {
 		strncpy(result.m_message, message, sizeof(m_message));
 		result.m_message[sizeof(result.m_message) - 1] = '\0';
 		result.m_error_code = 0xFF;
+		return result;
+	}
+
+	static Error from_errno(int error) {
+		Error result;
+		strncpy(result.m_message, strerror(error), sizeof(m_message));
+		result.m_message[sizeof(result.m_message) - 1] = '\0';
+		result.m_error_code = error;
 		return result;
 	}
 
