@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   Function.h                                   ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/09 13:03:56 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 22:05:47 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Function.h                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/09 13:03:56 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/30 17:54:29 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,7 +110,7 @@ template <typename Ret, typename... Args> class Function<Ret(Args...)> {
 
   private:
 	static constexpr size_t m_size = sizeof(void *) * 4;
-	alignas(max_align_t) uint8_t m_storage[m_size]{0};
+	alignas(CallableBase) uint8_t m_storage[m_size]{0};
 };
 
 } // namespace FROG
