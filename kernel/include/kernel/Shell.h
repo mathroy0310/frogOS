@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   Shell.h                                      ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 01:45:21 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:43:39 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Shell.h                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 01:45:21 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/30 17:33:33 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ class Shell {
   private:
 	void                       rerender_buffer() const;
 	FROG::Vector<FROG::String> parse_arguments(FROG::StringView) const;
-	void                       process_command(const FROG::Vector<FROG::String> &);
+	FROG::ErrorOr<void>        process_command(const FROG::Vector<FROG::String> &);
 	void                       key_event_callback(Input::KeyEvent);
 
   private:

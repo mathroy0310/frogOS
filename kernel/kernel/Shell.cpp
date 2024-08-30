@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:20:44 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:36:09 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,11 +143,11 @@ Vector<String> Shell::parse_arguments(StringView command) const {
 	return result;
 }
 
-void Shell::process_command(const Vector<String> &arguments) {
+FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 	if (arguments.empty()) {
 	} else if (arguments.front() == "date") {
 		if (arguments.size() != 1) {
-			return TTY_PRINTLN("'date' does not support command line arguments");
+			return FROG::Error::from_c_string("'date' does not support command line arguments");
 		}
 		auto time = RTC::get_current_time();
 		TTY_PRINTLN("{}", time);
@@ -160,7 +160,7 @@ void Shell::process_command(const Vector<String> &arguments) {
 		TTY_PRINTLN("");
 	} else if (arguments.front() == "clear") {
 		if (arguments.size() != 1) {
-			return TTY_PRINTLN("'clear' does not support command line arguments");
+			return FROG::Error::from_c_string("'clear' does not support command line arguments");
 		}
 		m_tty->clear();
 		m_tty->set_cursor_position(0, 0);
@@ -168,7 +168,7 @@ void Shell::process_command(const Vector<String> &arguments) {
 		auto new_args = arguments;
 		new_args.remove(0);
 		auto start = PIT::ms_since_boot();
-		process_command(new_args);
+		TRY(process_command(new_args));
 		auto duration = PIT::ms_since_boot() - start;
 		TTY_PRINTLN("took {} ms", duration);
 	} else if (arguments.front() == "thread") {
@@ -176,33 +176,31 @@ void Shell::process_command(const Vector<String> &arguments) {
 
 		s_thread_spinlock.lock();
 
-		auto thread_or_error = Thread::create([this, &arguments] {
+		auto thread = TRY(Thread::create([this, &arguments] {
 			auto args = arguments;
 			args.remove(0);
 			s_thread_spinlock.unlock();
 			PIT::sleep(5000);
-			process_command(args);
-		});
-		if (thread_or_error.is_error()) return TTY_PRINTLN("{}", thread_or_error.error());
-
-		MUST(Scheduler::get().add_thread(thread_or_error.release_value()));
+			if (auto res = process_command(args); res.is_error()) TTY_PRINTLN("{}", res.error());
+		}));
+		TRY(Scheduler::get().add_thread(thread));
 
 		while (s_thread_spinlock.is_locked())
 			;
 	} else if (arguments.front() == "memory") {
 		if (arguments.size() != 1) {
-			return TTY_PRINTLN("'memory' does not support command line arguments");
+			return FROG::Error::from_c_string("'memory' does not support command line arguments");
 		}
 		kmalloc_dump_info();
 	} else if (arguments.front() == "sleep") {
 		if (arguments.size() != 1) {
-			return TTY_PRINTLN("'sleep' does not support command line arguments");
+			return FROG::Error::from_c_string("'sleep' does not support command line arguments");
 		}
 		PIT::sleep(5000);
 		TTY_PRINTLN("done");
 	} else if (arguments.front() == "cpuinfo") {
 		if (arguments.size() != 1) {
-			return TTY_PRINTLN("'cpuinfo' does not support command line arguments");
+			return FROG::Error::from_c_string("'cpuinfo' does not support command line arguments");
 		}
 
 		uint32_t ecx, edx;
@@ -221,13 +219,12 @@ void Shell::process_command(const Vector<String> &arguments) {
 		if (!first) TTY_PRINTLN("");
 	} else if (arguments.front() == "random") {
 		if (arguments.size() != 1) {
-			return TTY_PRINTLN("'random' does not support command line arguments");
+			return FROG::Error::from_c_string("'random' does not support command line arguments");
 		}
 		uint32_t ecx, edx;
 		CPUID::get_features(ecx, edx);
 		if (!(ecx & CPUID::Features::ECX_RDRND)) {
-			TTY_PRINTLN("cpu does not support RDRAND instruction");
-			return;
+			return FROG::Error::from_c_string("cpu does not support RDRAND instruction");
 		}
 
 		for (int i = 0; i < 10; i++) {
@@ -237,7 +234,7 @@ void Shell::process_command(const Vector<String> &arguments) {
 		}
 	} else if (arguments.front() == "reboot") {
 		if (arguments.size() != 1) {
-			return TTY_PRINTLN("'reboot' does not support command line arguments");
+			return FROG::Error::from_c_string("'reboot' does not support command line arguments");
 		}
 		uint8_t good = 0x02;
 		while (good & 0x02)
@@ -248,24 +245,21 @@ void Shell::process_command(const Vector<String> &arguments) {
 
 	} else if (arguments.front() == "lspci") {
 		if (arguments.size() != 1)
-			return TTY_PRINTLN("'lspci' does not support command line arguments");
+			return FROG::Error::from_c_string("'lspci' does not support command line arguments");
 		for (auto &device : PCI::get().devices())
 			TTY_PRINTLN("{2H}:{2H}.{2H} {2H}", device.bus(), device.dev(), device.func(), device.class_code());
 	} else if (arguments.front() == "ls") {
-		if (!VirtualFileSystem::is_initialized()) return TTY_PRINTLN("VFS not initialized :(");
+		if (!VirtualFileSystem::is_initialized())
+			return FROG::Error::from_c_string("VFS not initialized :(");
 
-		if (arguments.size() > 2) return TTY_PRINTLN("usage: 'ls [path]'");
+		if (arguments.size() > 2) return FROG::Error::from_c_string("usage: 'ls [path]'");
 
 		FROG::StringView path = (arguments.size() == 2) ? arguments[1].sv() : "/";
-		if (path.front() != '/') return TTY_PRINTLN("ls currently works only with absolute paths");
+		if (path.front() != '/')
+			return FROG::Error::from_c_string("ls currently works only with absolute paths");
 
-		auto directory_or_error = VirtualFileSystem::get().from_absolute_path(path);
-		if (directory_or_error.is_error()) return TTY_PRINTLN("{}", directory_or_error.error());
-		auto directory = directory_or_error.release_value();
-
-		auto inodes_or_error = directory->directory_inodes();
-		if (inodes_or_error.is_error()) return TTY_PRINTLN("{}", inodes_or_error.error());
-		auto &inodes = inodes_or_error.value();
+		auto directory = TRY(VirtualFileSystem::get().from_absolute_path(path));
+		auto inodes = TRY(directory->directory_inodes());
 
 		auto mode_string = [](Inode::Mode mode) {
 			static char buffer[11]{};
@@ -291,32 +285,27 @@ void Shell::process_command(const Vector<String> &arguments) {
 			if (!inode->ifdir())
 				TTY_PRINTLN("  {} {7} {}", mode_string(inode->mode()), inode->size(), inode->name());
 	} else if (arguments.front() == "cat") {
-		if (!VirtualFileSystem::is_initialized()) return TTY_PRINTLN("VFS not initialized :(");
+		if (!VirtualFileSystem::is_initialized())
+			return FROG::Error::from_c_string("VFS not initialized :(");
 
-		if (arguments.size() != 2) return TTY_PRINTLN("usage: 'cat path'");
+		if (arguments.size() != 2) return FROG::Error::from_c_string("usage: 'cat path'");
 
-		auto file_or_error = VirtualFileSystem::get().from_absolute_path(arguments[1]);
-		if (file_or_error.is_error()) return TTY_PRINTLN("{}", file_or_error.error());
-		auto file = file_or_error.release_value();
-
-		auto data_or_error = file->read_all();
-		if (data_or_error.is_error()) return TTY_PRINTLN("{}", data_or_error.error());
-		auto data = data_or_error.release_value();
+		auto file = TRY(VirtualFileSystem::get().from_absolute_path(arguments[1]));
+		auto data = TRY(file->read_all());
 
 		TTY_PRINTLN("{}", FROG::StringView((const char *) data.data(), data.size()));
 	} else if (arguments.front() == "loadfont") {
-		if (!VirtualFileSystem::is_initialized()) return TTY_PRINTLN("VFS not initialized :(");
+		if (!VirtualFileSystem::is_initialized())
+			return FROG::Error::from_c_string("VFS not initialized :(");
 
-		if (arguments.size() != 2) return TTY_PRINTLN("usage: 'loadfont font_path'");
+		if (arguments.size() != 2) return FROG::Error::from_c_string("usage: 'loadfont font_path'");
 
-		auto font_or_error = Font::load(arguments[1]);
-		if (font_or_error.is_error()) return TTY_PRINTLN("{}", font_or_error.error());
-		auto font = font_or_error.release_value();
-
+		auto font = TRY(Font::load(arguments[1]));
 		m_tty->set_font(font);
 	} else {
-		TTY_PRINTLN("unrecognized command '{}'", arguments.front());
+		return FROG::Error::from_format("unrecognized command '{}'", arguments.front());
 	}
+	return {};
 }
 
 void Shell::rerender_buffer() const {
@@ -371,7 +360,8 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 		TTY_PRINTLN("");
 		auto arguments = parse_arguments(current_buffer.sv());
 		if (!arguments.empty()) {
-			process_command(arguments);
+			if (auto res = process_command(arguments); res.is_error())
+				TTY_PRINTLN("{}", res.error());
 			MUST(m_old_buffer.push_back(current_buffer));
 			m_buffer = m_old_buffer;
 			MUST(m_buffer.push_back(""_sv));

@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:18 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 17:12:31 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:29:01 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,7 +198,7 @@ FROG::ErrorOr<void> Ext2Inode::for_each_block(FROG::Function<FROG::ErrorOr<bool>
 		}
 	}
 
-	return FROG::Error::from_string("Inode did not contain enough blocks");
+	return FROG::Error::from_c_string("Inode did not contain enough blocks");
 }
 
 FROG::ErrorOr<FROG::Vector<uint8_t>> Ext2Inode::read_all() {
@@ -251,7 +251,7 @@ FROG::ErrorOr<FROG::RefPtr<Inode>> Ext2Inode::directory_find(FROG::StringView fi
 }
 
 FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> Ext2Inode::directory_inodes() {
-	if (!ifdir()) return FROG::Error::from_string("Inode is not a directory");
+	if (!ifdir()) return FROG::Error::from_c_string("Inode is not a directory");
 
 	FROG::Vector<FROG::RefPtr<Inode>> inodes;
 	FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> function([&](const FROG::Vector<uint8_t> &block_data) -> FROG::ErrorOr<bool> {
@@ -304,7 +304,7 @@ FROG::ErrorOr<void> Ext2FS::initialize_superblock() {
 		memcpy(&m_superblock, superblock_buffer, sizeof(Ext2::Superblock));
 	}
 
-	if (m_superblock.magic != 0xEF53) return FROG::Error::from_string("Not a ext2 filesystem");
+	if (m_superblock.magic != 0xEF53) return FROG::Error::from_c_string("Not a ext2 filesystem");
 
 	if (m_superblock.rev_level < 1) {
 		memset(m_superblock.__extension_start, 0, sizeof(Ext2::Superblock) - offsetof(Ext2::Superblock, Ext2::Superblock::__extension_start));
@@ -341,15 +341,15 @@ FROG::ErrorOr<void> Ext2FS::initialize_block_group_descriptors() {
 	uint32_t number_of_block_groups_check =
 	    FROG::Math::div_round_up(m_superblock.blocks_count, m_superblock.blocks_per_group);
 	if (number_of_block_groups != number_of_block_groups_check)
-		return FROG::Error::from_string("Ambiguous number of blocks");
+		return FROG::Error::from_c_string("Ambiguous number of blocks");
 
 	uint32_t block_group_descriptor_table_block = m_superblock.first_data_block + 1;
 	uint32_t block_group_descriptor_table_sector_count = FROG::Math::div_round_up(32u * number_of_block_groups, sector_size);
 
 	uint8_t *block_group_descriptor_table_buffer = (uint8_t *) kmalloc(block_group_descriptor_table_sector_count * sector_size);
 	if (block_group_descriptor_table_buffer == nullptr)
-		return FROG::Error::from_string("Could not allocate memory for block group descriptor "
-		                                "table");
+		return FROG::Error::from_c_string("Could not allocate memory for block group descriptor "
+		                                  "table");
 	FROG::ScopeGuard _(
 	    [block_group_descriptor_table_buffer] { kfree(block_group_descriptor_table_buffer); });
 

@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 01:34:53 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 17:20:14 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:29:01 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -178,7 +178,7 @@ FROG::ErrorOr<void> ATAController::initialize() {
 
 FROG::ErrorOr<void> ATAController::read(ATADevice *device, uint64_t lba, uint8_t sector_count, uint8_t *buffer) {
 	if (lba + sector_count > device->lba_count)
-		return FROG::Error::from_string("Attempted to read outside of the device boundaries");
+		return FROG::Error::from_c_string("Attempted to read outside of the device boundaries");
 
 	LockGuard _(m_lock);
 
@@ -246,14 +246,14 @@ FROG::ErrorOr<void> ATABus::wait(bool wait_drq) {
 
 FROG::Error ATABus::error() {
 	uint8_t err = read(ATA_PORT_ERROR);
-	if (err & ATA_ERROR_AMNF) return FROG::Error::from_string("Address mark not found.");
-	if (err & ATA_ERROR_TKZNF) return FROG::Error::from_string("Track zero not found.");
-	if (err & ATA_ERROR_ABRT) return FROG::Error::from_string("Aborted command.");
-	if (err & ATA_ERROR_MCR) return FROG::Error::from_string("Media change request.");
-	if (err & ATA_ERROR_IDNF) return FROG::Error::from_string("ID not found.");
-	if (err & ATA_ERROR_MC) return FROG::Error::from_string("Media changed.");
-	if (err & ATA_ERROR_UNC) return FROG::Error::from_string("Uncorrectable data error.");
-	if (err & ATA_ERROR_BBK) return FROG::Error::from_string("Bad Block detected.");
+	if (err & ATA_ERROR_AMNF) return FROG::Error::from_c_string("Address mark not found.");
+	if (err & ATA_ERROR_TKZNF) return FROG::Error::from_c_string("Track zero not found.");
+	if (err & ATA_ERROR_ABRT) return FROG::Error::from_c_string("Aborted command.");
+	if (err & ATA_ERROR_MCR) return FROG::Error::from_c_string("Media change request.");
+	if (err & ATA_ERROR_IDNF) return FROG::Error::from_c_string("ID not found.");
+	if (err & ATA_ERROR_MC) return FROG::Error::from_c_string("Media changed.");
+	if (err & ATA_ERROR_UNC) return FROG::Error::from_c_string("Uncorrectable data error.");
+	if (err & ATA_ERROR_BBK) return FROG::Error::from_c_string("Bad Block detected.");
 	ASSERT_NOT_REACHED();
 }
 

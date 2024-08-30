@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:33 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 17:12:31 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:29:01 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,13 +100,13 @@ FROG::ErrorOr<void> VirtualFileSystem::initialize_impl() {
 	}
 
 	if (m_root_inode) return {};
-	return FROG::Error::from_string("Could not locate root partition");
+	return FROG::Error::from_c_string("Could not locate root partition");
 }
 
 bool VirtualFileSystem::is_initialized() { return s_instance != nullptr; }
 
 FROG::ErrorOr<FROG::RefPtr<Inode>> VirtualFileSystem::from_absolute_path(FROG::StringView path) {
-	if (path.front() != '/') return FROG::Error::from_string("Path must be an absolute path");
+	if (path.front() != '/') return FROG::Error::from_c_string("Path must be an absolute path");
 
 	auto inode = root_inode();
 	auto path_parts = TRY(path.split('/'));

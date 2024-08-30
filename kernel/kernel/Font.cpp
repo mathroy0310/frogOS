@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/27 01:56:39 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/27 02:22:31 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:29:01 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,24 +35,24 @@ FROG::ErrorOr<Font> Font::prefs() {
 
 FROG::ErrorOr<Font> Font::load(FROG::StringView path) {
 	if (!VirtualFileSystem::is_initialized())
-		return FROG::Error::from_string("Virtual Filesystem is not initialized");
+		return FROG::Error::from_c_string("Virtual Filesystem is not initialized");
 
 	auto inode = TRY(VirtualFileSystem::get().from_absolute_path(path));
 
 	auto file_data = TRY(inode->read_all());
 
-	if (file_data.size() < 4) return FROG::Error::from_string("Font file is too small");
+	if (file_data.size() < 4) return FROG::Error::from_c_string("Font file is too small");
 
 	if (file_data[0] == 0x36 && file_data[1] == 0x04) return TRY(parse_psf1(file_data));
 
 	if (file_data[0] == 0x72 && file_data[1] == 0xB5 && file_data[2] == 0x4A && file_data[3] == 0x86)
 		return TRY(parse_psf2(file_data));
 
-	return FROG::Error::from_string("Unsupported font format");
+	return FROG::Error::from_c_string("Unsupported font format");
 }
 
 FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Vector<uint8_t> &font_data) {
-	if (font_data.size() < 4) return FROG::Error::from_string("Font file is too small");
+	if (font_data.size() < 4) return FROG::Error::from_c_string("Font file is too small");
 
 	struct PSF1Header {
 		uint16_t magic;
@@ -66,7 +66,7 @@ FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Vector<uint8_t> &font_data) {
 	uint32_t glyph_data_size = glyph_size * glyph_count;
 
 	if (font_data.size() < sizeof(PSF1Header) + glyph_data_size)
-		return FROG::Error::from_string("Font file is too small");
+		return FROG::Error::from_c_string("Font file is too small");
 
 	FROG::Vector<uint8_t> glyph_data;
 	TRY(glyph_data.resize(glyph_data_size));
@@ -105,7 +105,7 @@ FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Vector<uint8_t> &font_data) {
 		}
 
 		if (glyph_index != glyph_count)
-			return FROG::Error::from_string("Font did not contain unicode entry for all glyphs");
+			return FROG::Error::from_c_string("Font did not contain unicode entry for all glyphs");
 	} else {
 		for (uint32_t i = 0; i < glyph_count; i++)
 			TRY(glyph_offsets.insert(i, i * glyph_size));
@@ -136,7 +136,7 @@ FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Vector<uint8_t> &font_data) {
 	};
 
 	if (font_data.size() < sizeof(PSF2Header))
-		return FROG::Error::from_string("Font file is too small");
+		return FROG::Error::from_c_string("Font file is too small");
 
 	PSF2Header header;
 	header.magic = FROG::Math::little_endian_to_host<uint32_t>(font_data.data() + 0);
@@ -151,7 +151,7 @@ FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Vector<uint8_t> &font_data) {
 	uint32_t glyph_data_size = header.glyph_count * header.glyph_size;
 
 	if (font_data.size() < glyph_data_size + header.header_size)
-		return FROG::Error::from_string("Font file is too small");
+		return FROG::Error::from_c_string("Font file is too small");
 
 	FROG::Vector<uint8_t> glyph_data;
 	TRY(glyph_data.resize(glyph_data_size));
@@ -190,7 +190,7 @@ FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Vector<uint8_t> &font_data) {
 			}
 		}
 		if (glyph_index != header.glyph_count)
-			return FROG::Error::from_string("Font did not contain unicode entry for all glyphs");
+			return FROG::Error::from_c_string("Font did not contain unicode entry for all glyphs");
 	} else {
 		for (uint32_t i = 0; i < header.glyph_count; i++)
 			TRY(glyph_offsets.insert(i, i * header.glyph_size));

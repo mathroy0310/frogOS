@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 16:00:31 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:28:06 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,19 +46,27 @@ namespace FROG {
 
 class Error {
   public:
-	static Error from_string(const char *message) {
-		static_assert(sizeof(message) < 128);
+	static Error from_c_string(const char *message) {
 		Error result;
-		strncpy(result.m_message, message, sizeof(m_message));
-		result.m_message[sizeof(result.m_message) - 1] = '\0';
+		strncpy(result.m_message, message, sizeof(Error::m_message));
+		result.m_message[sizeof(Error::m_message) - 1] = '\0';
 		result.m_error_code = 0xFF;
 		return result;
 	}
 
+	template <typename... Args> static Error from_format(const char *format, Args &&...args) {
+		char   buffer[sizeof(Error::m_message)]{};
+		size_t index = 0;
+		auto   putc = [&](char ch) {
+            if (index < sizeof(buffer) - 1) buffer[index++] = ch;
+		};
+		Formatter::print(putc, format, forward<Args>(args)...);
+		return from_c_string(buffer);
+	}
 	static Error from_errno(int error) {
 		Error result;
-		strncpy(result.m_message, strerror(error), sizeof(m_message));
-		result.m_message[sizeof(result.m_message) - 1] = '\0';
+		strncpy(result.m_message, strerror(error), sizeof(Error::m_message));
+		result.m_message[sizeof(Error::m_message) - 1] = '\0';
 		result.m_error_code = error;
 		return result;
 	}
