@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 23:25:14 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 16:10:28 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:28:06 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,8 @@
 
 static constexpr size_t s_kmalloc_min_align = alignof(max_align_t);
 
-static Kernel::SpinLock s_lock;
+static Kernel::SpinLock s_general_lock;
+static Kernel::SpinLock s_fixed_lock;
 
 struct kmalloc_node {
 	void set_align(ptrdiff_t align) { m_align = align; }
@@ -73,7 +74,7 @@ struct kmalloc_node {
 static_assert(sizeof(kmalloc_node) == s_kmalloc_min_align);
 
 struct kmalloc_info {
-	static constexpr uintptr_t base = 0x00200000;
+	static constexpr uintptr_t base = 0x00400000;
 	static constexpr size_t    size = 1 * MB;
 	static constexpr uintptr_t end = base + size;
 
@@ -186,7 +187,7 @@ void kmalloc_dump_info() {
 }
 
 static void *kmalloc_fixed() {
-	Kernel::LockGuard guard(s_lock);
+	Kernel::LockGuard guard(s_fixed_lock);
 
 	auto &info = s_kmalloc_fixed_info;
 
@@ -223,9 +224,10 @@ static void *kmalloc_fixed() {
 }
 
 static void *kmalloc_impl(size_t size, size_t align) {
-	Kernel::LockGuard guard(s_lock);
+	Kernel::LockGuard guard(s_general_lock);
 
 	ASSERT(align % s_kmalloc_min_align == 0);
+	ASSERT(size % s_kmalloc_min_align == 0);
 
 	auto &info = s_kmalloc_info;
 
@@ -288,26 +290,26 @@ void *kmalloc(size_t size, size_t align) {
 
 	if (size == 0 || size >= info.size) return nullptr;
 
-	ASSERT(align);
-
 	ASSERT(is_power_of_two(align));
-	
+
 	// if the size fits into fixed node, we will try to use that since it is faster
-	if (align == s_kmalloc_min_align && size < sizeof(kmalloc_fixed_info::node::data))
+	if (align == s_kmalloc_min_align && size <= sizeof(kmalloc_fixed_info::node::data))
 		if (void *result = kmalloc_fixed()) return result;
+
+	if (ptrdiff_t rem = size % s_kmalloc_min_align) size += s_kmalloc_min_align - rem;
 
 	return kmalloc_impl(size, align);
 }
 
 void kfree(void *address) {
-	Kernel::LockGuard guard(s_lock);
-
 	if (address == nullptr) return;
 
 	uintptr_t address_uint = (uintptr_t) address;
 	ASSERT(address_uint % s_kmalloc_min_align == 0);
 
 	if (s_kmalloc_fixed_info.base <= address_uint && address_uint < s_kmalloc_fixed_info.end) {
+		Kernel::LockGuard guard(s_fixed_lock);
+
 		auto &info = s_kmalloc_fixed_info;
 		ASSERT(info.used_list_head);
 
@@ -338,6 +340,8 @@ void kfree(void *address) {
 		info.used -= sizeof(kmalloc_fixed_info::node);
 		info.free += sizeof(kmalloc_fixed_info::node);
 	} else if (s_kmalloc_info.base <= address_uint && address_uint < s_kmalloc_info.end) {
+		Kernel::LockGuard guard(s_general_lock);
+
 		auto &info = s_kmalloc_info;
 
 		auto *node = info.from_address(address);

@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 18:05:24 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/28 02:05:01 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:19:31 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ static uint64_t *allocate_page_aligned_page() {
 }
 
 MMU::MMU() {
-	// Identity map from 4 KiB -> 4 MiB
+	// Identity map from 4 KiB -> 6 MiB
 	m_highest_paging_struct = allocate_page_aligned_page();
 
 	uint64_t *pdpt = allocate_page_aligned_page();
@@ -51,7 +51,7 @@ MMU::MMU() {
 	uint64_t *pd = allocate_page_aligned_page();
 	pdpt[0] = (uint64_t) pd | Flags::ReadWrite | Flags::Present;
 
-	for (uint32_t i = 0; i < 2; i++) {
+	for (uint32_t i = 0; i < 3; i++) {
 		uint64_t *pt = allocate_page_aligned_page();
 		for (uint64_t j = 0; j < 512; j++)
 			pt[j] = (i << 21) | (j << 12) | Flags::ReadWrite | Flags::Present;

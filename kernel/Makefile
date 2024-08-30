@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/05 01:34:45 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/08/28 01:45:16 by maroy            ###   ########.fr        #
+#    Updated: 2024/08/30 16:18:07 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -38,6 +38,10 @@ CFLAGS:=$(CFLAGS) $(KERNEL_ARCH_CFLAGS)
 CPPFLAGS:=$(CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
 LDFLAGS:=$(LDFLAGS) $(KERNEL_ARCH_LDFLAGS)
 LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
+ 
+ifeq ($(UBSAN), 1)
+CFLAGS:=$(CFLAGS) -fsanitize=undefined
+endif
 
 BUILDDIR=$(abspath build)
  
@@ -70,6 +74,7 @@ kernel/Thread.o 				\
 kernel/TTY.o					\
 kernel/VesaTerminalDriver.o		\
 icxxabi.o						\
+ubsan.o							\
  
 OBJS=					\
 $(ARCHDIR)/crti.o		\

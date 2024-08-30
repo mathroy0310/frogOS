@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 17:47:09 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/28 01:53:29 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:24:10 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -148,7 +148,6 @@ static bool is_valid_std_header(const SDTHeader *header) {
 
 uintptr_t locate_madt(uintptr_t rsdp_addr) {
 	uintptr_t entry_address_base = 0;
-	uintptr_t entry_address_mask = 0;
 	ptrdiff_t entry_pointer_size = 0;
 	uint32_t  entry_count = 0;
 
@@ -157,7 +156,6 @@ uintptr_t locate_madt(uintptr_t rsdp_addr) {
 		uintptr_t xsdt_addr = rsdp->v2_xsdt_address;
 		MMU::get().allocate_page(xsdt_addr, MMU::Flags::ReadWrite | MMU::Flags::Present);
 		entry_address_base = xsdt_addr + sizeof(SDTHeader);
-		entry_address_mask = (uintptr_t) 0xFFFFFFFFFFFFFFFF;
 		entry_count = (((const SDTHeader *) xsdt_addr)->length - sizeof(SDTHeader)) / 8;
 		entry_pointer_size = 8;
 		MMU::get().unallocate_page(xsdt_addr);
@@ -165,7 +163,6 @@ uintptr_t locate_madt(uintptr_t rsdp_addr) {
 		uintptr_t rsdt_addr = rsdp->rsdt_address;
 		MMU::get().allocate_page(rsdt_addr, MMU::Flags::ReadWrite | MMU::Flags::Present);
 		entry_address_base = rsdt_addr + sizeof(SDTHeader);
-		entry_address_mask = 0xFFFFFFFF;
 		entry_count = (((const SDTHeader *) rsdt_addr)->length - sizeof(SDTHeader)) / 4;
 		entry_pointer_size = 4;
 		MMU::get().unallocate_page(rsdt_addr);
@@ -175,7 +172,11 @@ uintptr_t locate_madt(uintptr_t rsdp_addr) {
 		uintptr_t entry_addr_ptr = entry_address_base + i * entry_pointer_size;
 		MMU::get().allocate_page(entry_addr_ptr, MMU::Flags::ReadWrite | MMU::Flags::Present);
 
-		uintptr_t entry_addr = *(uintptr_t *) entry_addr_ptr & entry_address_mask;
+		uintptr_t entry_addr;
+		if (entry_pointer_size == 4)
+			entry_addr = *(uint32_t *) entry_addr_ptr;
+		else
+			entry_addr = *(uint64_t *) entry_addr_ptr;
 		MMU::get().allocate_page(entry_addr, MMU::Flags::ReadWrite | MMU::Flags::Present);
 
 		FROG::ScopeGuard _([&]() {

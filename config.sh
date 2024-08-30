@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/04 01:32:58 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/08/18 00:06:18 by maroy            ###   ########.fr        #
+#    Updated: 2024/08/30 16:17:06 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,6 +30,8 @@ export INCLUDEDIR=$PREFIX/include
 export CFLAGS='-O2 -g'
 export CPPFLAGS='--std=c++20'
  
+export UBSAN=1
+
 # Configure the cross-compiler to use the desired system root.
 export SYSROOT="$(pwd)/sysroot"
 export CC="$CC --sysroot=$SYSROOT"

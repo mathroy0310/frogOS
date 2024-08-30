@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/05 01:17:18 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/08/18 00:05:13 by maroy            ###   ########.fr        #
+#    Updated: 2024/08/30 16:17:52 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,7 +18,7 @@ CFLAGS?=-O2 -g
 CPPFLAGS?=
 LDFLAGS?=
 LIBS?=
- 
+
 DESTDIR?=
 PREFIX?=/usr/local
 EXEC_PREFIX?=$(PREFIX)

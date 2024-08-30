@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 23:35:30 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 15:57:14 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 16:16:35 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,7 +66,10 @@ template <typename T> class RefCounted {
 		uint32_t *count = new uint32_t(1);
 		if (!count) return Error::from_errno(ENOMEM);
 		T *data = new T(forward<Args>(args)...);
-		if (!data) return Error::from_errno(ENOMEM);
+		if (!data) {
+			delete count;
+			return Error::from_errno(ENOMEM);
+		}
 		return RefCounted<T>(data, count);
 	}
 
