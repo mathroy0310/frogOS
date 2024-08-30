@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 23:25:14 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:24:58 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 18:22:44 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,6 @@ struct kmalloc_node {
 	uint8_t  m_data[0];
 };
 static_assert(sizeof(kmalloc_node) == s_kmalloc_min_align);
-
 struct kmalloc_info {
 	static constexpr uintptr_t base = 0x00400000;
 	static constexpr size_t    size = 1 * MB;
@@ -168,7 +167,7 @@ void kmalloc_initialize() {
 }
 
 void kmalloc_dump_info() {
-	kprintln("kmalloc: 				0x{8H}->0x{8H}", s_kmalloc_info.base, s_kmalloc_info.end);
+	kprintln("kmalloc:               0x{8H}->0x{8H}", s_kmalloc_info.base, s_kmalloc_info.end);
 	kprintln("  used: 0x{8H}", s_kmalloc_info.used);
 	kprintln("  free: 0x{8H}", s_kmalloc_info.free);
 
@@ -188,8 +187,6 @@ static void *kmalloc_fixed() {
 	ASSERT(node->next == kmalloc_fixed_info::node::invalid);
 
 	// remove the node from free list
-	node->prev = kmalloc_fixed_info::node::invalid;
-	node->next = kmalloc_fixed_info::node::invalid;
 	if (info.free_list_head->prev != kmalloc_fixed_info::node::invalid) {
 		info.free_list_head = info.node_at(info.free_list_head->prev);
 		info.free_list_head->next = kmalloc_fixed_info::node::invalid;
@@ -262,15 +259,15 @@ static void *kmalloc_impl(size_t size, size_t align) {
 	return nullptr;
 }
 
-static constexpr bool is_power_of_two(size_t value) {
-	if (value == 0) return false;
-	return (value & (value - 1)) == 0;
-}
-
 void *kmalloc(size_t size) {
 	void *res = kmalloc(size, s_kmalloc_min_align);
 	if (res == nullptr) dwarnln("could not allocate {} bytes", size);
 	return res;
+}
+
+static constexpr bool is_power_of_two(size_t value) {
+	if (value == 0) return false;
+	return (value & (value - 1)) == 0;
 }
 
 void *kmalloc(size_t size, size_t align) {
@@ -279,6 +276,7 @@ void *kmalloc(size_t size, size_t align) {
 	if (size == 0 || size >= info.size) return nullptr;
 
 	ASSERT(is_power_of_two(align));
+	if (align < s_kmalloc_min_align) align = s_kmalloc_min_align;
 
 	Kernel::CriticalScope critical;
 
@@ -287,7 +285,6 @@ void *kmalloc(size_t size, size_t align) {
 		if (void *result = kmalloc_fixed()) return result;
 
 	if (ptrdiff_t rem = size % s_kmalloc_min_align) size += s_kmalloc_min_align - rem;
-
 	return kmalloc_impl(size, align);
 }
 
@@ -300,7 +297,6 @@ void kfree(void *address) {
 	Kernel::CriticalScope critical;
 
 	if (s_kmalloc_fixed_info.base <= address_uint && address_uint < s_kmalloc_fixed_info.end) {
-
 		auto &info = s_kmalloc_fixed_info;
 		ASSERT(info.used_list_head);
 
@@ -331,7 +327,6 @@ void kfree(void *address) {
 		info.used -= sizeof(kmalloc_fixed_info::node);
 		info.free += sizeof(kmalloc_fixed_info::node);
 	} else if (s_kmalloc_info.base <= address_uint && address_uint < s_kmalloc_info.end) {
-
 		auto &info = s_kmalloc_info;
 
 		auto *node = info.from_address(address);

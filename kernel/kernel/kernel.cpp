@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:23:45 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 18:06:03 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,6 +80,29 @@ void print_logo(void) {
 	kprintln("\e[m");
 }
 
+struct Test {
+	Test() { dprintln("construct (default)"); }
+	Test(const Test &) { dprintln("construct (copy)"); }
+	Test(Test &&) { dprintln("construct (move)"); }
+	~Test() { dprintln("destruct"); }
+	Test &operator=(const Test &) {
+		dprintln("assign (copy)");
+		return *this;
+	}
+	Test &operator=(Test &&) {
+		dprintln("assign (move)");
+		return *this;
+	}
+};
+
+namespace FROG::Formatter {
+
+template <typename F> void print_argument(F putc, const Test &test, const ValueFormat &format) {
+	print_argument(putc, &test, format);
+}
+
+} // namespace FROG::Formatter
+
 extern "C" void kernel_main() {
 	using namespace Kernel;
 
@@ -125,23 +148,24 @@ extern "C" void kernel_main() {
 	MUST(Scheduler::initialize());
 	Scheduler &scheduler = Scheduler::get();
 
-	MUST(scheduler.add_thread(MUST(Thread::create([terminal_driver] {
-		if (auto error = VirtualFileSystem::initialize(); error.is_error()) {
-			derrorln("{}", error.error());
-			return;
-		}
+	MUST(scheduler.add_thread(MUST(Thread::create(
+	    [](void *terminal_driver) {
+		    MUST(VirtualFileSystem::initialize());
 
-		auto font_or_error = Font::load("/usr/share/fonts/zap-ext-vga16.psf");
-		if (font_or_error.is_error())
-			dprintln("{}", font_or_error.error());
-		else
-			terminal_driver->set_font(font_or_error.release_value());
-	}))));
-	MUST(scheduler.add_thread(MUST(Thread::create([tty1] {
-		Shell *shell = new Shell(tty1);
-		ASSERT(shell);
-		shell->run();
-	}))));
+		    auto font_or_error = Font::load("/usr/share/fonts/zap-ext-vga16.psf");
+		    if (font_or_error.is_error())
+			    dprintln("{}", font_or_error.error());
+		    else
+			    ((TerminalDriver *) terminal_driver)->set_font(font_or_error.release_value());
+	    },
+	    terminal_driver))));
+	MUST(scheduler.add_thread(MUST(Thread::create(
+	    [](void *tty) {
+		    Shell *shell = new Shell((TTY *) tty);
+		    ASSERT(shell);
+		    shell->run();
+	    },
+	    tty1))));
 	// scheduler.add_thread(FROG::Function<void()>([tty1] { print_logo(); }));
 	scheduler.start();
 	ASSERT(false);

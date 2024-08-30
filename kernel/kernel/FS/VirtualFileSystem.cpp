@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:33 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 17:29:01 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 18:07:37 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,13 @@ FROG::ErrorOr<void> VirtualFileSystem::initialize() {
 	ASSERT(s_instance == nullptr);
 	s_instance = new VirtualFileSystem();
 	if (s_instance == nullptr) return FROG::Error::from_errno(ENOMEM);
-	return s_instance->initialize_impl();
+	if (auto res = s_instance->initialize_impl(); res.is_error()) {
+		delete s_instance;
+		s_instance = nullptr;
+		return res;
+	}
+
+	return {};
 }
 
 VirtualFileSystem &VirtualFileSystem::get() {
@@ -99,16 +105,15 @@ FROG::ErrorOr<void> VirtualFileSystem::initialize_impl() {
 		}
 	}
 
-	if (m_root_inode) return {};
-	return FROG::Error::from_c_string("Could not locate root partition");
+	if (m_root_inode.empty()) derrorln("Could not locate root partition");
+	return {};
 }
-
-bool VirtualFileSystem::is_initialized() { return s_instance != nullptr; }
 
 FROG::ErrorOr<FROG::RefPtr<Inode>> VirtualFileSystem::from_absolute_path(FROG::StringView path) {
 	if (path.front() != '/') return FROG::Error::from_c_string("Path must be an absolute path");
 
 	auto inode = root_inode();
+	if (!inode) return FROG::Error::from_c_string("No root inode available");
 	auto path_parts = TRY(path.split('/'));
 
 	for (FROG::StringView part : path_parts)

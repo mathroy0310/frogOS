@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 17:47:09 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 16:24:10 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:53:40 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,11 +172,16 @@ uintptr_t locate_madt(uintptr_t rsdp_addr) {
 		uintptr_t entry_addr_ptr = entry_address_base + i * entry_pointer_size;
 		MMU::get().allocate_page(entry_addr_ptr, MMU::Flags::ReadWrite | MMU::Flags::Present);
 
+		union dummy {
+			uint32_t addr32;
+			uint64_t addr64;
+		} __attribute__((aligned(1), packed));
+
 		uintptr_t entry_addr;
 		if (entry_pointer_size == 4)
-			entry_addr = *(uint32_t *) entry_addr_ptr;
+			entry_addr = ((dummy *) entry_addr_ptr)->addr32;
 		else
-			entry_addr = *(uint64_t *) entry_addr_ptr;
+			entry_addr = ((dummy *) entry_addr_ptr)->addr64;
 		MMU::get().allocate_page(entry_addr, MMU::Flags::ReadWrite | MMU::Flags::Present);
 
 		FROG::ScopeGuard _([&]() {

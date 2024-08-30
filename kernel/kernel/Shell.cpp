@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:36:09 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 18:03:35 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,35 +172,46 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 		auto duration = PIT::ms_since_boot() - start;
 		TTY_PRINTLN("took {} ms", duration);
 	} else if (arguments.front() == "thread") {
-		static SpinLock s_thread_spinlock;
+		struct thread_data_t {
+			Shell                *shell;
+			SpinLock             &lock;
+			const Vector<String> &arguments;
+		};
 
-		s_thread_spinlock.lock();
-
-		auto thread = TRY(Thread::create([this, &arguments] {
-			auto args = arguments;
+		auto function = [](void *data) {
+			thread_data_t *thread_data = (thread_data_t *) data;
+			Shell         *shell = thread_data->shell;
+			auto           args = thread_data->arguments;
+			thread_data->lock.unlock();
 			args.remove(0);
-			s_thread_spinlock.unlock();
 			PIT::sleep(5000);
-			if (auto res = process_command(args); res.is_error()) TTY_PRINTLN("{}", res.error());
-		}));
-		TRY(Scheduler::get().add_thread(thread));
+			if (auto res = shell->process_command(args); res.is_error())
+				Formatter::println([&](char c) { shell->m_tty->putchar(c); }, "{}", res.error());
+		};
 
-		while (s_thread_spinlock.is_locked())
+		SpinLock      spinlock;
+		thread_data_t thread_data = {this, spinlock, arguments};
+		spinlock.lock();
+		TRY(Scheduler::get().add_thread(TRY(Thread::create(function, &thread_data))));
+		while (spinlock.is_locked())
 			;
 	} else if (arguments.front() == "memory") {
 		if (arguments.size() != 1) {
-			return FROG::Error::from_c_string("'memory' does not support command line arguments");
+			return FROG::Error::from_c_string("'memory' does not support command line "
+			                                  "arguments");
 		}
 		kmalloc_dump_info();
 	} else if (arguments.front() == "sleep") {
 		if (arguments.size() != 1) {
-			return FROG::Error::from_c_string("'sleep' does not support command line arguments");
+			return FROG::Error::from_c_string("'sleep' does not support command line "
+			                                  "arguments");
 		}
 		PIT::sleep(5000);
 		TTY_PRINTLN("done");
 	} else if (arguments.front() == "cpuinfo") {
 		if (arguments.size() != 1) {
-			return FROG::Error::from_c_string("'cpuinfo' does not support command line arguments");
+			return FROG::Error::from_c_string("'cpuinfo' does not support command line "
+			                                  "arguments");
 		}
 
 		uint32_t ecx, edx;
@@ -219,7 +230,8 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 		if (!first) TTY_PRINTLN("");
 	} else if (arguments.front() == "random") {
 		if (arguments.size() != 1) {
-			return FROG::Error::from_c_string("'random' does not support command line arguments");
+			return FROG::Error::from_c_string("'random' does not support command line "
+			                                  "arguments");
 		}
 		uint32_t ecx, edx;
 		CPUID::get_features(ecx, edx);
@@ -234,7 +246,8 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 		}
 	} else if (arguments.front() == "reboot") {
 		if (arguments.size() != 1) {
-			return FROG::Error::from_c_string("'reboot' does not support command line arguments");
+			return FROG::Error::from_c_string("'reboot' does not support command line "
+			                                  "arguments");
 		}
 		uint8_t good = 0x02;
 		while (good & 0x02)
@@ -242,16 +255,13 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 		IO::outb(0x64, 0xFE);
 		asm volatile("cli\n\t"
 		             "hlt");
-
 	} else if (arguments.front() == "lspci") {
 		if (arguments.size() != 1)
-			return FROG::Error::from_c_string("'lspci' does not support command line arguments");
+			return FROG::Error::from_c_string("'lspci' does not support command line "
+			                                  "arguments");
 		for (auto &device : PCI::get().devices())
 			TTY_PRINTLN("{2H}:{2H}.{2H} {2H}", device.bus(), device.dev(), device.func(), device.class_code());
 	} else if (arguments.front() == "ls") {
-		if (!VirtualFileSystem::is_initialized())
-			return FROG::Error::from_c_string("VFS not initialized :(");
-
 		if (arguments.size() > 2) return FROG::Error::from_c_string("usage: 'ls [path]'");
 
 		FROG::StringView path = (arguments.size() == 2) ? arguments[1].sv() : "/";
@@ -285,9 +295,6 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 			if (!inode->ifdir())
 				TTY_PRINTLN("  {} {7} {}", mode_string(inode->mode()), inode->size(), inode->name());
 	} else if (arguments.front() == "cat") {
-		if (!VirtualFileSystem::is_initialized())
-			return FROG::Error::from_c_string("VFS not initialized :(");
-
 		if (arguments.size() != 2) return FROG::Error::from_c_string("usage: 'cat path'");
 
 		auto file = TRY(VirtualFileSystem::get().from_absolute_path(arguments[1]));
@@ -295,9 +302,6 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 
 		TTY_PRINTLN("{}", FROG::StringView((const char *) data.data(), data.size()));
 	} else if (arguments.front() == "loadfont") {
-		if (!VirtualFileSystem::is_initialized())
-			return FROG::Error::from_c_string("VFS not initialized :(");
-
 		if (arguments.size() != 2) return FROG::Error::from_c_string("usage: 'loadfont font_path'");
 
 		auto font = TRY(Font::load(arguments[1]));

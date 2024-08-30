@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:26:00 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 17:12:31 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:56:17 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ class VirtualFileSystem : public FileSystem {
   public:
 	static FROG::ErrorOr<void> initialize();
 	static VirtualFileSystem  &get();
-	static bool                is_initialized();
+	virtual ~VirtualFileSystem() {};
 
 	virtual const FROG::RefPtr<Inode> root_inode() const override { return m_root_inode; }
 

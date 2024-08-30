@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/27 01:56:39 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 17:29:01 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 17:57:21 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,6 @@ FROG::ErrorOr<Font> Font::prefs() {
 }
 
 FROG::ErrorOr<Font> Font::load(FROG::StringView path) {
-	if (!VirtualFileSystem::is_initialized())
-		return FROG::Error::from_c_string("Virtual Filesystem is not initialized");
 
 	auto inode = TRY(VirtualFileSystem::get().from_absolute_path(path));
 

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   multiboot.h                                  ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/04 01:34:16 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 02:58:06 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   multiboot.h                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/04 01:34:16 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/08/30 18:23:53 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,14 +27,13 @@ struct framebuffer_info_t {
 	uint8_t  bpp;
 	uint8_t  type;
 	uint8_t  color_info[6];
-} __attribute__((packed));
-
+};
 struct multiboot_memory_map_t {
 	uint32_t size;
 	uint64_t base_addr;
 	uint64_t length;
 	uint32_t type;
-} __attribute__((packed));
+}__attribute__((packed));
 
 // https://www.gnu.org/software/grub/manual/multiboot/multiboot.html#Boot-information-format
 struct multiboot_info_t {
@@ -60,7 +59,7 @@ struct multiboot_info_t {
 	uint16_t           vbe_interface_off;
 	uint16_t           vbe_interface_len;
 	framebuffer_info_t framebuffer;
-} __attribute__((packed));
+};
 
 extern "C" multiboot_info_t *g_multiboot_info;
 extern "C" uint32_t          g_multiboot_magic;

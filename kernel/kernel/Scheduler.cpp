@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 23:00:36 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:23:15 by maroy            ###   ########.fr       */
+/*   Updated: 2024/08/30 18:02:41 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,8 @@
 
 namespace Kernel {
 
-extern "C" void start_thread(const FROG::Function<void()> *function, uintptr_t rsp, uintptr_t rip);
-extern "C" void continue_thread(uintptr_t rsp, uintptr_t rip);
+extern "C" void      start_thread(uintptr_t rsp, uintptr_t rip);
+extern "C" void      continue_thread(uintptr_t rsp, uintptr_t rip);
 extern "C" uintptr_t read_rip();
 
 static Scheduler *s_instance = nullptr;
@@ -36,7 +36,7 @@ FROG::ErrorOr<void> Scheduler::initialize() {
 	ASSERT(s_instance == nullptr);
 	s_instance = new Scheduler();
 	ASSERT(s_instance);
-	s_instance->m_idle_thread = TRY(Thread::create([] {
+	s_instance->m_idle_thread = TRY(Thread::create([](void *) {
 		for (;;)
 			asm volatile("hlt");
 	}));
@@ -151,7 +151,7 @@ void Scheduler::execute_current_thread() {
 		continue_thread(current.rsp(), current.rip());
 	} else {
 		current.set_started();
-		start_thread(current.function(), current.rsp(), current.rip());
+		start_thread(current.rsp(), current.rip());
 	}
 
 	ASSERT_NOT_REACHED();
