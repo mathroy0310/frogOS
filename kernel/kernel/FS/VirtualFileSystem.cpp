@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:33 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 13:59:04 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 14:24:34 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,7 @@ FROG::ErrorOr<void> VirtualFileSystem::initialize_impl() {
 
 			for (auto &partition : device->partitions()) {
 				if (partition.name() == "root"sv) {
-					if (m_root_inode)
+					if (root_inode())
 						dwarnln("multiple root partitions found");
 					else {
 						auto ext2fs_or_error = Ext2FS::create(partition);
@@ -98,19 +98,33 @@ FROG::ErrorOr<void> VirtualFileSystem::initialize_impl() {
 						else
 							// FIXME: We leave a dangling pointer to ext2fs. This might be okay since
 							//        root fs sould probably be always mounted
-							m_root_inode = ext2fs_or_error.release_value()->root_inode();
+							TRY(m_open_inodes.insert("/"sv, ext2fs_or_error.release_value()->root_inode()));
 					}
 				}
 			}
 		}
 	}
 
-	if (m_root_inode.empty()) derrorln("Could not locate root partition");
+	if (!root_inode()) derrorln("Could not locate root partition");
 	return {};
 }
 
+const FROG::RefPtr<Inode> VirtualFileSystem::root_inode() const {
+	if (!m_open_inodes.contains("/"sv)) return nullptr;
+	return m_open_inodes["/"sv];
+}
+
+void VirtualFileSystem::close_inode(FROG::StringView path) {
+	ASSERT(m_open_inodes.contains(path));
+
+	// Delete the cached inode, if we are the only one holding a reference to it
+	if (m_open_inodes[path]->ref_count() == 1) m_open_inodes.remove(path);
+}
+
 FROG::ErrorOr<FROG::RefPtr<Inode>> VirtualFileSystem::from_absolute_path(FROG::StringView path) {
-	if (path.front() != '/') return FROG::Error::from_c_string("Path must be an absolute path");
+	ASSERT(path.front() == '/');
+
+	if (m_open_inodes.contains(path)) return m_open_inodes[path];
 
 	auto inode = root_inode();
 	if (!inode) return FROG::Error::from_c_string("No root inode available");
@@ -118,6 +132,8 @@ FROG::ErrorOr<FROG::RefPtr<Inode>> VirtualFileSystem::from_absolute_path(FROG::S
 
 	for (FROG::StringView part : path_parts)
 		inode = TRY(inode->directory_find(part));
+
+	TRY(m_open_inodes.insert(path, inode));
 
 	return inode;
 }
