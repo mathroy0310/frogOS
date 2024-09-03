@@ -6,13 +6,16 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/27 01:56:39 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 17:57:21 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 16:08:50 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <FROG/ScopeGuard.h>
 #include <FROG/UTF8.h>
-#include <kernel/FS/VirtualFileSystem.h>
 #include <kernel/Font.h>
+#include <kernel/Process.h>
+
+#include <fcntl.h>
 
 #define PSF1_MODE_512 0x01
 #define PSF1_MODE_HASTAB 0x02
@@ -34,10 +37,13 @@ FROG::ErrorOr<Font> Font::prefs() {
 }
 
 FROG::ErrorOr<Font> Font::load(FROG::StringView path) {
+	int             fd = TRY(Process::current()->open(path, O_RDONLY));
+	FROG::ScopeGuard _([fd] { MUST(Process::current()->close(fd)); });
 
-	auto inode = TRY(VirtualFileSystem::get().from_absolute_path(path));
-
-	auto file_data = TRY(inode->read_all());
+	size_t               file_size = Process::current()->inode_for_fd(fd).size();
+	FROG::Vector<uint8_t> file_data;
+	TRY(file_data.resize(file_size));
+	TRY(Process::current()->read(fd, file_data.data(), file_size));
 
 	if (file_data.size() < 4) return FROG::Error::from_c_string("Font file is too small");
 

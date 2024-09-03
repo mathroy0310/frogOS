@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:25:42 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 17:12:31 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 15:58:40 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,8 @@ class Inode : public FROG::RefCounted<Inode> {
 	};
 
   public:
+	virtual ~Inode() {}
+
 	bool ifdir() const { return mode().IFDIR; }
 	bool ifreg() const { return mode().IFREG; }
 
@@ -55,7 +57,7 @@ class Inode : public FROG::RefCounted<Inode> {
 
 	virtual FROG::StringView name() const = 0;
 
-	virtual FROG::ErrorOr<FROG::Vector<uint8_t>>             read_all() = 0;
+	virtual FROG::ErrorOr<size_t> read(size_t, void*, size_t) = 0;
 	virtual FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> directory_inodes() = 0;
 	virtual FROG::ErrorOr<FROG::RefPtr<Inode>>               directory_find(FROG::StringView) = 0;
 };

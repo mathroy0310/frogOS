@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:18 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 17:29:01 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 16:16:04 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,7 +137,7 @@ enum InodeFlags {
 
 } // namespace Ext2::Enum
 
-FROG::ErrorOr<void> Ext2Inode::for_each_block(FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> &func) {
+FROG::ErrorOr<void> Ext2Inode::for_each_block(block_callback_t callback, void *callback_data) {
 	uint32_t data_blocks_left = m_inode.blocks / (2 << m_fs->superblock().log_block_size);
 	uint32_t block_array_block_count = (1024 << m_fs->superblock().log_block_size) / sizeof(uint32_t);
 
@@ -146,7 +146,7 @@ FROG::ErrorOr<void> Ext2Inode::for_each_block(FROG::Function<FROG::ErrorOr<bool>
 		if (m_inode.block[i] == 0) continue;
 
 		auto block_data = TRY(m_fs->read_block(m_inode.block[i]));
-		if (!TRY(func(block_data))) return {};
+		if (!TRY(callback(block_data, callback_data))) return {};
 		if (--data_blocks_left == 0) return {};
 	}
 
@@ -157,7 +157,7 @@ FROG::ErrorOr<void> Ext2Inode::for_each_block(FROG::Function<FROG::ErrorOr<bool>
 			uint32_t block = ((uint32_t *) block_array.data())[i];
 			if (block == 0) continue;
 			auto block_data = TRY(m_fs->read_block(block));
-			if (!TRY(func(block_data))) return {};
+			if (!TRY(callback(block_data, callback_data))) return {};
 			if (--data_blocks_left == 0) return {};
 		}
 	}
@@ -172,7 +172,7 @@ FROG::ErrorOr<void> Ext2Inode::for_each_block(FROG::Function<FROG::ErrorOr<bool>
 				uint32_t block = ((uint32_t *) block_array.data())[j];
 				if (block == 0) continue;
 				auto block_data = TRY(m_fs->read_block(block));
-				if (!TRY(func(block_data))) return {};
+				if (!TRY(callback(block_data, callback_data))) return {};
 				if (--data_blocks_left == 0) return {};
 			}
 		}
@@ -191,7 +191,7 @@ FROG::ErrorOr<void> Ext2Inode::for_each_block(FROG::Function<FROG::ErrorOr<bool>
 					uint32_t block = ((uint32_t *) block_array.data())[k];
 					if (block == 0) continue;
 					auto block_data = TRY(m_fs->read_block(block));
-					if (!TRY(func(block_data))) return {};
+					if (!TRY(callback(block_data, callback_data))) return {};
 					if (--data_blocks_left == 0) return {};
 				}
 			}
@@ -201,80 +201,131 @@ FROG::ErrorOr<void> Ext2Inode::for_each_block(FROG::Function<FROG::ErrorOr<bool>
 	return FROG::Error::from_c_string("Inode did not contain enough blocks");
 }
 
-FROG::ErrorOr<FROG::Vector<uint8_t>> Ext2Inode::read_all() {
+FROG::ErrorOr<size_t> Ext2Inode::read(size_t offset, void *buffer, size_t count) {
 	if (ifdir()) return FROG::Error::from_errno(EISDIR);
 
-	FROG::Vector<uint8_t> data_buffer;
-	TRY(data_buffer.resize(m_inode.size));
+	struct read_info {
+		size_t   file_current_offset;
+		size_t   file_start_offset;
+		size_t   file_bytes_left;
+		uint8_t *out_byte_buffer;
+		size_t   out_bytes_read;
+		size_t   out_byte_buffer_size;
+	};
 
-	uint32_t bytes_done = 0;
-	uint32_t bytes_left = m_inode.size;
+	read_info info;
+	info.file_current_offset = 0;
+	info.file_start_offset = offset;
+	info.file_bytes_left = m_inode.size;
+	info.out_byte_buffer = (uint8_t *) buffer;
+	info.out_bytes_read = 0;
+	info.out_byte_buffer_size = count;
 
-	FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> read_func([&](const FROG::Vector<uint8_t> &block_data) {
-		uint32_t to_copy = FROG::Math::min<uint32_t>(block_data.size(), bytes_left);
-		memcpy(data_buffer.data() + bytes_done, block_data.data(), to_copy);
-		bytes_done += to_copy;
-		bytes_left -= to_copy;
-		return bytes_left > 0;
-	});
+	block_callback_t read_func = [](const FROG::Vector<uint8_t> &block_data, void *info_) -> FROG::ErrorOr<bool> {
+		read_info &info = *(read_info *) info_;
 
-	TRY(for_each_block(read_func));
-	ASSERT(bytes_left == 0);
+		size_t block_size = FROG::Math::min<size_t>(block_data.size(), info.file_bytes_left);
 
-	return data_buffer;
+		// Skip blocks before 'offset'
+		if (info.file_current_offset + block_size <= info.file_start_offset) {
+			info.file_current_offset += block_size;
+			info.file_bytes_left -= block_size;
+			return info.file_bytes_left > 0;
+		}
+
+		size_t read_offset = 0;
+		if (info.file_current_offset < info.file_start_offset)
+			read_offset = info.file_start_offset - info.file_current_offset;
+
+		size_t to_read = FROG::Math::min<size_t>(block_size - read_offset, info.out_byte_buffer_size - info.out_bytes_read);
+		memcpy(info.out_byte_buffer + info.out_bytes_read, block_data.data() + read_offset, to_read);
+
+		info.out_bytes_read += to_read;
+		if (info.out_bytes_read >= info.out_byte_buffer_size) return false;
+
+		info.file_current_offset += block_size;
+		info.file_bytes_left -= block_size;
+		return info.file_bytes_left > 0;
+	};
+
+	TRY(for_each_block(read_func, &info));
+
+	return info.out_bytes_read;
 }
 
 FROG::ErrorOr<FROG::RefPtr<Inode>> Ext2Inode::directory_find(FROG::StringView file_name) {
 	if (!ifdir()) return FROG::Error::from_errno(ENOTDIR);
 
-	FROG::RefPtr<Inode> result;
-	FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> function([&](const FROG::Vector<uint8_t> &block_data) -> FROG::ErrorOr<bool> {
+	struct search_info {
+		FROG::StringView    file_name;
+		FROG::RefPtr<Inode> result;
+		Ext2FS             *fs;
+	};
+
+	search_info info;
+	info.file_name = file_name;
+	info.result = {};
+	info.fs = m_fs;
+
+	block_callback_t function = [](const FROG::Vector<uint8_t> &block_data, void *info_) -> FROG::ErrorOr<bool> {
+		search_info &info = *(search_info *) info_;
+
 		uintptr_t block_data_end = (uintptr_t) block_data.data() + block_data.size();
 		uintptr_t entry_addr = (uintptr_t) block_data.data();
 		while (entry_addr < block_data_end) {
 			Ext2::LinkedDirectoryEntry *entry = (Ext2::LinkedDirectoryEntry *) entry_addr;
 			FROG::StringView            entry_name = FROG::StringView(entry->name, entry->name_len);
-			if (entry->inode && file_name == entry_name) {
-				Ext2Inode *inode = new Ext2Inode(m_fs, TRY(m_fs->read_inode(entry->inode)), entry_name);
+			if (entry->inode && info.file_name == entry_name) {
+				Ext2Inode *inode = new Ext2Inode(info.fs, TRY(info.fs->read_inode(entry->inode)), entry_name);
 				if (inode == nullptr) return FROG::Error::from_errno(ENOMEM);
-				result = FROG::RefPtr<Inode>::adopt(inode);
+				info.result = FROG::RefPtr<Inode>::adopt(inode);
 				return false;
 			}
 			entry_addr += entry->rec_len;
 		}
 		return true;
-	});
+	};
 
-	TRY(for_each_block(function));
-	if (result) return result;
+	TRY(for_each_block(function, &info));
+	if (info.result) return info.result;
 	return FROG::Error::from_errno(ENOENT);
 }
 
 FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> Ext2Inode::directory_inodes() {
-	if (!ifdir()) return FROG::Error::from_c_string("Inode is not a directory");
+	if (!ifdir()) return FROG::Error::from_errno(ENOTDIR);
 
-	FROG::Vector<FROG::RefPtr<Inode>> inodes;
-	FROG::Function<FROG::ErrorOr<bool>(const FROG::Vector<uint8_t> &)> function([&](const FROG::Vector<uint8_t> &block_data) -> FROG::ErrorOr<bool> {
+	struct directory_info {
+		FROG::Vector<FROG::RefPtr<Inode>> inodes;
+		Ext2FS                           *fs;
+	};
+
+	directory_info info;
+	info.inodes = {};
+	info.fs = m_fs;
+
+	block_callback_t function = [](const FROG::Vector<uint8_t> &block_data, void *info_) -> FROG::ErrorOr<bool> {
+		directory_info &info = *(directory_info *) info_;
+
 		uintptr_t block_data_end = (uintptr_t) block_data.data() + block_data.size();
 		uintptr_t entry_addr = (uintptr_t) block_data.data();
 		while (entry_addr < block_data_end) {
 			Ext2::LinkedDirectoryEntry *entry = (Ext2::LinkedDirectoryEntry *) entry_addr;
 			if (entry->inode) {
 				FROG::StringView entry_name = FROG::StringView(entry->name, entry->name_len);
-				Ext2::Inode      current_inode = TRY(m_fs->read_inode(entry->inode));
+				Ext2::Inode      current_inode = TRY(info.fs->read_inode(entry->inode));
 
-				Ext2Inode *inode = new Ext2Inode(m_fs, FROG::move(current_inode), entry_name);
+				Ext2Inode *inode = new Ext2Inode(info.fs, FROG::move(current_inode), entry_name);
 				if (inode == nullptr) return FROG::Error::from_errno(ENOMEM);
-				TRY(inodes.push_back(FROG::RefPtr<Inode>::adopt(inode)));
+				TRY(info.inodes.push_back(FROG::RefPtr<Inode>::adopt(inode)));
 			}
 			entry_addr += entry->rec_len;
 		}
 		return true;
-	});
+	};
 
-	TRY(for_each_block(function));
+	TRY(for_each_block(function, &info));
 
-	return inodes;
+	return info.inodes;
 }
 
 FROG::ErrorOr<Ext2FS *> Ext2FS::create(StorageDevice::Partition &partition) {

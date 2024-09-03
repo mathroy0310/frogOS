@@ -6,24 +6,25 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/03 14:07:18 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 16:17:55 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Math.h>
+#include <FROG/ScopeGuard.h>
 #include <FROG/StringView.h>
 #include <FROG/Vector.h>
 #include <kernel/CPUID.h>
 #include <kernel/IO.h>
 #include <kernel/Input.h>
+#include <kernel/PCI.h>
 #include <kernel/PIT.h>
 #include <kernel/Process.h>
 #include <kernel/RTC.h>
 #include <kernel/Shell.h>
 
-#include <kernel/FS/VirtualFileSystem.h>
-
 #include <ctype.h>
+#include <fcntl.h>
 
 #define TTY_PRINT(...) Formatter::print([this](char c) { m_tty->putchar(c); }, __VA_ARGS__)
 #define TTY_PRINTLN(...) Formatter::println([this](char c) { m_tty->putchar(c); }, __VA_ARGS__)
@@ -31,30 +32,53 @@
 namespace Kernel {
 using namespace FROG;
 
-static auto s_default_prompt = "\\[\e[32m\\]user\\[\e[m\\]# "sv;
+static auto s_default_prompt = "\\[\e[32m\\]user\\[\e[m\\]:\\[\e[34m\\]\\w\\[\e[m\\]# "sv;
 
 Shell::Shell(TTY *tty) : m_tty(tty) {
 	Input::register_key_event_callback({&Shell::key_event_callback, this});
-	set_prompt(s_default_prompt);
+	MUST(set_prompt(s_default_prompt));
 	MUST(m_buffer.push_back(""sv));
 }
 
-void Shell::set_prompt(StringView prompt) {
+FROG::ErrorOr<void> Shell::set_prompt(StringView prompt) {
+	m_prompt_string = prompt;
+	TRY(update_prompt());
+	return {};
+}
+
+FROG::ErrorOr<void> Shell::update_prompt() {
 	m_prompt_length = 0;
 	m_prompt = String();
 
 	bool skipping = false;
-	for (size_t i = 0; i < prompt.size(); i++) {
-		if (i < prompt.size() - 1 && prompt[i] == '\\') {
-			if (prompt[i + 1] == '[') skipping = true;
-			if (prompt[i + 1] == ']') skipping = false;
+	for (size_t i = 0; i < m_prompt_string.size(); i++) {
+		if (i < m_prompt_string.size() - 1 && m_prompt_string[i] == '\\') {
+			switch (m_prompt_string[i + 1]) {
+			case '[':
+				skipping = true;
+				break;
+			case ']':
+				skipping = false;
+				break;
+			case 'w': {
+				auto working_directory = Process::current()->working_directory();
+				TRY(m_prompt.append(working_directory));
+				m_prompt_length += working_directory.size();
+				break;
+			}
+			default:
+				dprintln("unknown escape character '{}' in shell prompt", m_prompt_string[i + 1]);
+				break;
+			}
 			i++;
 			continue;
 		}
 
-		MUST(m_prompt.push_back(prompt[i]));
+		TRY(m_prompt.push_back(m_prompt_string[i]));
 		if (!skipping) m_prompt_length++;
 	}
+
+	return {};
 }
 
 void Shell::run() {
@@ -264,12 +288,13 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 	} else if (arguments.front() == "ls") {
 		if (arguments.size() > 2) return FROG::Error::from_c_string("usage: 'ls [path]'");
 
-		FROG::StringView path = (arguments.size() == 2) ? arguments[1].sv() : "/";
-		if (path.front() != '/')
-			return FROG::Error::from_c_string("ls currently works only with absolute paths");
+		FROG::StringView path = (arguments.size() == 2) ? arguments[1].sv() : Process::current()->working_directory();
 
-		auto directory = TRY(VirtualFileSystem::get().from_absolute_path(path));
-		auto inodes = TRY(directory->directory_inodes());
+		int              fd = TRY(Process::current()->open(path, O_RDONLY));
+		FROG::ScopeGuard _([fd] { MUST(Process::current()->close(fd)); });
+
+		auto &directory = Process::current()->inode_for_fd(fd);
+		auto  inodes = TRY(directory.directory_inodes());
 
 		auto mode_string = [](Inode::Mode mode) {
 			static char buffer[11]{};
@@ -286,7 +311,6 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 			return (const char *) buffer;
 		};
 
-		TTY_PRINTLN("{}", path);
 		for (auto &inode : inodes)
 			if (inode->ifdir())
 				TTY_PRINTLN("  {} {7} \e[34m{}\e[m", mode_string(inode->mode()), inode->size(),
@@ -297,10 +321,21 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 	} else if (arguments.front() == "cat") {
 		if (arguments.size() != 2) return FROG::Error::from_c_string("usage: 'cat path'");
 
-		auto file = TRY(VirtualFileSystem::get().from_absolute_path(arguments[1]));
-		auto data = TRY(file->read_all());
+		int              fd = TRY(Process::current()->open(arguments[1], O_RDONLY));
+		FROG::ScopeGuard _([fd] { MUST(Process::current()->close(fd)); });
 
-		TTY_PRINTLN("{}", FROG::StringView((const char *) data.data(), data.size()));
+		char buffer[1024]{};
+		while (true) {
+			size_t n_read = TRY(Process::current()->read(fd, buffer, sizeof(buffer)));
+			if (n_read == 0) break;
+			TTY_PRINT("{}", FROG::StringView(buffer, n_read));
+		}
+		TTY_PRINTLN("");
+	} else if (arguments.front() == "cd") {
+		if (arguments.size() > 2) return FROG::Error::from_c_string("usage 'cd path'");
+		FROG::StringView path = arguments.size() == 2 ? arguments[1].sv() : "/"sv;
+		TRY(Process::current()->set_working_directory(path));
+		TRY(update_prompt());
 	} else if (arguments.front() == "loadfont") {
 		if (arguments.size() != 2) return FROG::Error::from_c_string("usage: 'loadfont font_path'");
 

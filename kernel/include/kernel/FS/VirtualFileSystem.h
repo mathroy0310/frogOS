@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:26:00 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 14:23:26 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 16:00:22 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,18 +25,21 @@ class VirtualFileSystem : public FileSystem {
 	static VirtualFileSystem  &get();
 	virtual ~VirtualFileSystem() {};
 
-	virtual const FROG::RefPtr<Inode> root_inode() const override;
+	virtual const FROG::RefPtr<Inode> root_inode() const override { return m_root_inode; }
 
-	void                               close_inode(FROG::StringView);
-	FROG::ErrorOr<FROG::RefPtr<Inode>> from_absolute_path(FROG::StringView);
+	struct File {
+		FROG::RefPtr<Inode> inode;
+		FROG::String        canonical_path;
+	};
+	FROG::ErrorOr<File> file_from_absolute_path(FROG::StringView);
 
   private:
 	VirtualFileSystem() = default;
 	FROG::ErrorOr<void> initialize_impl();
 
   private:
-	FROG::HashMap<FROG::String, FROG::RefPtr<Inode>> m_open_inodes;
-	FROG::Vector<StorageController *>              m_storage_controllers;
+	FROG::RefPtr<Inode>               m_root_inode;
+	FROG::Vector<StorageController *> m_storage_controllers;
 };
 
 } // namespace Kernel

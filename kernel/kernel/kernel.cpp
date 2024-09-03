@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/03 14:20:23 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 16:13:33 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -216,13 +216,6 @@ void init2(void *tty1_ptr) {
 	TTY *tty1 = (TTY *) tty1_ptr;
 
 	MUST(VirtualFileSystem::initialize());
-
-	auto font_or_error = Font::load("/usr/share/fonts/zap-ext-vga16.psf");
-	if (font_or_error.is_error())
-		dprintln("{}", font_or_error.error());
-	else
-		tty1->set_font(font_or_error.release_value());
-
 	MUST(Process::create_kernel(
 	    [](void *tty1) {
 		    Shell *shell = new Shell((TTY *) tty1);
