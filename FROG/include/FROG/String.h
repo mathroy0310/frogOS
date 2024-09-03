@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:49 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:44:49 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 14:22:17 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 #include <FROG/Formatter.h>
 #include <FROG/ForwardList.h>
+#include <FROG/Hash.h>
 
 namespace FROG {
 
@@ -82,6 +83,21 @@ template <typename... Args> String String::formatted(const char *format, const A
 	FROG::Formatter::print([&](char c) { result.push_back(c); }, format, args...);
 	return result;
 }
+
+template <> struct hash<String> {
+	hash_t operator()(const String &string) const {
+		constexpr hash_t FNV_offset_basis = 0x811c9dc5;
+		constexpr hash_t FNV_prime = 0x01000193;
+
+		hash_t hash = FNV_offset_basis;
+		for (String::size_type i = 0; i < string.size(); i++) {
+			hash *= FNV_prime;
+			hash ^= (uint8_t) string[i];
+		}
+
+		return hash;
+	}
+};
 
 } // namespace FROG
 
