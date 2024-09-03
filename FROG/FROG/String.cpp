@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:29 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 15:23:37 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 13:57:50 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@
 
 namespace FROG {
 
-String::String() { MUST(copy_impl(""_sv)); }
+String::String() { MUST(copy_impl(""sv)); }
 
 String::String(const String &other) { MUST(copy_impl(other.sv())); }
 

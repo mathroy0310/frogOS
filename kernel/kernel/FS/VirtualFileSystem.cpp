@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:33 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 18:07:37 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 13:59:04 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,7 +88,7 @@ FROG::ErrorOr<void> VirtualFileSystem::initialize_impl() {
 			}
 
 			for (auto &partition : device->partitions()) {
-				if (partition.name() == "root"_sv) {
+				if (partition.name() == "root"sv) {
 					if (m_root_inode)
 						dwarnln("multiple root partitions found");
 					else {

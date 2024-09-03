@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:17:09 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:44:55 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 13:58:08 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ class StringView {
 
 } // namespace FROG
 
-inline FROG::StringView operator""_sv(const char *str, FROG::StringView::size_type len) {
+inline FROG::StringView operator""sv(const char *str, FROG::StringView::size_type len) {
 	return FROG::StringView(str, len);
 }
 

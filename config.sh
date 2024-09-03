@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/04 01:32:58 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/08/30 16:17:06 by maroy            ###   ########.fr        #
+#    Updated: 2024/09/03 13:58:30 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,7 +28,7 @@ export LIBDIR=$EXEC_PREFIX/lib
 export INCLUDEDIR=$PREFIX/include
  
 export CFLAGS='-O2 -g'
-export CPPFLAGS='--std=c++20'
+export CPPFLAGS='--std=c++20 -Wno-literal-suffix'
  
 export UBSAN=1
 

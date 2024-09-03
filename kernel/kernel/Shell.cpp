@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 18:03:35 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 13:59:32 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,12 +31,12 @@
 namespace Kernel {
 using namespace FROG;
 
-static auto s_default_prompt = "\\[\e[32m\\]user\\[\e[m\\]# "_sv;
+static auto s_default_prompt = "\\[\e[32m\\]user\\[\e[m\\]# "sv;
 
 Shell::Shell(TTY *tty) : m_tty(tty) {
 	Input::register_key_event_callback({&Shell::key_event_callback, this});
 	set_prompt(s_default_prompt);
-	MUST(m_buffer.push_back(""_sv));
+	MUST(m_buffer.push_back(""sv));
 }
 
 void Shell::set_prompt(StringView prompt) {
@@ -74,7 +74,7 @@ Vector<String> Shell::parse_arguments(StringView command) const {
 
 		if (command.empty()) break;
 
-		MUST(result.push_back(""_sv));
+		MUST(result.push_back(""sv));
 
 		char quoted = '\0';
 		bool escape = false;
@@ -368,7 +368,7 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 				TTY_PRINTLN("{}", res.error());
 			MUST(m_old_buffer.push_back(current_buffer));
 			m_buffer = m_old_buffer;
-			MUST(m_buffer.push_back(""_sv));
+			MUST(m_buffer.push_back(""sv));
 			MUST(m_buffer.back().reserve(128));
 			m_cursor_pos.line = m_buffer.size() - 1;
 		}
