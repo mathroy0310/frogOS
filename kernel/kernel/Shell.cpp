@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/03 13:59:32 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 14:07:18 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,8 @@
 #include <kernel/IO.h>
 #include <kernel/Input.h>
 #include <kernel/PIT.h>
+#include <kernel/Process.h>
 #include <kernel/RTC.h>
-#include <kernel/Scheduler.h>
 #include <kernel/Shell.h>
 
 #include <kernel/FS/VirtualFileSystem.h>
@@ -192,7 +192,7 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 		SpinLock      spinlock;
 		thread_data_t thread_data = {this, spinlock, arguments};
 		spinlock.lock();
-		TRY(Scheduler::get().add_thread(TRY(Thread::create(function, &thread_data))));
+		TRY(Process::current()->add_thread(function, &thread_data));
 		while (spinlock.is_locked())
 			;
 	} else if (arguments.front() == "memory") {

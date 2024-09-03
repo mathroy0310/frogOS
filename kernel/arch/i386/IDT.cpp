@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/27 01:51:42 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 13:49:12 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,7 +140,7 @@ found:
 }
 
 extern "C" void handle_irq_common();
-asm (".globl handle_irq_common;"
+asm(".globl handle_irq_common;"
     "handle_irq_common:"
     "pusha;"
     "pushw %ds;"
@@ -153,8 +153,28 @@ asm (".globl handle_irq_common;"
     "popw %es;"
     "popw %ds;"
     "popa;"
-    "iret;"
-);
+    "iret;");
+
+extern "C" void syscall_asm();
+asm(".global syscall_asm;"
+    "syscall_asm:"
+    "pusha;"
+    "pushw %ds;"
+    "pushw %es;"
+    "pushw %ss;"
+    "pushw %ss;"
+    "popw %ds;"
+    "popw %es;"
+    "pushl %edx;"
+    "pushl %ecx;"
+    "pushl %ebx;"
+    "pushl %eax;"
+    "call cpp_syscall_handler;"
+    "addl $16, %esp;"
+    "popw %es;"
+    "popw %ds;"
+    "popa;"
+    "iret;");
 
 static void flush_idt() { asm volatile("lidt %0" ::"m"(s_idtr)); }
 
@@ -174,10 +194,15 @@ void register_irq_handler(uint8_t irq, void (*f)()) {
 	flush_idt();
 }
 
+void register_syscall_handler(uint8_t offset, void (*handler)()) {
+	register_interrupt_handler(offset, handler);
+	s_idt[offset].DPL = 3;
+}
+
 void initialize() {
 	constexpr size_t idt_size = 0x100 * sizeof(GateDescriptor);
 
-	s_idt = (GateDescriptor*)kmalloc(idt_size);
+	s_idt = (GateDescriptor *) kmalloc(idt_size);
 	ASSERT(s_idt);
 	memset(s_idt, 0x00, idt_size);
 
@@ -216,6 +241,8 @@ void initialize() {
 	REGISTER_HANDLER(0x1D);
 	REGISTER_HANDLER(0x1E);
 	REGISTER_HANDLER(0x1F);
+
+	register_syscall_handler(0x80, syscall_asm);
 
 	flush_idt();
 }

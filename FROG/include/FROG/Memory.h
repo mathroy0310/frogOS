@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 23:35:30 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:13:51 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 14:02:47 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,14 +62,22 @@ template <typename T> class RefCounted {
 template <typename T> class RefPtr {
   public:
 	RefPtr() = default;
+	RefPtr(T *pointer) {
+		m_pointer = pointer;
+		if (m_pointer) m_pointer->ref();
+	}
 	~RefPtr() { clear(); }
 
-	template <typename U> static RefPtr adopt(U *pointer) { return RefPtr(pointer); }
+	template <typename U> static RefPtr adopt(U *pointer) {
+		RefPtr ptr;
+		ptr.m_pointer = pointer;
+		return ptr;
+	}
 
 	template <typename... Args> static ErrorOr<RefPtr> create(Args &&...args) {
 		T *pointer = new T(forward<Args>(args)...);
 		if (pointer == nullptr) return Error::from_errno(ENOMEM);
-		return RefPtr(pointer);
+		return adopt(pointer);
 	}
 
 	RefPtr(const RefPtr &other) { *this = other; }
@@ -111,9 +119,6 @@ template <typename T> class RefPtr {
 		if (m_pointer) m_pointer->unref();
 		m_pointer = nullptr;
 	}
-
-  private:
-	RefPtr(T *pointer) : m_pointer(pointer) {}
 
   private:
 	T *m_pointer = nullptr;

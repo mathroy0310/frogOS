@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 22:57:03 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:16:33 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 14:04:07 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,10 +31,10 @@ class Scheduler {
 	void              set_current_thread_sleeping(uint64_t);
 	[[noreturn]] void set_current_thread_done();
 
+	FROG::RefPtr<Thread> current_thread();
   private:
 	Scheduler() = default;
 
-	FROG::RefPtr<Thread> current_thread();
 
 	void               wake_threads();
 	[[nodiscard]] bool save_current_thread();

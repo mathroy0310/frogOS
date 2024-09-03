@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 01:54:51 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/27 01:51:55 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 13:50:08 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,6 +139,11 @@ static void register_interrupt_handler(uint8_t index, void (*handler)()) {
 	descriptor.flags = 0x8E;
 }
 
+static void register_syscall_handler(uint8_t index, void (*handler)()) {
+	register_interrupt_handler(index, handler);
+	s_idt[index].flags = 0xEE;
+}
+
 void register_irq_handler(uint8_t irq, void (*handler)()) { s_irq_handlers[irq] = handler; }
 
 extern "C" void isr0();
@@ -191,8 +196,10 @@ extern "C" void irq13();
 extern "C" void irq14();
 extern "C" void irq15();
 
+extern "C" void syscall_asm();
+
 void initialize() {
-	s_idt = (GateDescriptor*)kmalloc(0x100 * sizeof(GateDescriptor));
+	s_idt = (GateDescriptor *) kmalloc(0x100 * sizeof(GateDescriptor));
 	ASSERT(s_idt);
 	memset(s_idt, 0x00, 0x100 * sizeof(GateDescriptor));
 
@@ -248,6 +255,8 @@ void initialize() {
 	REGISTER_IRQ_HANDLER(13);
 	REGISTER_IRQ_HANDLER(14);
 	REGISTER_IRQ_HANDLER(15);
+
+	register_syscall_handler(0x80, syscall_asm);
 
 	flush_idt();
 }

@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 18:06:03 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 14:20:23 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,10 +24,11 @@
 #include <kernel/PCI.h>
 #include <kernel/PIC.h>
 #include <kernel/PIT.h>
-#include <kernel/RTC.h>
+#include <kernel/Process.h>
 #include <kernel/Scheduler.h>
 #include <kernel/Serial.h>
 #include <kernel/Shell.h>
+#include <kernel/Syscall.h>
 #include <kernel/TTY.h>
 #include <kernel/VesaTerminalDriver.h>
 #include <kernel/kmalloc.h>
@@ -103,6 +104,16 @@ template <typename F> void print_argument(F putc, const Test &test, const ValueF
 
 } // namespace FROG::Formatter
 
+extern "C" uintptr_t g_rodata_start;
+extern "C" uintptr_t g_rodata_end;
+
+extern "C" uintptr_t g_userspace_start;
+extern "C" uintptr_t g_userspace_end;
+
+extern void userspace_entry();
+
+void init2(void *);
+
 extern "C" void kernel_main() {
 	using namespace Kernel;
 
@@ -135,6 +146,7 @@ extern "C" void kernel_main() {
 	ASSERT(terminal_driver);
 	dprintln("VESA initialized");
 	TTY *tty1 = new TTY(terminal_driver);
+	ASSERT(tty1);
 
 	InterruptController::initialize(cmdline.force_pic);
 	dprintln("Interrupt controller initialized");
@@ -148,25 +160,74 @@ extern "C" void kernel_main() {
 	MUST(Scheduler::initialize());
 	Scheduler &scheduler = Scheduler::get();
 
+#if 0 
 	MUST(scheduler.add_thread(MUST(Thread::create(
-	    [](void *terminal_driver) {
-		    MUST(VirtualFileSystem::initialize());
+		[] (void*)
+		{
+			MMU::get().allocate_range((uintptr_t)&g_userspace_start, (uintptr_t)&g_userspace_end - (uintptr_t)&g_userspace_start, MMU::Flags::UserSupervisor | MMU::Flags::Present);
+			MMU::get().allocate_range((uintptr_t)&g_rodata_start,    (uintptr_t)&g_rodata_end    - (uintptr_t)&g_rodata_start,    MMU::Flags::UserSupervisor | MMU::Flags::Present);
 
-		    auto font_or_error = Font::load("/usr/share/fonts/zap-ext-vga16.psf");
-		    if (font_or_error.is_error())
-			    dprintln("{}", font_or_error.error());
-		    else
-			    ((TerminalDriver *) terminal_driver)->set_font(font_or_error.release_value());
-	    },
-	    terminal_driver))));
-	MUST(scheduler.add_thread(MUST(Thread::create(
-	    [](void *tty) {
-		    Shell *shell = new Shell((TTY *) tty);
+			void* userspace_stack = kmalloc(4096, 4096);
+			ASSERT(userspace_stack);
+			MMU::get().allocate_page((uintptr_t)userspace_stack, MMU::Flags::UserSupervisor | MMU::Flags::ReadWrite | MMU::Flags::Present);
+
+			BOCHS_BREAK();
+
+#if ARCH(x86_64)
+			asm volatile(
+				"pushq %0\r\n"
+				"pushq %1\r\n"
+				"pushfq\r\n"
+				"pushq %2\r\n"
+				"pushq %3\r\n"
+				"iretq\r\n"
+				:: "r"((uintptr_t)0x20 | 3), "r"((uintptr_t)userspace_stack + 4096), "r"((uintptr_t)0x18 | 3), "r"(userspace_entry)
+			);
+#else
+			asm volatile(
+				"movl %0, %%eax\r\n"
+				"movw %%ax, %%ds\r\n"
+				"movw %%ax, %%es\r\n"
+				"movw %%ax, %%fs\r\n"
+				"movw %%ax, %%gs\r\n"
+
+				"movl %1, %%esp\r\n"
+				"pushl %0\r\n"
+				"pushl %1\r\n"
+				"pushfl\r\n"
+				"pushl %2\r\n"
+				"pushl %3\r\n"
+				"iret\r\n"
+				:: "r"((uintptr_t)0x20 | 3), "r"((uintptr_t)userspace_stack + 4096), "r"((uintptr_t)0x18 | 3), "r"(userspace_entry)
+			);
+#endif
+		}
+	))));
+#else
+	MUST(scheduler.add_thread(MUST(Thread::create(init2, tty1, nullptr))));
+#endif
+	scheduler.start();
+	ASSERT(false);
+}
+
+void init2(void *tty1_ptr) {
+	using namespace Kernel;
+
+	TTY *tty1 = (TTY *) tty1_ptr;
+
+	MUST(VirtualFileSystem::initialize());
+
+	auto font_or_error = Font::load("/usr/share/fonts/zap-ext-vga16.psf");
+	if (font_or_error.is_error())
+		dprintln("{}", font_or_error.error());
+	else
+		tty1->set_font(font_or_error.release_value());
+
+	MUST(Process::create_kernel(
+	    [](void *tty1) {
+		    Shell *shell = new Shell((TTY *) tty1);
 		    ASSERT(shell);
 		    shell->run();
 	    },
-	    tty1))));
-	// scheduler.add_thread(FROG::Function<void()>([tty1] { print_logo(); }));
-	scheduler.start();
-	ASSERT(false);
+	    tty1));
 }

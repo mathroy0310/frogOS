@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 23:00:36 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 18:02:41 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 14:06:50 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include <kernel/Attributes.h>
 #include <kernel/CriticalScope.h>
 #include <kernel/InterruptController.h>
+#include <kernel/Process.h>
 #include <kernel/Scheduler.h>
 
 #if 1

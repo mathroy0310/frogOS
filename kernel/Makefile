@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/05 01:34:45 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/08/30 16:18:07 by maroy            ###   ########.fr        #
+#    Updated: 2024/09/03 14:18:18 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -62,6 +62,7 @@ kernel/kmalloc.o				\
 kernel/PCI.o 					\
 kernel/PIC.o					\
 kernel/PIT.o					\
+kernel/Process.o				\
 kernel/RTC.o					\
 kernel/Scheduler.o 				\
 kernel/Serial.o					\
@@ -70,9 +71,11 @@ kernel/SpinLock.o 				\
 kernel/SSP.o					\
 kernel/Storage/ATAController.o	\
 kernel/Storage/StorageDevice.o	\
+kernel/Syscall.o				\
 kernel/Thread.o 				\
 kernel/TTY.o					\
 kernel/VesaTerminalDriver.o		\
+userspace/userspace.o			\
 icxxabi.o						\
 ubsan.o							\
  
@@ -121,6 +124,7 @@ always:
 	mkdir -p $(BUILDDIR)/kernel
 	mkdir -p $(BUILDDIR)/kernel/FS
 	mkdir -p $(BUILDDIR)/kernel/Storage
+	mkdir -p $(BUILDDIR)/userspace
 	mkdir -p $(BUILDDIR)/font
 
 clean:
