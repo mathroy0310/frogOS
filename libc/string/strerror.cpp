@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/30 15:32:07 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 15:59:42 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 14:26:59 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,12 @@ char *strerror(int error) {
 	case EIO:
 		strcpy(buffer, "Input/output error");
 		return "Input/output error";
+	case ENOTSUP:
+		strcpy(buffer, "Operation not supported");
+		break;
+	case EBADF:
+		strcpy(buffer, "Bad file descriptor");
+		break;
 	default:
 		// FIXME: sprintf
 		// sprintf(buffer, "Unknown error %d", error);
