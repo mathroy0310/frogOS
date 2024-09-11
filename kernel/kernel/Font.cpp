@@ -6,10 +6,11 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/27 01:56:39 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/11 00:42:08 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/11 01:00:24 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <FROG/Endianness.h>
 #include <FROG/ScopeGuard.h>
 #include <FROG/UTF8.h>
 #include <kernel/Font.h>
@@ -17,23 +18,31 @@
 
 #include <fcntl.h>
 
-#define PSF1_MODE_512 0x01
-#define PSF1_MODE_HASTAB 0x02
-#define PSF1_MODE_SEQ 0x02
+#define PSF1_MAGIC0 0x36
+#define PSF1_MAGIC1 0x04
+#define PSF1_MODE512 0x01
+#define PSF1_MODEHASTAB 0x02
+#define PSF1_MODEHASSEQ 0x04
+#define PSF1_STARTSEQ 0xFFFE
+#define PSF1_SEPARATOR 0xFFFF
 
-#define PSF2_HAS_UNICODE_TABLE 0x00000001
+#define PSF2_MAGIC0 0x72
+#define PSF2_MAGIC1 0xB5
+#define PSF2_MAGIC2 0x4A
+#define PSF2_MAGIC3 0x86
+#define PSF2_HAS_UNICODE_TABLE 0x01
+#define PSF2_STARTSEQ 0xFE
+#define PSF2_SEPARATOR 0xFF
 
-extern char _binary_font_prefs_psf_start;
-extern char _binary_font_prefs_psf_end;
+extern uint8_t _binary_font_prefs_psf_start[];
+extern uint8_t _binary_font_prefs_psf_end[];
 
 namespace Kernel {
 
 FROG::ErrorOr<Font> Font::prefs() {
-	size_t font_data_size = &_binary_font_prefs_psf_end - &_binary_font_prefs_psf_start;
-	FROG::Vector<uint8_t> font_data;
-	TRY(font_data.resize(font_data_size));
-	memcpy(font_data.data(), &_binary_font_prefs_psf_start, font_data_size);
-	return parse_psf1(font_data.span());
+	size_t              font_data_size = _binary_font_prefs_psf_end - _binary_font_prefs_psf_start;
+	FROG::Span<uint8_t> font_data(_binary_font_prefs_psf_start, font_data_size);
+	return parse_psf1(font_data);
 }
 
 FROG::ErrorOr<Font> Font::load(FROG::StringView path) {
@@ -47,9 +56,10 @@ FROG::ErrorOr<Font> Font::load(FROG::StringView path) {
 
 	if (file_data.size() < 4) return FROG::Error::from_c_string("Font file is too small");
 
-	if (file_data[0] == 0x36 && file_data[1] == 0x04) return TRY(parse_psf1(file_data.span()));
+	if (file_data[0] == PSF1_MAGIC0 && file_data[1] == PSF1_MAGIC1)
+		return TRY(parse_psf1(file_data.span()));
 
-	if (file_data[0] == 0x72 && file_data[1] == 0xB5 && file_data[2] == 0x4A && file_data[3] == 0x86)
+	if (file_data[0] == PSF2_MAGIC0 && file_data[1] == PSF2_MAGIC1 && file_data[2] == PSF2_MAGIC2 && file_data[3] == PSF2_MAGIC3)
 		return TRY(parse_psf2(file_data.span()));
 
 	return FROG::Error::from_c_string("Unsupported font format");
@@ -59,14 +69,14 @@ FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Span<uint8_t> font_data) {
 	if (font_data.size() < 4) return FROG::Error::from_c_string("Font file is too small");
 
 	struct PSF1Header {
-		uint16_t magic;
-		uint8_t  mode;
-		uint8_t  char_size;
+		uint8_t magic[2];
+		uint8_t mode;
+		uint8_t char_size;
 	};
-	auto *header = (const PSF1Header *) (font_data.data());
+	const PSF1Header &header = *(const PSF1Header *) font_data.data();
 
-	uint32_t glyph_count = header->mode & PSF1_MODE_512 ? 512 : 256;
-	uint32_t glyph_size = header->char_size;
+	uint32_t glyph_count = header.mode & PSF1_MODE512 ? 512 : 256;
+	uint32_t glyph_size = header.char_size;
 	uint32_t glyph_data_size = glyph_size * glyph_count;
 
 	if (font_data.size() < sizeof(PSF1Header) + glyph_data_size)
@@ -82,7 +92,7 @@ FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Span<uint8_t> font_data) {
 	bool codepoint_redef = false;
 	bool codepoint_sequence = false;
 
-	if (header->magic & (PSF1_MODE_HASTAB | PSF1_MODE_SEQ)) {
+	if (header.mode & (PSF1_MODEHASTAB | PSF1_MODEHASSEQ)) {
 		uint32_t current_index = sizeof(PSF1Header) + glyph_data_size;
 
 		uint32_t glyph_index = 0;
@@ -91,10 +101,10 @@ FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Span<uint8_t> font_data) {
 			uint16_t hi = font_data[current_index + 1];
 			uint16_t codepoint = (hi << 8) | lo;
 
-			if (codepoint == 0xFFFE) {
+			if (codepoint == PSF1_STARTSEQ) {
 				codepoint_sequence = true;
 				break;
-			} else if (codepoint == 0xFFFF) {
+			} else if (codepoint == PSF1_SEPARATOR) {
 				glyph_index++;
 			} else {
 				if (glyph_offsets.contains(codepoint))
@@ -120,35 +130,27 @@ FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Span<uint8_t> font_data) {
 	result.m_glyph_offsets = FROG::move(glyph_offsets);
 	result.m_glyph_data = FROG::move(glyph_data);
 	result.m_width = 8;
-	result.m_height = header->char_size;
+	result.m_height = header.char_size;
 	result.m_pitch = 1;
 	return result;
 }
 
 FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Span<uint8_t> font_data) {
 	struct PSF2Header {
-		uint32_t magic;
-		uint32_t version;
-		uint32_t header_size;
-		uint32_t flags;
-		uint32_t glyph_count;
-		uint32_t glyph_size;
-		uint32_t height;
-		uint32_t width;
+		uint8_t                      magic[4];
+		FROG::LittleEndian<uint32_t> version;
+		FROG::LittleEndian<uint32_t> header_size;
+		FROG::LittleEndian<uint32_t> flags;
+		FROG::LittleEndian<uint32_t> glyph_count;
+		FROG::LittleEndian<uint32_t> glyph_size;
+		FROG::LittleEndian<uint32_t> height;
+		FROG::LittleEndian<uint32_t> width;
 	};
 
 	if (font_data.size() < sizeof(PSF2Header))
 		return FROG::Error::from_c_string("Font file is too small");
 
-	PSF2Header header;
-	header.magic = FROG::Math::little_endian_to_host<uint32_t>(font_data.data() + 0);
-	header.version = FROG::Math::little_endian_to_host<uint32_t>(font_data.data() + 4);
-	header.header_size = FROG::Math::little_endian_to_host<uint32_t>(font_data.data() + 8);
-	header.flags = FROG::Math::little_endian_to_host<uint32_t>(font_data.data() + 12);
-	header.glyph_count = FROG::Math::little_endian_to_host<uint32_t>(font_data.data() + 16);
-	header.glyph_size = FROG::Math::little_endian_to_host<uint32_t>(font_data.data() + 20);
-	header.height = FROG::Math::little_endian_to_host<uint32_t>(font_data.data() + 24);
-	header.width = FROG::Math::little_endian_to_host<uint32_t>(font_data.data() + 28);
+	const PSF2Header &header = *(const PSF2Header *) font_data.data();
 
 	uint32_t glyph_data_size = header.glyph_count * header.glyph_size;
 
@@ -173,10 +175,10 @@ FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Span<uint8_t> font_data) {
 		for (uint32_t i = glyph_data_size + header.header_size; i < font_data.size(); i++) {
 			uint8_t byte = font_data[i];
 
-			if (byte == 0xFE) {
+			if (byte == PSF2_STARTSEQ) {
 				codepoint_sequence = true;
 				break;
-			} else if (byte == 0xFF) {
+			} else if (byte == PSF2_SEPARATOR) {
 				if (byte_index) {
 					invalid_utf = true;
 					byte_index = 0;
@@ -215,7 +217,7 @@ FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Span<uint8_t> font_data) {
 	}
 
 	if (invalid_utf) dwarnln("Font contains invalid UTF-8 codepoint(s)");
-	if (codepoint_redef) dwarnln("Font contsins multiple definitions for same codepoint(s)");
+	if (codepoint_redef) dwarnln("Font contains multiple definitions for same codepoint(s)");
 	if (codepoint_sequence) dwarnln("Font contains codepoint sequences (not supported)");
 
 	Font result;
