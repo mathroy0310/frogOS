@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:17:04 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/11 00:02:36 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/11 00:22:22 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include <FROG/Errors.h>
 #include <FROG/Iterators.h>
 #include <FROG/Math.h>
+#include <FROG/Span.h>
 #include <FROG/Memory.h>
 #include <FROG/Move.h>
 
@@ -60,6 +61,9 @@ template <typename T> class Vector {
 	const T *data() const { return m_data; }
 
 	bool contains(const T &) const;
+
+	Span<T>       span() { return Span(m_data, size()); }
+	const Span<T> span() const { return Span(m_data, size()); }
 
 	const T &operator[](size_type) const;
 	T &operator[](size_type);

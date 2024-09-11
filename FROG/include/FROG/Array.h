@@ -6,12 +6,13 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 11:24:17 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/10 23:57:32 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/11 00:19:24 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Errors.h>
 #include <FROG/Iterators.h>
+#include <FROG/Span.h>
 #include <stddef.h>
 
 namespace FROG {
@@ -39,6 +40,9 @@ template <typename T, size_t S> class Array {
 	T       &back();
 	const T &front() const;
 	T       &front();
+
+	Span<T>       span() { return Span(m_data, size()); }
+	const Span<T> span() const { return Span(m_data, size()); }
 
 	constexpr size_type size() const;
 
