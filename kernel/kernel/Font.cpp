@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/27 01:56:39 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 16:08:50 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/11 00:42:08 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,29 +33,29 @@ FROG::ErrorOr<Font> Font::prefs() {
 	FROG::Vector<uint8_t> font_data;
 	TRY(font_data.resize(font_data_size));
 	memcpy(font_data.data(), &_binary_font_prefs_psf_start, font_data_size);
-	return parse_psf1(font_data);
+	return parse_psf1(font_data.span());
 }
 
 FROG::ErrorOr<Font> Font::load(FROG::StringView path) {
-	int             fd = TRY(Process::current()->open(path, O_RDONLY));
+	int              fd = TRY(Process::current()->open(path, O_RDONLY));
 	FROG::ScopeGuard _([fd] { MUST(Process::current()->close(fd)); });
 
-	size_t               file_size = Process::current()->inode_for_fd(fd).size();
+	size_t                file_size = Process::current()->inode_for_fd(fd).size();
 	FROG::Vector<uint8_t> file_data;
 	TRY(file_data.resize(file_size));
 	TRY(Process::current()->read(fd, file_data.data(), file_size));
 
 	if (file_data.size() < 4) return FROG::Error::from_c_string("Font file is too small");
 
-	if (file_data[0] == 0x36 && file_data[1] == 0x04) return TRY(parse_psf1(file_data));
+	if (file_data[0] == 0x36 && file_data[1] == 0x04) return TRY(parse_psf1(file_data.span()));
 
 	if (file_data[0] == 0x72 && file_data[1] == 0xB5 && file_data[2] == 0x4A && file_data[3] == 0x86)
-		return TRY(parse_psf2(file_data));
+		return TRY(parse_psf2(file_data.span()));
 
 	return FROG::Error::from_c_string("Unsupported font format");
 }
 
-FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Vector<uint8_t> &font_data) {
+FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Span<uint8_t> font_data) {
 	if (font_data.size() < 4) return FROG::Error::from_c_string("Font file is too small");
 
 	struct PSF1Header {
@@ -76,29 +76,27 @@ FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Vector<uint8_t> &font_data) {
 	TRY(glyph_data.resize(glyph_data_size));
 	memcpy(glyph_data.data(), font_data.data() + sizeof(PSF1Header), glyph_data_size);
 
-	FROG::HashMap<uint16_t, uint32_t> glyph_offsets;
+	FROG::HashMap<uint32_t, uint32_t> glyph_offsets;
 	TRY(glyph_offsets.reserve(glyph_count));
 
-	bool unsupported_utf = false;
 	bool codepoint_redef = false;
+	bool codepoint_sequence = false;
 
 	if (header->magic & (PSF1_MODE_HASTAB | PSF1_MODE_SEQ)) {
 		uint32_t current_index = sizeof(PSF1Header) + glyph_data_size;
 
-		bool     in_sequence = false;
 		uint32_t glyph_index = 0;
 		while (current_index < font_data.size()) {
 			uint16_t lo = font_data[current_index];
 			uint16_t hi = font_data[current_index + 1];
 			uint16_t codepoint = (hi << 8) | lo;
 
-			if (codepoint == 0xFFFF) {
+			if (codepoint == 0xFFFE) {
+				codepoint_sequence = true;
+				break;
+			} else if (codepoint == 0xFFFF) {
 				glyph_index++;
-				in_sequence = false;
-			} else if (codepoint == 0xFFFE) {
-				in_sequence = true;
-				unsupported_utf = true;
-			} else if (!in_sequence) {
+			} else {
 				if (glyph_offsets.contains(codepoint))
 					codepoint_redef = true;
 				else
@@ -115,8 +113,8 @@ FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Vector<uint8_t> &font_data) {
 			TRY(glyph_offsets.insert(i, i * glyph_size));
 	}
 
-	if (unsupported_utf) dwarnln("Font contains invalid/unsupported UTF-8 codepoint(s)");
 	if (codepoint_redef) dwarnln("Font contsins multiple definitions for same codepoint(s)");
+	if (codepoint_sequence) dwarnln("Font contains codepoint sequences (not supported)");
 
 	Font result;
 	result.m_glyph_offsets = FROG::move(glyph_offsets);
@@ -127,7 +125,7 @@ FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Vector<uint8_t> &font_data) {
 	return result;
 }
 
-FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Vector<uint8_t> &font_data) {
+FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Span<uint8_t> font_data) {
 	struct PSF2Header {
 		uint32_t magic;
 		uint32_t version;
@@ -161,11 +159,12 @@ FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Vector<uint8_t> &font_data) {
 	TRY(glyph_data.resize(glyph_data_size));
 	memcpy(glyph_data.data(), font_data.data() + header.header_size, glyph_data_size);
 
-	FROG::HashMap<uint16_t, uint32_t> glyph_offsets;
+	FROG::HashMap<uint32_t, uint32_t> glyph_offsets;
 	TRY(glyph_offsets.reserve(400));
 
-	bool unsupported_utf = false;
+	bool invalid_utf = false;
 	bool codepoint_redef = false;
+	bool codepoint_sequence = false;
 
 	uint8_t  bytes[4]{};
 	uint32_t byte_index = 0;
@@ -174,27 +173,35 @@ FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Vector<uint8_t> &font_data) {
 		for (uint32_t i = glyph_data_size + header.header_size; i < font_data.size(); i++) {
 			uint8_t byte = font_data[i];
 
-			if ((byte >> 1) == 0x7F) {
-				if (byte_index <= 4) {
-					uint16_t codepoint = FROG::utf8_to_codepoint(bytes, byte_index);
-					if (codepoint == 0xFFFF)
-						unsupported_utf = true;
+			if (byte == 0xFE) {
+				codepoint_sequence = true;
+				break;
+			} else if (byte == 0xFF) {
+				if (byte_index) {
+					invalid_utf = true;
+					byte_index = 0;
+				}
+				glyph_index++;
+			} else {
+				ASSERT(byte_index < 4);
+				bytes[byte_index++] = byte;
+				uint32_t len = FROG::utf8_byte_length(bytes[0]);
+
+				if (len == 0) {
+					invalid_utf = true;
+					byte_index = 0;
+				} else if (len == byte_index) {
+					uint32_t codepoint = FROG::utf8_to_codepoint(bytes);
+					if (codepoint == FROG::UTF8::invalid)
+						invalid_utf = true;
 					else if (glyph_offsets.contains(codepoint))
 						codepoint_redef = true;
 					else
 						TRY(glyph_offsets.insert(codepoint, glyph_index * header.glyph_size));
+					byte_index = 0;
 				}
-				byte_index = 0;
-				if (byte == 0xFF) glyph_index++;
-			} else {
-				if (byte_index < 4)
-					bytes[byte_index++] = byte;
-				else
-					unsupported_utf = true;
 			}
 		}
-		if (glyph_index != header.glyph_count)
-			return FROG::Error::from_c_string("Font did not contain unicode entry for all glyphs");
 	} else {
 		for (uint32_t i = 0; i < header.glyph_count; i++)
 			TRY(glyph_offsets.insert(i, i * header.glyph_size));
@@ -207,8 +214,9 @@ FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Vector<uint8_t> &font_data) {
 		TRY(glyph_offsets.insert(' ', glyph_data_size));
 	}
 
-	if (unsupported_utf) dwarnln("Font contains invalid/unsupported UTF-8 codepoint(s)");
+	if (invalid_utf) dwarnln("Font contains invalid UTF-8 codepoint(s)");
 	if (codepoint_redef) dwarnln("Font contsins multiple definitions for same codepoint(s)");
+	if (codepoint_sequence) dwarnln("Font contains codepoint sequences (not supported)");
 
 	Font result;
 	result.m_glyph_offsets = FROG::move(glyph_offsets);
@@ -219,9 +227,9 @@ FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Vector<uint8_t> &font_data) {
 	return result;
 }
 
-bool Font::has_glyph(uint16_t codepoint) const { return m_glyph_offsets.contains(codepoint); }
+bool Font::has_glyph(uint32_t codepoint) const { return m_glyph_offsets.contains(codepoint); }
 
-const uint8_t *Font::glyph(uint16_t codepoint) const {
+const uint8_t *Font::glyph(uint32_t codepoint) const {
 	return m_glyph_data.data() + m_glyph_offsets[codepoint];
 }
 
