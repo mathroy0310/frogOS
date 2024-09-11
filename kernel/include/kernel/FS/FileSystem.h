@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:25:26 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 17:12:31 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 16:59:41 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ namespace Kernel {
 
 class FileSystem {
   public:
-	virtual const FROG::RefPtr<Inode> root_inode() const = 0;
+	virtual FROG::RefPtr<Inode> root_inode() = 0;
 };
 
 } // namespace Kernel

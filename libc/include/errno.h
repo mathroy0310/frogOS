@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/30 15:31:39 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 14:26:48 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 16:52:45 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,8 @@
 #define EIO 6
 #define ENOTSUP 7
 #define EBADF 8
+#define EEXISTS 9
+#define ENOTEMPTY 10
 
 __BEGIN_DECLS
 

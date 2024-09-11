@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 13:38:25 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/26 16:06:38 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 17:22:58 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -326,8 +326,7 @@ void update() {
 					if (s_command_response[0] != I8042_MOUSE_SELF_TEST_PASS)
 						Kernel::panic("PS/2 Mouse self test failed");
 					if (s_command_response[1] != 0x00)
-						Kernel::panic("PS/2 Mouse invalid byte sent after self "
-						              "test");
+						Kernel::panic("PS/2 Mouse invalid byte sent after self test");
 					break;
 				case I8042_MOUSE_ENABLE:
 					break;

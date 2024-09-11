@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/03 16:17:55 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 16:33:33 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,11 +26,10 @@
 #include <ctype.h>
 #include <fcntl.h>
 
-#define TTY_PRINT(...) Formatter::print([this](char c) { m_tty->putchar(c); }, __VA_ARGS__)
-#define TTY_PRINTLN(...) Formatter::println([this](char c) { m_tty->putchar(c); }, __VA_ARGS__)
-
+#define TTY_PRINT(...) FROG::Formatter::print([this](char c) { m_tty->putchar(c); }, __VA_ARGS__)
+#define TTY_PRINTLN(...) \
+	FROG::Formatter::println([this](char c) { m_tty->putchar(c); }, __VA_ARGS__)
 namespace Kernel {
-using namespace FROG;
 
 static auto s_default_prompt = "\\[\e[32m\\]user\\[\e[m\\]:\\[\e[34m\\]\\w\\[\e[m\\]# "sv;
 
@@ -40,7 +39,7 @@ Shell::Shell(TTY *tty) : m_tty(tty) {
 	MUST(m_buffer.push_back(""sv));
 }
 
-FROG::ErrorOr<void> Shell::set_prompt(StringView prompt) {
+FROG::ErrorOr<void> Shell::set_prompt(FROG::StringView prompt) {
 	m_prompt_string = prompt;
 	TRY(update_prompt());
 	return {};
@@ -48,7 +47,7 @@ FROG::ErrorOr<void> Shell::set_prompt(StringView prompt) {
 
 FROG::ErrorOr<void> Shell::update_prompt() {
 	m_prompt_length = 0;
-	m_prompt = String();
+	m_prompt.clear();
 
 	bool skipping = false;
 	for (size_t i = 0; i < m_prompt_string.size(); i++) {
@@ -89,8 +88,8 @@ void Shell::run() {
 	}
 }
 
-Vector<String> Shell::parse_arguments(StringView command) const {
-	Vector<String> result;
+FROG::Vector<FROG::String> Shell::parse_arguments(FROG::StringView command) const {
+	FROG::Vector<FROG::String> result;
 
 	while (!command.empty()) {
 		while (!command.empty() && isspace(command.front()))
@@ -167,7 +166,9 @@ Vector<String> Shell::parse_arguments(StringView command) const {
 	return result;
 }
 
-FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
+extern uint32_t crc32_table[256];
+
+FROG::ErrorOr<void> Shell::process_command(const FROG::Vector<FROG::String> &arguments) {
 	if (arguments.empty()) {
 	} else if (arguments.front() == "date") {
 		if (arguments.size() != 1) {
@@ -197,9 +198,9 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 		TTY_PRINTLN("took {} ms", duration);
 	} else if (arguments.front() == "thread") {
 		struct thread_data_t {
-			Shell                *shell;
-			SpinLock             &lock;
-			const Vector<String> &arguments;
+			Shell                          *shell;
+			SpinLock                       &lock;
+			const FROG::Vector<FROG::String> &arguments;
 		};
 
 		auto function = [](void *data) {
@@ -210,7 +211,7 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 			args.remove(0);
 			PIT::sleep(5000);
 			if (auto res = shell->process_command(args); res.is_error())
-				Formatter::println([&](char c) { shell->m_tty->putchar(c); }, "{}", res.error());
+				FROG::Formatter::println([&](char c) { shell->m_tty->putchar(c); }, "{}", res.error());
 		};
 
 		SpinLock      spinlock;
@@ -336,6 +337,31 @@ FROG::ErrorOr<void> Shell::process_command(const Vector<String> &arguments) {
 		FROG::StringView path = arguments.size() == 2 ? arguments[1].sv() : "/"sv;
 		TRY(Process::current()->set_working_directory(path));
 		TRY(update_prompt());
+	} else if (arguments.front() == "cksum") {
+		if (arguments.size() < 2) return FROG::Error::from_c_string("usage 'cksum paths...'");
+
+		uint8_t buffer[1024];
+		for (size_t i = 1; i < arguments.size(); i++) {
+			int             fd = TRY(Process::current()->open(arguments[i], O_RDONLY));
+			FROG::ScopeGuard _([fd] { MUST(Process::current()->close(fd)); });
+
+			uint32_t crc32 = 0;
+			uint32_t total_read = 0;
+
+			while (true) {
+				size_t n_read = TRY(Process::current()->read(fd, buffer, sizeof(buffer)));
+				if (n_read == 0) break;
+				for (size_t j = 0; j < n_read; j++)
+					crc32 = (crc32 << 8) ^ crc32_table[((crc32 >> 24) ^ buffer[j]) & 0xFF];
+				total_read += n_read;
+			}
+
+			for (uint32_t length = total_read; length; length >>= 8)
+				crc32 = (crc32 << 8) ^ crc32_table[((crc32 >> 24) ^ length) & 0xFF];
+			crc32 = ~crc32 & 0xFFFFFFFF;
+
+			TTY_PRINTLN("{} {} {}", crc32, total_read, arguments[i]);
+		}
 	} else if (arguments.front() == "loadfont") {
 		if (arguments.size() != 2) return FROG::Error::from_c_string("usage: 'loadfont font_path'");
 
@@ -351,21 +377,21 @@ void Shell::rerender_buffer() const {
 	TTY_PRINT("\e[{}G{}\e[K", m_prompt_length + 1, m_buffer[m_cursor_pos.line]);
 }
 
-static uint32_t get_last_lenght(StringView sv) {
+static uint32_t get_last_length(FROG::StringView sv) {
 	if (sv.size() >= 2 && ((uint8_t) sv[sv.size() - 2] >> 5) == 0b110) return 2;
 	if (sv.size() >= 3 && ((uint8_t) sv[sv.size() - 3] >> 4) == 0b1110) return 3;
 	if (sv.size() >= 4 && ((uint8_t) sv[sv.size() - 4] >> 3) == 0b11110) return 4;
-	return Math::min<uint32_t>(sv.size(), 1);
+	return FROG::Math::min<uint32_t>(sv.size(), 1);
 }
 
-static uint32_t get_next_lenght(StringView sv) {
+static uint32_t get_next_length(FROG::StringView sv) {
 	if (sv.size() >= 2 && ((uint8_t) sv[0] >> 5) == 0b110) return 2;
 	if (sv.size() >= 3 && ((uint8_t) sv[0] >> 4) == 0b1110) return 3;
 	if (sv.size() >= 4 && ((uint8_t) sv[0] >> 3) == 0b11110) return 4;
-	return Math::min<uint32_t>(sv.size(), 1);
+	return FROG::Math::min<uint32_t>(sv.size(), 1);
 }
 
-static uint32_t get_unicode_character_count(StringView sv) {
+static uint32_t get_unicode_character_count(FROG::StringView sv) {
 	uint32_t len = 0;
 	for (uint32_t i = 0; i < sv.size(); i++) {
 		uint8_t ch = sv[i];
@@ -380,14 +406,14 @@ static uint32_t get_unicode_character_count(StringView sv) {
 void Shell::key_event_callback(Input::KeyEvent event) {
 	if (!event.pressed) return;
 
-	String &current_buffer = m_buffer[m_cursor_pos.line];
+	FROG::String &current_buffer = m_buffer[m_cursor_pos.line];
 
 	switch (event.key) {
 	case Input::Key::Backspace:
 		if (m_cursor_pos.col > 0) {
 			TTY_PRINT("\e[D{} ", current_buffer.sv().substring(m_cursor_pos.index));
 
-			uint32_t len = get_last_lenght(current_buffer.sv().substring(0, m_cursor_pos.index));
+			uint32_t len = get_last_length(current_buffer.sv().substring(0, m_cursor_pos.index));
 			m_cursor_pos.index -= len;
 			current_buffer.erase(m_cursor_pos.index, len);
 			m_cursor_pos.col--;
@@ -422,7 +448,7 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 
 	case Input::Key::Left:
 		if (m_cursor_pos.index > 0) {
-			uint32_t len = get_last_lenght(current_buffer.sv().substring(0, m_cursor_pos.index));
+			uint32_t len = get_last_length(current_buffer.sv().substring(0, m_cursor_pos.index));
 			m_cursor_pos.index -= len;
 			m_cursor_pos.col--;
 		}
@@ -430,7 +456,7 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 
 	case Input::Key::Right:
 		if (m_cursor_pos.index < current_buffer.size()) {
-			uint32_t len = get_next_lenght(current_buffer.sv().substring(m_cursor_pos.index));
+			uint32_t len = get_next_length(current_buffer.sv().substring(m_cursor_pos.index));
 			m_cursor_pos.index += len;
 			m_cursor_pos.col++;
 		}
@@ -455,7 +481,11 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 			rerender_buffer();
 		}
 		break;
-
+	case Input::Key::A:
+		if (event.modifiers & 2) {
+			m_cursor_pos.col = m_cursor_pos.index = 0;
+			break;
+		}
 	default: {
 		const char *utf8 = Input::key_event_to_utf8(event);
 		if (utf8) {

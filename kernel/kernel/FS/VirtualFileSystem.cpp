@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:33 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 16:08:11 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 17:33:35 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,7 +88,7 @@ FROG::ErrorOr<void> VirtualFileSystem::initialize_impl() {
 			}
 
 			for (auto &partition : device->partitions()) {
-				if (partition.name() == "root"sv) {
+				if (partition.name() == "frog-root"sv) {
 					if (root_inode())
 						dwarnln("multiple root partitions found");
 					else {
@@ -106,6 +106,25 @@ FROG::ErrorOr<void> VirtualFileSystem::initialize_impl() {
 	}
 
 	if (!root_inode()) derrorln("Could not locate root partition");
+	return {};
+}
+
+FROG::ErrorOr<void> VirtualFileSystem::mount_test() {
+	auto mount = TRY(root_inode()->directory_find("mnt"sv));
+	if (!mount->ifdir()) return FROG::Error::from_errno(ENOTDIR);
+	if (TRY(mount->directory_inodes()).size() > 2) return FROG::Error::from_errno(ENOTEMPTY);
+
+	for (auto *controller : m_storage_controllers) {
+		for (auto *device : controller->devices()) {
+			for (auto &partition : device->partitions()) {
+				if (partition.name() == "frog-mount"sv) {
+					auto ext2fs = TRY(Ext2FS::create(partition));
+					TRY(m_mount_points.push_back({mount, ext2fs}));
+					return {};
+				}
+			}
+		}
+	}
 	return {};
 }
 

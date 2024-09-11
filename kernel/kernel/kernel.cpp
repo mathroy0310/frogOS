@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/03 16:13:33 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/10 23:44:34 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,29 +175,29 @@ extern "C" void kernel_main() {
 
 #if ARCH(x86_64)
 			asm volatile(
-				"pushq %0\r\n"
-				"pushq %1\r\n"
-				"pushfq\r\n"
-				"pushq %2\r\n"
-				"pushq %3\r\n"
-				"iretq\r\n"
+				"pushq %0;"
+				"pushq %1;"
+				"pushfq;"
+				"pushq %2;"
+				"pushq %3;"
+				"iretq;"
 				:: "r"((uintptr_t)0x20 | 3), "r"((uintptr_t)userspace_stack + 4096), "r"((uintptr_t)0x18 | 3), "r"(userspace_entry)
 			);
 #else
 			asm volatile(
-				"movl %0, %%eax\r\n"
-				"movw %%ax, %%ds\r\n"
-				"movw %%ax, %%es\r\n"
-				"movw %%ax, %%fs\r\n"
-				"movw %%ax, %%gs\r\n"
+				"movl %0, %%eax;"
+				"movw %%ax, %%ds;"
+				"movw %%ax, %%es;"
+				"movw %%ax, %%fs;"
+				"movw %%ax, %%gs;"
 
-				"movl %1, %%esp\r\n"
-				"pushl %0\r\n"
-				"pushl %1\r\n"
-				"pushfl\r\n"
-				"pushl %2\r\n"
-				"pushl %3\r\n"
-				"iret\r\n"
+				"movl %1, %%esp;"
+				"pushl %0;"
+				"pushl %1;"
+				"pushfl;"
+				"pushl %2;"
+				"pushl %3;"
+				"iret;"
 				:: "r"((uintptr_t)0x20 | 3), "r"((uintptr_t)userspace_stack + 4096), "r"((uintptr_t)0x18 | 3), "r"(userspace_entry)
 			);
 #endif
@@ -216,6 +216,8 @@ void init2(void *tty1_ptr) {
 	TTY *tty1 = (TTY *) tty1_ptr;
 
 	MUST(VirtualFileSystem::initialize());
+	if (auto res = VirtualFileSystem::get().mount_test(); res.is_error())
+		dwarnln("{}", res.error());
 	MUST(Process::create_kernel(
 	    [](void *tty1) {
 		    Shell *shell = new Shell((TTY *) tty1);

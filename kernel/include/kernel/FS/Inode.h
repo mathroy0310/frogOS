@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:25:42 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 15:58:40 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 16:56:42 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,8 @@
 #include <FROG/ForwardList.h>
 #include <FROG/Memory.h>
 
-#include <stdint.h>
+#include <FROG/String.h>
+#include <FROG/Vector.h>
 
 namespace Kernel {
 
@@ -43,6 +44,11 @@ class Inode : public FROG::RefCounted<Inode> {
 		uint16_t mode;
 	};
 
+	enum class Type {
+		General,
+		Ext2,
+	};
+
   public:
 	virtual ~Inode() {}
 
@@ -57,9 +63,17 @@ class Inode : public FROG::RefCounted<Inode> {
 
 	virtual FROG::StringView name() const = 0;
 
-	virtual FROG::ErrorOr<size_t> read(size_t, void*, size_t) = 0;
-	virtual FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> directory_inodes() = 0;
-	virtual FROG::ErrorOr<FROG::RefPtr<Inode>>               directory_find(FROG::StringView) = 0;
+	FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> directory_inodes();
+	FROG::ErrorOr<FROG::RefPtr<Inode>>               directory_find(FROG::StringView);
+
+	virtual FROG::ErrorOr<size_t> read(size_t, void *, size_t) = 0;
+
+	virtual Type type() const = 0;
+	virtual bool operator==(const Inode &) const = 0;
+
+  protected:
+	virtual FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> directory_inodes_impl() = 0;
+	virtual FROG::ErrorOr<FROG::RefPtr<Inode>>              directory_find_impl(FROG::StringView) = 0;
 };
 
 } // namespace Kernel

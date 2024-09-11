@@ -8,27 +8,34 @@ MOUNT_DIR=/mnt
 
 dd if=/dev/zero of=$DISK_NAME bs=512 count=$[$DISK_SIZE / 512]
 
-sed -e 's/\s*\([-\+[:alnum:]]*\).*/\1/' << EOF | fdisk $DISK_NAME > /dev/null
+sed -e 's/\s*\([-\+[:alnum:]]*\).*/\1/' << EOF | fdisk $DISK_NAME
   g     # gpt
   n     # new partition
   1     # partition number 1
         # default (from the beginning of the disk)
   +1MiB # bios boot partiton size
+  n	  # new partition
+  3	  # partition number 3
+	  # default (right after bios boot partition)
+  +10Mib# partition size
   n     # new partition
   2     # partition number 2
         # default (right after bios boot partition)
-		# default (to the end of disk)
+	  # default (to the end of disk)
   t     # set type
   1     # ... of partition 1
   4     # bios boot partition
   t     # set type
   2     # ... of partition 2
   20    # Linux filesystem
-  x     # expert menu
+  x	  # expert menu
   n     # partition name
-  2     # ... of partition 2
-  root  # name
-  r     # return to main menu
+  3	  # ... of partition 3
+  frog-mount
+  n	  # partition name
+  2	  # ... of partition 2
+  frog-root
+  r	  # back to main menu
   w     # write changes
 EOF
 
@@ -37,6 +44,7 @@ sudo partprobe $LOOP_DEV
 
 PARTITION1=${LOOP_DEV}p1
 PARTITION2=${LOOP_DEV}p2
+PARTITION3=${LOOP_DEV}p3
 
 sudo mkfs.ext2 $PARTITION2
 
@@ -94,4 +102,10 @@ menuentry "Exit" {
 '  | sudo tee ${MOUNT_DIR}/boot/grub/grub.cfg
 
 sudo umount $MOUNT_DIR
+
+sudo mkfs.ext2 $PARTITION3
+sudo mount $PARTITION3 $MOUNT_DIR
+echo 'hello' | sudo tee ${MOUNT_DIR}/hello.txt
+sudo umount $MOUNT_DIR
+
 sudo losetup -d $LOOP_DEV

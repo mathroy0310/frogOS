@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/05 01:34:45 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/09/03 14:18:18 by maroy            ###   ########.fr        #
+#    Updated: 2024/09/03 16:54:15 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -54,6 +54,7 @@ kernel/CPUID.o					\
 kernel/Debug.o 					\
 kernel/Font.o					\
 kernel/FS/Ext2.o				\
+kernel/FS/Inode.o				\
 kernel/FS/VirtualFileSystem.o	\
 kernel/Input.o					\
 kernel/InterruptController.o	\

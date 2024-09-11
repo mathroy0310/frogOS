@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:24:57 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 15:58:23 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/03 16:55:07 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,32 +136,42 @@ class Ext2Inode : public Inode {
 
 	virtual FROG::StringView name() const override { return m_name; }
 
-	virtual FROG::ErrorOr<size_t>                             read(size_t, void *, size_t) override;
-	virtual FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> directory_inodes() override;
-	virtual FROG::ErrorOr<FROG::RefPtr<Inode>> directory_find(FROG::StringView) override;
+	virtual FROG::ErrorOr<size_t> read(size_t, void *, size_t) override;
+
+	virtual Type type() const override { return Type::Ext2; }
+	virtual bool operator==(const Inode &other) const override;
+
+  protected:
+	virtual FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> directory_inodes_impl() override;
+	virtual FROG::ErrorOr<FROG::RefPtr<Inode>> directory_find_impl(FROG::StringView) override;
 
   private:
+	FROG::ErrorOr<uint32_t> data_block_index(uint32_t);
+
 	using block_callback_t = FROG::ErrorOr<bool> (*)(const FROG::Vector<uint8_t> &, void *);
 	FROG::ErrorOr<void> for_each_block(block_callback_t, void *);
+	uint32_t            index() const { return m_index; }
 
   private:
-	Ext2Inode() {}
-	Ext2Inode(Ext2FS *fs, Ext2::Inode inode, FROG::StringView name)
-	    : m_fs(fs), m_inode(inode), m_name(name) {}
+	Ext2Inode(Ext2FS &fs, Ext2::Inode inode, FROG::StringView name, uint32_t index)
+	    : m_fs(fs), m_inode(inode), m_name(name), m_index(index) {}
+	static FROG::ErrorOr<FROG::RefPtr<Inode>> create(Ext2FS &, uint32_t, FROG::StringView);
 
   private:
-	Ext2FS      *m_fs = nullptr;
+	Ext2FS      &m_fs;
 	Ext2::Inode  m_inode;
 	FROG::String m_name;
+	uint32_t     m_index;
 
 	friend class Ext2FS;
+	friend class FROG::RefPtr<Ext2Inode>;
 };
 
 class Ext2FS : public FileSystem {
   public:
 	static FROG::ErrorOr<Ext2FS *> create(StorageDevice::Partition &);
 
-	virtual const FROG::RefPtr<Inode> root_inode() const override { return m_root_inode; }
+	virtual FROG::RefPtr<Inode> root_inode() override { return m_root_inode; }
 
   private:
 	Ext2FS(StorageDevice::Partition &partition) : m_partition(partition) {}
