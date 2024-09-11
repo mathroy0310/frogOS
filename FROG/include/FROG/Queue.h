@@ -6,13 +6,14 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:46 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 15:26:16 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/11 00:03:04 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <FROG/Errors.h>
+#include <FROG/Iterators.h>
 #include <FROG/Math.h>
 #include <FROG/Memory.h>
 #include <FROG/Move.h>
@@ -23,6 +24,8 @@ template <typename T> class Queue {
   public:
 	using size_type = size_t;
 	using value_type = T;
+	using iterator = IteratorSimple<T, Queue>;
+	using const_iterator = ConstIteratorSimple<T, Queue>;
 
   public:
 	Queue() = default;
@@ -39,6 +42,11 @@ template <typename T> class Queue {
 
 	ErrorOr<void> reserve(size_type);
 	ErrorOr<void> shrink_to_fit();
+
+	iterator       begin() { return iterator(m_data); }
+	iterator       end() { return iterator(m_data + m_size); }
+	const_iterator begin() const { return const_iterator(m_data); }
+	const_iterator end() const { return const_iterator(m_data + m_size); }
 
 	void pop();
 	void clear();

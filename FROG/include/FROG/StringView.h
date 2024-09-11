@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:17:09 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/03 13:58:08 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/11 00:00:24 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,17 +14,22 @@
 
 #include <FROG/Formatter.h>
 #include <FROG/ForwardList.h>
+#include <FROG/Iterators.h>
 
 namespace FROG {
 
 class StringView {
   public:
 	using size_type = size_t;
+	using const_iterator = ConstIteratorSimple<char, StringView>;
 
   public:
 	StringView();
 	StringView(const String &);
 	StringView(const char *, size_type = -1);
+
+	const_iterator begin() const { return const_iterator(m_data); }
+	const_iterator end() const { return const_iterator(m_data + m_size); }
 
 	char operator[](size_type) const;
 

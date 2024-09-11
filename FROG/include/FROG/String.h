@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:16:49 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/03 14:22:17 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/10 23:59:54 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,12 +15,15 @@
 #include <FROG/Formatter.h>
 #include <FROG/ForwardList.h>
 #include <FROG/Hash.h>
+#include <FROG/Iterators.h>
 
 namespace FROG {
 
 class String {
   public:
 	using size_type = size_t;
+	using iterator = IteratorSimple<char, String>;
+	using const_iterator = ConstIteratorSimple<char, String>;
 
   public:
 	String();
@@ -46,6 +49,11 @@ class String {
 	void erase(size_type, size_type);
 
 	void clear();
+
+	const_iterator begin() const { return const_iterator(m_data); }
+	iterator       begin() { return iterator(m_data); }
+	const_iterator end() const { return const_iterator(m_data + m_size); }
+	iterator       end() { return iterator(m_data + m_size); }
 
 	char operator[](size_type) const;
 	char &operator[](size_type);

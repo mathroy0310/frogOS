@@ -1,17 +1,17 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   Array.h                                      ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/09 11:24:17 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:29:15 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Array.h                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/09 11:24:17 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/09/10 23:57:32 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Errors.h>
-
+#include <FROG/Iterators.h>
 #include <stddef.h>
 
 namespace FROG {
@@ -20,10 +20,17 @@ template <typename T, size_t S> class Array {
   public:
 	using size_type = decltype(S);
 	using value_type = T;
+	using iterator = IteratorSimple<T, Array>;
+	using const_iterator = ConstIteratorSimple<T, Array>;
 
   public:
 	Array();
 	Array(const T &);
+
+	iterator       begin() { return iterator(m_data); }
+	iterator       end() { return iterator(m_data + size()); }
+	const_iterator begin() const { return const_iterator(m_data); }
+	const_iterator end() const { return const_iterator(m_data + size()); }
 
 	const T &operator[](size_type) const;
 	T &operator[](size_type);
