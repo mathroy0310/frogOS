@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/11 01:29:11 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/11 01:47:50 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -530,7 +530,7 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 	}
 	}
 
-	TTY_PRINT("\e[{}G", m_prompt_length + m_cursor_pos.col + 1);
+	TTY_PRINT("\e[{}G", (m_prompt_length + m_cursor_pos.col) % m_tty->width() + 1);
 }
 
-} // namespace Kernel
+} // namespace Kernel			

@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 11:58:57 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/27 02:17:53 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/11 01:33:56 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,27 @@ void TTY::set_cursor_position(uint32_t x, uint32_t y) {
 
 void TTY::set_font(const Kernel::Font &font) {
 	m_terminal_driver->set_font(font);
+
+	uint32_t new_width = m_terminal_driver->width();
+	uint32_t new_height = m_terminal_driver->height();
+
+	if (m_width != new_width || m_height != new_height) {
+		Cell *new_buffer = new Cell[new_width * new_height];
+		ASSERT(new_buffer);
+
+		for (uint32_t i = 0; i < new_width * m_height; i++)
+			new_buffer[i] = {.foreground = m_foreground, .background = m_background, .character = ' '};
+
+		for (uint32_t y = 0; y < FROG::Math::min<uint32_t>(m_height, new_height); y++)
+			for (uint32_t x = 0; x < FROG::Math::min<uint32_t>(m_width, new_width); x++)
+				new_buffer[y * new_width + x] = m_buffer[y * m_width + x];
+
+		delete[] m_buffer;
+		m_buffer = new_buffer;
+		m_width = new_width;
+		m_height = new_height;
+	}
+
 	for (uint32_t y = 0; y < m_height; y++)
 		for (uint32_t x = 0; x < m_width; x++)
 			render_from_buffer(x, y);
