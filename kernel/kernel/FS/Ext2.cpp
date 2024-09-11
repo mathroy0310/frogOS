@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:18 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 16:58:26 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/11 01:28:37 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -199,18 +199,6 @@ FROG::ErrorOr<uint32_t> Ext2Inode::data_block_index(uint32_t asked_data_block) {
 	ASSERT(false);
 }
 
-FROG::ErrorOr<void> Ext2Inode::for_each_block(block_callback_t callback, void *callback_data) {
-	uint32_t data_block_count = m_inode.blocks / (2 << m_fs.superblock().log_block_size);
-
-	for (uint32_t i = 0; i < data_block_count; i++) {
-		uint32_t data_block_index = TRY(this->data_block_index(i));
-		auto     block_data = TRY(m_fs.read_block(data_block_index));
-		if (!TRY(callback(block_data, callback_data))) return {};
-	}
-
-	return {};
-}
-
 FROG::ErrorOr<size_t> Ext2Inode::read(size_t offset, void *buffer, size_t count) {
 	if (ifdir()) return FROG::Error::from_errno(EISDIR);
 
@@ -219,107 +207,86 @@ FROG::ErrorOr<size_t> Ext2Inode::read(size_t offset, void *buffer, size_t count)
 
 	const uint32_t block_size = 1024 << m_fs.superblock().log_block_size;
 
-	ASSERT(offset % block_size == 0);
-
 	const uint32_t first_block = offset / block_size;
 	const uint32_t last_block = FROG::Math::div_round_up<uint32_t>(offset + count, block_size);
 
 	size_t n_read = 0;
 
 	for (uint32_t block = first_block; block < last_block; block++) {
-		uint32_t data_block = TRY(data_block_index(block));
-		auto     block_data = TRY(m_fs.read_block(data_block));
+		uint32_t block_index = TRY(data_block_index(block));
+		auto     block_data = TRY(m_fs.read_block(block_index));
+		ASSERT(block_data.size() == block_size);
 
-		uint32_t to_copy = FROG::Math::min<uint32_t>(block_data.size(), count - n_read);
+		uint32_t copy_offset = (offset + n_read) % block_size;
+		uint32_t to_copy = BAN::Math::min<uint32_t>(block_size - copy_offset, count - n_read);
+		memcpy((uint8_t *) buffer + n_read, block_data.data() + copy_offset, to_copy);
 
-		memcpy((uint8_t *) buffer + n_read, block_data.data(), to_copy);
 		n_read += to_copy;
 	}
 
-	return count;
+	return n_read;
 }
 
-FROG::ErrorOr<FROG::RefPtr<Inode>> Ext2Inode::directory_find_impl(FROG::StringView file_name)
-	{
-		if (!ifdir())
-			return FROG::Error::from_errno(ENOTDIR);
+FROG::ErrorOr<FROG::RefPtr<Inode>> Ext2Inode::directory_find_impl(FROG::StringView file_name) {
+	if (!ifdir()) return FROG::Error::from_errno(ENOTDIR);
 
-		struct search_info
-		{
-			FROG::StringView file_name;
-			FROG::RefPtr<Inode> result;
-			Ext2FS* fs;
-		};
+	uint32_t data_block_count = m_inode.blocks / (2 << m_fs.superblock().log_block_size);
 
-		search_info info;
-		info.file_name = file_name;
-		info.result = {};
-		info.fs = &m_fs;
-
-		block_callback_t function =
-			[](const FROG::Vector<uint8_t>& block_data, void* info_) -> FROG::ErrorOr<bool>
-			{
-				search_info& info = *(search_info*)info_;
-
-				uintptr_t block_data_end = (uintptr_t)block_data.data() + block_data.size();
-				uintptr_t entry_addr = (uintptr_t)block_data.data();
-				while (entry_addr < block_data_end)
-				{
-					Ext2::LinkedDirectoryEntry* entry = (Ext2::LinkedDirectoryEntry*)entry_addr;
-					FROG::StringView entry_name = FROG::StringView(entry->name, entry->name_len);
-					if (entry->inode && info.file_name == entry_name)
-					{
-						info.result = TRY(Ext2Inode::create(*info.fs, entry->inode, entry_name));
-						return false;
-					}
-					entry_addr += entry->rec_len;
-				}
-				return true;
-			};
-
-		TRY(for_each_block(function, &info));
-		if (info.result)
-			return info.result;
-		return FROG::Error::from_errno(ENOENT);
-	}
-
-	FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> Ext2Inode::directory_inodes_impl()
-	{
-		if (!ifdir())
-			return FROG::Error::from_errno(ENOTDIR);
-
-		uint32_t data_block_count = m_inode.blocks / (2 << m_fs.superblock().log_block_size);
-		
-		FROG::Vector<FROG::RefPtr<Inode>> inodes;
-
-		for (uint32_t i = 0; i < data_block_count; i++)
-		{
-			auto data_block_index_or_error = data_block_index(i);
-			if (data_block_index_or_error.is_error())
-			{
-				dprintln("{}", data_block_index_or_error.error());
-				continue;	
-			}
-
-			auto block_data = TRY(m_fs.read_block(data_block_index_or_error.value()));
-			
-			uint8_t* block_data_end = block_data.data() + block_data.size();
-			uint8_t* entry_addr = block_data.data();
-			while (entry_addr < block_data_end)
-			{
-				Ext2::LinkedDirectoryEntry* entry = (Ext2::LinkedDirectoryEntry*)entry_addr;
-				if (entry->inode)
-				{
-					auto entry_name = FROG::StringView(entry->name, entry->name_len);
-					auto inode = TRY(Ext2Inode::create(m_fs, entry->inode, entry_name));
-					TRY(inodes.push_back(inode));
-				}
-				entry_addr += entry->rec_len;
-			}
+	for (uint32_t i = 0; i < data_block_count; i++) {
+		auto data_block_index_or_error = data_block_index(i);
+		if (data_block_index_or_error.is_error()) {
+			dprintln("{}", data_block_index_or_error.error());
+			continue;
 		}
 
-		return inodes;
+		auto block_data = TRY(m_fs.read_block(data_block_index_or_error.value()));
+
+		const uint8_t *block_data_end = block_data.data() + block_data.size();
+		const uint8_t *entry_addr = block_data.data();
+
+		while (entry_addr < block_data_end) {
+			const auto      &entry = *(const Ext2::LinkedDirectoryEntry *) entry_addr;
+			FROG::StringView entry_name(entry.name, entry.name_len);
+			if (entry.inode && entry_name == file_name)
+				return TRY(Ext2Inode::create(m_fs, entry.inode, entry.name));
+			entry_addr += entry.rec_len;
+		}
 	}
+
+	return FROG::Error::from_errno(ENOENT);
+}
+
+FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> Ext2Inode::directory_inodes_impl() {
+	if (!ifdir()) return FROG::Error::from_errno(ENOTDIR);
+
+	uint32_t data_block_count = m_inode.blocks / (2 << m_fs.superblock().log_block_size);
+
+	FROG::Vector<FROG::RefPtr<Inode>> inodes;
+
+	for (uint32_t i = 0; i < data_block_count; i++) {
+		auto data_block_index_or_error = data_block_index(i);
+		if (data_block_index_or_error.is_error()) {
+			dprintln("{}", data_block_index_or_error.error());
+			continue;
+		}
+
+		auto block_data = TRY(m_fs.read_block(data_block_index_or_error.value()));
+
+		const uint8_t *block_data_end = block_data.data() + block_data.size();
+		const uint8_t *entry_addr = block_data.data();
+		while (entry_addr < block_data_end) {
+			const auto &entry = *(const Ext2::LinkedDirectoryEntry *) entry_addr;
+			if (entry.inode) {
+				FROG::StringView entry_name(entry.name, entry.name_len);
+				auto             inode = TRY(Ext2Inode::create(m_fs, entry.inode, entry_name));
+				TRY(inodes.push_back(inode));
+			}
+			entry_addr += entry.rec_len;
+		}
+	}
+
+	return inodes;
+}
 
 bool Ext2Inode::operator==(const Inode &other) const {
 	if (type() != other.type()) return false;
