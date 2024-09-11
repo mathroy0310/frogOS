@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 14:06:34 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 16:09:39 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/11 01:32:48 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,6 +99,7 @@ FROG::ErrorOr<FROG::String> Process::absolute_path_of(FROG::StringView path) con
 }
 
 FROG::ErrorOr<size_t> Process::OpenFileDescription::read(void *buffer, size_t count) {
+	if (!(flags & O_RDONLY)) return FROG::Error::from_errno(EBADF);
 	size_t n_read = TRY(inode->read(offset, buffer, count));
 	offset += n_read;
 	return n_read;
