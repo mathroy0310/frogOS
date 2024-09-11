@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:18 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/11 01:28:37 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/11 01:32:05 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -218,7 +218,7 @@ FROG::ErrorOr<size_t> Ext2Inode::read(size_t offset, void *buffer, size_t count)
 		ASSERT(block_data.size() == block_size);
 
 		uint32_t copy_offset = (offset + n_read) % block_size;
-		uint32_t to_copy = BAN::Math::min<uint32_t>(block_size - copy_offset, count - n_read);
+		uint32_t to_copy = FROG::Math::min<uint32_t>(block_size - copy_offset, count - n_read);
 		memcpy((uint8_t *) buffer + n_read, block_data.data() + copy_offset, to_copy);
 
 		n_read += to_copy;
@@ -233,13 +233,8 @@ FROG::ErrorOr<FROG::RefPtr<Inode>> Ext2Inode::directory_find_impl(FROG::StringVi
 	uint32_t data_block_count = m_inode.blocks / (2 << m_fs.superblock().log_block_size);
 
 	for (uint32_t i = 0; i < data_block_count; i++) {
-		auto data_block_index_or_error = data_block_index(i);
-		if (data_block_index_or_error.is_error()) {
-			dprintln("{}", data_block_index_or_error.error());
-			continue;
-		}
-
-		auto block_data = TRY(m_fs.read_block(data_block_index_or_error.value()));
+		uint32_t block_index = TRY(data_block_index(i));
+		auto     block_data = TRY(m_fs.read_block(block_index));
 
 		const uint8_t *block_data_end = block_data.data() + block_data.size();
 		const uint8_t *entry_addr = block_data.data();
@@ -264,13 +259,8 @@ FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> Ext2Inode::directory_inodes_imp
 	FROG::Vector<FROG::RefPtr<Inode>> inodes;
 
 	for (uint32_t i = 0; i < data_block_count; i++) {
-		auto data_block_index_or_error = data_block_index(i);
-		if (data_block_index_or_error.is_error()) {
-			dprintln("{}", data_block_index_or_error.error());
-			continue;
-		}
-
-		auto block_data = TRY(m_fs.read_block(data_block_index_or_error.value()));
+		uint32_t block_index = TRY(data_block_index(i));
+		auto     block_data = TRY(m_fs.read_block(block_index));
 
 		const uint8_t *block_data_end = block_data.data() + block_data.size();
 		const uint8_t *entry_addr = block_data.data();
