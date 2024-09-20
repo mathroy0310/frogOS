@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 01:42:06 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/28 01:42:07 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:26:22 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ namespace Kernel
 			const uint64_t m_lba_start;
 			const uint64_t m_lba_end;
 			const uint64_t m_attributes;
-			char m_name[36 * 3 + 1];
+			char m_name[36 * 4 + 1];
 		};
 
 	public:

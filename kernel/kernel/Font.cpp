@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/27 01:56:39 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/11 01:00:24 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:26:53 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -187,13 +187,13 @@ FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Span<uint8_t> font_data) {
 			} else {
 				ASSERT(byte_index < 4);
 				bytes[byte_index++] = byte;
-				uint32_t len = FROG::utf8_byte_length(bytes[0]);
+				uint32_t len = FROG::UTF8::byte_length(bytes[0]);
 
 				if (len == 0) {
 					invalid_utf = true;
 					byte_index = 0;
 				} else if (len == byte_index) {
-					uint32_t codepoint = FROG::utf8_to_codepoint(bytes);
+					uint32_t codepoint = FROG::UTF8::to_codepoint(bytes);
 					if (codepoint == FROG::UTF8::invalid)
 						invalid_utf = true;
 					else if (glyph_offsets.contains(codepoint))

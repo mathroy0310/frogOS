@@ -6,12 +6,14 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 01:35:28 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 17:29:01 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:30:49 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <FROG/Endianness.h>
 #include <FROG/ScopeGuard.h>
 #include <FROG/StringView.h>
+#include <FROG/UTF8.h>
 #include <kernel/FS/Ext2.h>
 #include <kernel/FS/VirtualFileSystem.h>
 #include <kernel/PCI.h>
@@ -24,21 +26,33 @@
 namespace Kernel {
 
 struct GPTHeader {
-	char     signature[8];
-	uint32_t revision;
-	uint32_t size;
-	uint32_t crc32;
-	uint64_t my_lba;
-	uint64_t first_lba;
-	uint64_t last_lba;
-	GUID     guid;
-	uint64_t partition_entry_lba;
-	uint32_t partition_entry_count;
-	uint32_t partition_entry_size;
-	uint32_t partition_entry_array_crc32;
+	char                         signature[8];
+	FROG::LittleEndian<uint32_t> revision;
+	FROG::LittleEndian<uint32_t> size;
+	FROG::LittleEndian<uint32_t> crc32;
+	FROG::LittleEndian<uint32_t> reserved;
+	FROG::LittleEndian<uint64_t> my_lba;
+	FROG::LittleEndian<uint64_t> alternate_lba;
+	FROG::LittleEndian<uint64_t> first_usable_lba;
+	FROG::LittleEndian<uint64_t> last_usable_lba;
+	GUID                         disk_guid;
+	FROG::LittleEndian<uint64_t> partition_entry_lba;
+	FROG::LittleEndian<uint32_t> partition_entry_count;
+	FROG::LittleEndian<uint32_t> partition_entry_size;
+	FROG::LittleEndian<uint32_t> partition_entry_array_crc32;
 };
 
-uint32_t crc32_table[256] = {
+struct PartitionEntry {
+	GUID partition_type_guid;
+	GUID unique_partition_guid;
+
+	FROG::LittleEndian<uint64_t> starting_lba;
+	FROG::LittleEndian<uint64_t> ending_lba;
+	FROG::LittleEndian<uint64_t> attributes;
+	FROG::LittleEndian<uint16_t> partition_name[36];
+} __attribute__((packed));
+
+static uint32_t crc32_table[256] = {
     0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA, 0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
     0x0EDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988, 0x09B64C2B, 0x7EB17CBD, 0xE7B82D07, 0x90BF1D91,
     0x1DB71064, 0x6AB020F2, 0xF3B97148, 0x84BE41DE, 0x1ADAD47D, 0x6DDDE4EB, 0xF4D4B551, 0x83D385C7,
@@ -82,15 +96,6 @@ static uint32_t crc32_checksum(const uint8_t *data, size_t count) {
 	return crc32 ^ 0xFFFFFFFF;
 }
 
-static GUID parse_guid(const uint8_t *guid) {
-	GUID result;
-	result.data1 = FROG::Math::big_endian_to_host<uint32_t>(guid + 0);
-	result.data2 = FROG::Math::big_endian_to_host<uint16_t>(guid + 4);
-	result.data3 = FROG::Math::big_endian_to_host<uint16_t>(guid + 6);
-	memcpy(result.data4, guid + 8, 8);
-	return result;
-}
-
 static bool is_valid_gpt_header(const GPTHeader &header, uint32_t sector_size) {
 	if (memcmp(header.signature, "EFI PART", 8) != 0) return false;
 	if (header.revision != 0x00010000) return false;
@@ -108,68 +113,32 @@ static bool is_valid_gpt_crc32(const GPTHeader &header, FROG::Vector<uint8_t> lb
 	return true;
 }
 
-static GPTHeader parse_gpt_header(const FROG::Vector<uint8_t> &lba1) {
-	GPTHeader header;
-	memset(&header, 0, sizeof(header));
-
-	memcpy(header.signature, lba1.data(), 8);
-	header.revision = FROG::Math::little_endian_to_host<uint32_t>(lba1.data() + 8);
-	header.size = FROG::Math::little_endian_to_host<uint32_t>(lba1.data() + 12);
-	header.crc32 = FROG::Math::little_endian_to_host<uint32_t>(lba1.data() + 16);
-	header.my_lba = FROG::Math::little_endian_to_host<uint64_t>(lba1.data() + 24);
-	header.first_lba = FROG::Math::little_endian_to_host<uint64_t>(lba1.data() + 40);
-	header.last_lba = FROG::Math::little_endian_to_host<uint64_t>(lba1.data() + 48);
-	header.guid = parse_guid(lba1.data() + 56);
-	header.partition_entry_lba = FROG::Math::little_endian_to_host<uint64_t>(lba1.data() + 72);
-	header.partition_entry_count = FROG::Math::little_endian_to_host<uint32_t>(lba1.data() + 80);
-	header.partition_entry_size = FROG::Math::little_endian_to_host<uint32_t>(lba1.data() + 84);
-	header.partition_entry_array_crc32 = FROG::Math::little_endian_to_host<uint32_t>(lba1.data() + 88);
-	return header;
-}
-
-static void utf8_encode(const uint16_t *codepoints, size_t count, char *out) {
-	uint32_t len = 0;
-	while (*codepoints && count--) {
-		uint16_t cp = *codepoints;
-		if (cp < 128) {
-			out[len++] = cp & 0x7F;
-		} else if (cp < 2048) {
-			out[len++] = 0xC0 | ((cp >> 0x6) & 0x1F);
-			out[len++] = 0x80 | (cp & 0x3F);
-		} else {
-			out[len++] = 0xE0 | ((cp >> 0xC) & 0x0F);
-			out[len++] = 0x80 | ((cp >> 0x6) & 0x3F);
-			out[len++] = 0x80 | (cp & 0x3F);
-		}
-		codepoints++;
-	}
-	out[len] = 0;
-}
-
 FROG::ErrorOr<void> StorageDevice::initialize_partitions() {
 	FROG::Vector<uint8_t> lba1(sector_size());
 	TRY(read_sectors(1, 1, lba1.data()));
 
-	GPTHeader header = parse_gpt_header(lba1);
+	const GPTHeader &header = *(const GPTHeader *) lba1.data();
 	if (!is_valid_gpt_header(header, sector_size()))
 		return FROG::Error::from_c_string("Invalid GPT header");
 
 	uint32_t size = header.partition_entry_count * header.partition_entry_size;
 	if (uint32_t remainder = size % sector_size()) size += sector_size() - remainder;
 
-	FROG::Vector<uint8_t> entry_array(size);
+	FROG::Vector<uint8_t> entry_array;
+	TRY(entry_array.resize(size));
 	TRY(read_sectors(header.partition_entry_lba, size / sector_size(), entry_array.data()));
 
 	if (!is_valid_gpt_crc32(header, lba1, entry_array))
 		return FROG::Error::from_c_string("Invalid crc3 in the GPT header");
 
 	for (uint32_t i = 0; i < header.partition_entry_count; i++) {
-		uint8_t *partition_data = entry_array.data() + header.partition_entry_size * i;
+		const PartitionEntry &entry = *(const PartitionEntry *) (entry_array.data() + header.partition_entry_size * i);
 
-		char utf8_name[36 * 3 + 1]; // 36 16-bit codepoints + nullbyte
-		utf8_encode((uint16_t *) (partition_data + 56), header.partition_entry_size - 56, utf8_name);
+		char utf8_name[36 * 4 + 1]; // 36 16-bit codepoints + nullbyte
+		FROG::UTF8::from_codepoints(entry.partition_name, 36, utf8_name);
 
-		MUST(m_partitions.emplace_back(*this, parse_guid(partition_data + 0), parse_guid(partition_data + 16), FROG::Math::little_endian_to_host<uint64_t>(partition_data + 32), FROG::Math::little_endian_to_host<uint64_t>(partition_data + 40), FROG::Math::little_endian_to_host<uint64_t>(partition_data + 48), utf8_name));
+		MUST(m_partitions.emplace_back(*this, entry.partition_type_guid, entry.unique_partition_guid,
+		                               entry.starting_lba, entry.ending_lba, entry.attributes, utf8_name));
 	}
 
 	return {};
