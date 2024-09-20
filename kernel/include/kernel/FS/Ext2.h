@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:24:57 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 01:36:27 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 02:18:56 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,8 +89,8 @@ struct BlockGroupDescriptor {
 	uint16_t free_blocks_count;
 	uint16_t free_inodes_count;
 	uint16_t used_dirs_count;
-	uint16_t __padding;
-	// uint8_t reserved[12];
+	uint8_t  __padding[2];
+	uint8_t  __reserved[12];
 };
 
 struct Inode {
@@ -128,15 +128,17 @@ class Ext2FS;
 
 class Ext2Inode : public Inode {
   public:
-	virtual uint16_t uid() const override { return m_inode.uid; }
-	virtual uint16_t gid() const override { return m_inode.gid; }
-	virtual uint32_t size() const override { return m_inode.size; }
+	virtual uid_t  uid() const override { return m_inode.uid; }
+	virtual gid_t  gid() const override { return m_inode.gid; }
+	virtual size_t size() const override { return m_inode.size; }
 
-	virtual Mode mode() const override { return {.mode = m_inode.mode}; }
+	virtual mode_t mode() const override { return m_inode.mode; }
 
 	virtual FROG::StringView name() const override { return m_name; }
 
 	virtual FROG::ErrorOr<size_t> read(size_t, void *, size_t) override;
+
+	virtual FROG::ErrorOr<void> create_file(FROG::StringView, mode_t) override;
 
 	virtual Type type() const override { return Type::Ext2; }
 	virtual bool operator==(const Inode &other) const override;
@@ -148,9 +150,7 @@ class Ext2Inode : public Inode {
   private:
 	FROG::ErrorOr<uint32_t> data_block_index(uint32_t);
 
-	using block_callback_t = FROG::ErrorOr<bool> (*)(const FROG::Vector<uint8_t> &, void *);
-	FROG::ErrorOr<void> for_each_block(block_callback_t, void *);
-	uint32_t            index() const { return m_index; }
+	uint32_t index() const { return m_index; }
 
   private:
 	Ext2Inode(Ext2FS &fs, Ext2::Inode inode, FROG::StringView name, uint32_t index)
@@ -158,10 +158,10 @@ class Ext2Inode : public Inode {
 	static FROG::ErrorOr<FROG::RefPtr<Inode>> create(Ext2FS &, uint32_t, FROG::StringView);
 
   private:
-	Ext2FS      &m_fs;
-	Ext2::Inode  m_inode;
+	Ext2FS     &m_fs;
+	Ext2::Inode m_inode;
 	FROG::String m_name;
-	uint32_t     m_index;
+	uint32_t    m_index;
 
 	friend class Ext2FS;
 	friend class FROG::RefPtr<Ext2Inode>;
@@ -177,25 +177,34 @@ class Ext2FS : public FileSystem {
 	Ext2FS(StorageDevice::Partition &partition) : m_partition(partition) {}
 
 	FROG::ErrorOr<void> initialize_superblock();
-	FROG::ErrorOr<void> initialize_block_group_descriptors();
 	FROG::ErrorOr<void> initialize_root_inode();
 
-	FROG::ErrorOr<Ext2::Inode>           read_inode(uint32_t);
+	FROG::ErrorOr<uint32_t> create_inode(const Ext2::Inode &);
+	FROG::ErrorOr<void>     delete_inode(uint32_t);
+	FROG::ErrorOr<void>     resize_inode(uint32_t, size_t);
+
 	FROG::ErrorOr<FROG::Vector<uint8_t>> read_block(uint32_t);
-	FROG::ErrorOr<void> write_block(uint32_t, FROG::Span<const uint8_t>);
+	FROG::ErrorOr<void>                 write_block(uint32_t, FROG::Span<const uint8_t>);
 
 	const Ext2::Superblock &superblock() const { return m_superblock; }
 
-	const Ext2::Inode &ext2_root_inode() const;
+	struct BlockLocation {
+		uint32_t block;
+		uint32_t offset;
+	};
+	FROG::ErrorOr<BlockLocation> locate_inode(uint32_t);
+	BlockLocation               locate_block_group_descriptior(uint32_t);
+
+	uint32_t block_size() const { return 1024 << superblock().log_block_size; }
 
   private:
 	StorageDevice::Partition &m_partition;
 
 	FROG::RefPtr<Inode> m_root_inode;
 
-	Ext2::Superblock                         m_superblock;
-	FROG::Vector<Ext2::BlockGroupDescriptor> m_block_group_descriptors;
+	Ext2::Superblock m_superblock;
 
 	friend class Ext2Inode;
 };
+
 } // namespace Kernel

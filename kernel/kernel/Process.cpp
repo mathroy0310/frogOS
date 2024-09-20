@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 14:06:34 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/11 01:32:48 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 02:17:07 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,17 @@ FROG::ErrorOr<size_t> Process::read(int fd, void *buffer, size_t count) {
 	if (open_file_description.offset >= open_file_description.inode->size()) return 0;
 	size_t n_read = TRY(open_file_description.read(buffer, count));
 	return n_read;
+}
+
+FROG::ErrorOr<void> Process::creat(FROG::StringView path, mode_t mode) {
+	auto absolute_path = TRY(absolute_path_of(path));
+	while (absolute_path.sv().back() != '/')
+		absolute_path.pop_back();
+	auto parent_inode = TRY(VirtualFileSystem::get().file_from_absolute_path(absolute_path));
+	if (path.count('/') > 0)
+		return FROG::Error::from_c_string("You can only create files to current working directory");
+	TRY(parent_inode.inode->create_file(path, mode));
+	return {};
 }
 
 Inode &Process::inode_for_fd(int fd) {

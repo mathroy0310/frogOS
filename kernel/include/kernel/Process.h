@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 14:03:32 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 16:01:23 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 02:11:02 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ class Process : FROG::RefCounted<Process> {
 	FROG::ErrorOr<int>    open(FROG::StringView, int);
 	FROG::ErrorOr<void>   close(int);
 	FROG::ErrorOr<size_t> read(int, void *, size_t);
+	FROG::ErrorOr<void>    creat(FROG::StringView, mode_t);
 
 	FROG::StringView    working_directory() const { return m_working_directory; }
 	FROG::ErrorOr<void> set_working_directory(FROG::StringView);
@@ -56,15 +57,15 @@ class Process : FROG::RefCounted<Process> {
 	struct OpenFileDescription {
 		FROG::RefPtr<Inode> inode;
 		FROG::String        path;
-		size_t             offset = 0;
-		uint8_t            flags = 0;
+		size_t              offset = 0;
+		uint8_t             flags = 0;
 
 		FROG::ErrorOr<size_t> read(void *, size_t);
 	};
 
-	FROG::ErrorOr<void>   validate_fd(int);
+	FROG::ErrorOr<void>  validate_fd(int);
 	OpenFileDescription &open_file_description(int);
-	FROG::ErrorOr<int>    get_free_fd();
+	FROG::ErrorOr<int>   get_free_fd();
 
 	FROG::Vector<OpenFileDescription> m_open_files;
 
