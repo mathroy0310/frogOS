@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 01:34:53 by maroy             #+#    #+#             */
-/*   Updated: 2024/08/30 17:29:01 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:40:10 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,8 @@
 #define ATA_STATUS_BSY 0x80
 
 #define ATA_COMMAND_READ_SECTORS 0x20
+#define ATA_COMMAND_WRITE_SECTORS 0x30
+#define ATA_COMMAND_CACHE_FLUSH 0xE7
 #define ATA_COMMAND_IDENTIFY 0xEC
 #define ATA_COMMAND_IDENTIFY_PACKET 0xA1
 
@@ -204,8 +206,39 @@ FROG::ErrorOr<void> ATAController::read(ATADevice *device, uint64_t lba, uint8_t
 	return {};
 }
 
+FROG::ErrorOr<void> ATAController::write(ATADevice *device, uint64_t lba, uint8_t sector_count, const uint8_t *buffer) {
+	if (lba + sector_count > device->lba_count)
+		return FROG::Error::from_c_string("Attempted to read outside of the device boundaries");
+	LockGuard _(m_lock);
+	if (lba < (1 << 28)) {
+		// LBA28
+		device->bus->write(ATA_PORT_DRIVE_SELECT, 0xE0 | device->slave_bit | ((lba >> 24) & 0x0F));
+		device->bus->write(ATA_PORT_SECTOR_COUNT, sector_count);
+		device->bus->write(ATA_PORT_LBA0, (uint8_t) (lba >> 0));
+		device->bus->write(ATA_PORT_LBA1, (uint8_t) (lba >> 8));
+		device->bus->write(ATA_PORT_LBA2, (uint8_t) (lba >> 16));
+		device->bus->write(ATA_PORT_COMMAND, ATA_COMMAND_WRITE_SECTORS);
+		for (uint32_t sector = 0; sector < sector_count; sector++) {
+			TRY(device->bus->wait(false));
+			device->bus->write_buffer(ATA_PORT_DATA, (uint16_t *) buffer + sector * device->sector_words,
+			                          device->sector_words);
+		}
+	} else {
+		// LBA48
+		ASSERT(false);
+	}
+	device->bus->write(ATA_PORT_COMMAND, ATA_COMMAND_CACHE_FLUSH);
+	TRY(device->bus->wait(false));
+	return {};
+}
+
 FROG::ErrorOr<void> ATADevice::read_sectors(uint64_t lba, uint8_t sector_count, uint8_t *buffer) {
 	TRY(controller->read(this, lba, sector_count, buffer));
+	return {};
+}
+
+FROG::ErrorOr<void> ATADevice::write_sectors(uint64_t lba, uint8_t sector_count, const uint8_t *buffer) {
+	TRY(controller->write(this, lba, sector_count, buffer));
 	return {};
 }
 
@@ -225,6 +258,15 @@ void ATABus::write(uint16_t port, uint8_t data) {
 	if (port <= 0x07) return IO::outb(base + port, data);
 	if (0x10 <= port && port <= 0x11) return IO::outb(ctrl + port - 0x10, data);
 	ASSERT_NOT_REACHED();
+}
+
+void ATABus::write_buffer(uint16_t port, const uint16_t *buffer, size_t words) {
+	uint16_t io_port = 0;
+	if (port <= 0x07) io_port = base + port;
+	if (0x10 <= port && port <= 0x11) io_port = ctrl + port - 0x10;
+	ASSERT(io_port);
+	for (size_t i = 0; i < words; i++)
+		IO::outw(io_port, buffer[i]);
 }
 
 FROG::ErrorOr<void> ATABus::wait(bool wait_drq) {

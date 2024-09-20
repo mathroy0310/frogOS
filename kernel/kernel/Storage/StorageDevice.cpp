@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 01:35:28 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 01:30:49 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:40:50 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -133,6 +133,7 @@ FROG::ErrorOr<void> StorageDevice::initialize_partitions() {
 
 	for (uint32_t i = 0; i < header.partition_entry_count; i++) {
 		const PartitionEntry &entry = *(const PartitionEntry *) (entry_array.data() + header.partition_entry_size * i);
+		ASSERT((uintptr_t) &entry % 2 == 0);
 
 		char utf8_name[36 * 4 + 1]; // 36 16-bit codepoints + nullbyte
 		FROG::UTF8::from_codepoints(entry.partition_name, 36, utf8_name);
@@ -154,6 +155,14 @@ FROG::ErrorOr<void> StorageDevice::Partition::read_sectors(uint64_t lba, uint8_t
 	if (lba + sector_count > sectors_in_partition)
 		return FROG::Error::from_c_string("Attempted to read outside of the partition boundaries");
 	TRY(m_device.read_sectors(m_lba_start + lba, sector_count, buffer));
+	return {};
+}
+
+FROG::ErrorOr<void> StorageDevice::Partition::write_sectors(uint64_t lba, uint8_t sector_count, const uint8_t *buffer) {
+	const uint32_t sectors_in_partition = m_lba_end - m_lba_start;
+	if (lba + sector_count > sectors_in_partition)
+		return FROG::Error::from_c_string("Attempted to read outside of the partition boundaries");
+	TRY(m_device.write_sectors(m_lba_start + lba, sector_count, buffer));
 	return {};
 }
 

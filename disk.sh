@@ -56,6 +56,7 @@ sudo mount $PARTITION2 $MOUNT_DIR
 sudo cp -r ${SYSROOT}/* ${MOUNT_DIR}/
 sudo mkdir -p ${MOUNT_DIR}/usr/share/
 sudo cp -r fonts ${MOUNT_DIR}/usr/share/
+sudo mkdir -p ${MOUNT_DIR}/mnt
 
 sudo grub-install --no-floppy --target=i386-pc --modules="normal ext2 multiboot" --boot-directory=${MOUNT_DIR}/boot $LOOP_DEV
 
@@ -105,7 +106,7 @@ sudo umount $MOUNT_DIR
 
 sudo mkfs.ext2 $PARTITION3
 sudo mount $PARTITION3 $MOUNT_DIR
-echo 'hello' | sudo tee ${MOUNT_DIR}/hello.txt
+echo 'hello from mnt' | sudo tee ${MOUNT_DIR}/hello.txt
 sudo umount $MOUNT_DIR
 
 sudo losetup -d $LOOP_DEV

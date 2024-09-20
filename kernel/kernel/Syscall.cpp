@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 13:52:04 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 13:52:05 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:44:18 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 namespace Kernel {
 
 int sys_test() {
-	dprintln("hello");
+	dprintln("hello from syscall test");
 	return 0;
 }
 

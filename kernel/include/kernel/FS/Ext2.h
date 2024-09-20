@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:24:57 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 16:55:07 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:36:27 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,6 +182,7 @@ class Ext2FS : public FileSystem {
 
 	FROG::ErrorOr<Ext2::Inode>           read_inode(uint32_t);
 	FROG::ErrorOr<FROG::Vector<uint8_t>> read_block(uint32_t);
+	FROG::ErrorOr<void> write_block(uint32_t, FROG::Span<const uint8_t>);
 
 	const Ext2::Superblock &superblock() const { return m_superblock; }
 

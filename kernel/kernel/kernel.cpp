@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/10 23:44:34 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:42:25 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,7 +160,7 @@ extern "C" void kernel_main() {
 	MUST(Scheduler::initialize());
 	Scheduler &scheduler = Scheduler::get();
 
-#if 0 
+#if 0
 	MUST(scheduler.add_thread(MUST(Thread::create(
 		[] (void*)
 		{

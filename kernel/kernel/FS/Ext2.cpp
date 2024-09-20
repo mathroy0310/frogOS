@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:18 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/11 01:32:05 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:38:58 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -196,7 +196,7 @@ FROG::ErrorOr<uint32_t> Ext2Inode::data_block_index(uint32_t asked_data_block) {
 		return block;
 	}
 
-	ASSERT(false);
+	ASSERT_NOT_REACHED();
 }
 
 FROG::ErrorOr<size_t> Ext2Inode::read(size_t offset, void *buffer, size_t count) {
@@ -410,9 +410,9 @@ FROG::ErrorOr<Ext2::Inode> Ext2FS::read_inode(uint32_t inode) {
 
 FROG::ErrorOr<FROG::Vector<uint8_t>> Ext2FS::read_block(uint32_t block) {
 	const uint32_t sector_size = m_partition.device().sector_size();
-	uint32_t       block_size = 1024 << m_superblock.log_block_size;
+	const uint32_t block_size = 1024 << m_superblock.log_block_size;
 	ASSERT(block_size % sector_size == 0);
-	uint32_t sectors_per_block = block_size / sector_size;
+	const uint32_t sectors_per_block = block_size / sector_size;
 
 	FROG::Vector<uint8_t> block_buffer;
 	TRY(block_buffer.resize(block_size));
@@ -424,6 +424,16 @@ FROG::ErrorOr<FROG::Vector<uint8_t>> Ext2FS::read_block(uint32_t block) {
 
 const Ext2::Inode &Ext2FS::ext2_root_inode() const {
 	return reinterpret_cast<const Ext2Inode *>(m_root_inode.ptr())->m_inode;
+}
+
+FROG::ErrorOr<void> Ext2FS::write_block(uint32_t block, FROG::Span<const uint8_t> data) {
+	const uint32_t sector_size = m_partition.device().sector_size();
+	const uint32_t block_size = 1024 << m_superblock.log_block_size;
+	ASSERT(block_size % sector_size == 0);
+	ASSERT(data.size() <= block_size);
+	const uint32_t sectors_per_block = block_size / sector_size;
+	TRY(m_partition.write_sectors(block * sectors_per_block, sectors_per_block, data.data()));
+	return {};
 }
 
 } // namespace Kernel
