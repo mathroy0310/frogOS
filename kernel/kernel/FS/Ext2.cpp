@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:18 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 02:28:37 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 13:30:56 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 #include <kernel/FS/Ext2.h>
 #include <kernel/RTC.h>
 
-//FIXME: compile error when debugging is enabled
+// FIXME: compile error when debugging is enabled
 #define EXT2_DEBUG_PRINT 0
 #define VERIFY_INODE_EXISTANCE 1
 
@@ -150,9 +150,12 @@ enum FileType {
 } // namespace Ext2::Enum
 
 FROG::ErrorOr<FROG::RefPtr<Inode>> Ext2Inode::create(Ext2FS &fs, uint32_t inode_inode, FROG::StringView name) {
-	auto       inode_location = TRY(fs.locate_inode(inode_inode));
-	auto       inode_buffer = TRY(fs.read_block(inode_location.block));
-	auto      &inode = *(Ext2::Inode *) (inode_buffer.data() + inode_location.offset);
+	FROG::Vector<uint8_t> block_buffer;
+	TRY(block_buffer.resize(fs.block_size()));
+
+	auto inode_location = TRY(fs.locate_inode(inode_inode));
+	fs.read_block(inode_location.block, block_buffer.span());
+	auto      &inode = *(Ext2::Inode *) (block_buffer.data() + inode_location.offset);
 	Ext2Inode *result = new Ext2Inode(fs, inode, name, inode_inode);
 	if (result == nullptr) return FROG::Error::from_errno(ENOMEM);
 	return FROG::RefPtr<Inode>::adopt(result);
@@ -162,8 +165,7 @@ FROG::ErrorOr<uint32_t> Ext2Inode::data_block_index(uint32_t asked_data_block) {
 	uint32_t data_blocks_count = m_inode.blocks / (2 << m_fs.superblock().log_block_size);
 	uint32_t blocks_per_array = (1024 << m_fs.superblock().log_block_size) / sizeof(uint32_t);
 
-	if (asked_data_block >= data_blocks_count)
-		return FROG::Error::from_c_string("Ext2: no such block");
+	ASSERT(asked_data_block < data_blocks_count);
 
 	// Direct block
 	if (asked_data_block < 12) {
@@ -174,11 +176,16 @@ FROG::ErrorOr<uint32_t> Ext2Inode::data_block_index(uint32_t asked_data_block) {
 
 	asked_data_block -= 12;
 
+	uint32_t              block_size = m_fs.block_size();
+	FROG::Vector<uint8_t> block_buffer;
+	TRY(block_buffer.resize(block_size));
+
 	// Singly indirect block
 	if (asked_data_block < blocks_per_array) {
 		if (m_inode.block[12] == 0) return FROG::Error::from_errno(EIO);
-		auto     block_array = TRY(m_fs.read_block(m_inode.block[12]));
-		uint32_t block = ((uint32_t *) block_array.data())[asked_data_block];
+		m_fs.read_block(m_inode.block[12], block_buffer.span()); // Block array
+		uint32_t block = ((uint32_t *) block_buffer.data())[asked_data_block];
+
 		if (block == 0) return FROG::Error::from_errno(EIO);
 		return block;
 	}
@@ -187,11 +194,11 @@ FROG::ErrorOr<uint32_t> Ext2Inode::data_block_index(uint32_t asked_data_block) {
 
 	// Doubly indirect blocks
 	if (asked_data_block < blocks_per_array * blocks_per_array) {
-		auto singly_indirect_array = TRY(m_fs.read_block(m_inode.block[13]));
-		uint32_t direct_block = ((uint32_t *) singly_indirect_array.data())[asked_data_block / blocks_per_array];
+		m_fs.read_block(m_inode.block[13], block_buffer.span()); // Singly indirect array
+		uint32_t direct_block = ((uint32_t *) block_buffer.data())[asked_data_block / blocks_per_array];
 		if (direct_block == 0) return FROG::Error::from_errno(EIO);
-		auto     block_array = TRY(m_fs.read_block(direct_block));
-		uint32_t block = ((uint32_t *) block_array.data())[asked_data_block % blocks_per_array];
+		m_fs.read_block(direct_block, block_buffer.span()); // Block array
+		uint32_t block = ((uint32_t *) block_buffer.data())[asked_data_block % blocks_per_array];
 		if (block == 0) return FROG::Error::from_errno(EIO);
 		return block;
 	}
@@ -200,14 +207,14 @@ FROG::ErrorOr<uint32_t> Ext2Inode::data_block_index(uint32_t asked_data_block) {
 
 	// Triply indirect blocks
 	if (asked_data_block < blocks_per_array * blocks_per_array * blocks_per_array) {
-		auto doubly_indirect_array = TRY(m_fs.read_block(m_inode.block[14]));
-		uint32_t singly_indirect_block = ((uint32_t *) doubly_indirect_array.data())[asked_data_block / (blocks_per_array * blocks_per_array)];
+		m_fs.read_block(m_inode.block[14], block_buffer.span()); // Doubly indirect array
+		uint32_t singly_indirect_block = ((uint32_t *) block_buffer.data())[asked_data_block / (blocks_per_array * blocks_per_array)];
 		if (singly_indirect_block == 0) return FROG::Error::from_errno(EIO);
-		auto singly_indirect_array = TRY(m_fs.read_block(singly_indirect_block));
-		uint32_t direct_block = ((uint32_t *) singly_indirect_array.data())[(asked_data_block / blocks_per_array) % blocks_per_array];
+		m_fs.read_block(singly_indirect_block, block_buffer.span()); // Singly indirect array
+		uint32_t direct_block = ((uint32_t *) block_buffer.data())[(asked_data_block / blocks_per_array) % blocks_per_array];
 		if (direct_block == 0) return FROG::Error::from_errno(EIO);
-		auto     block_array = TRY(m_fs.read_block(direct_block));
-		uint32_t block = ((uint32_t *) block_array.data())[asked_data_block % blocks_per_array];
+		m_fs.read_block(direct_block, block_buffer.span()); // Block array
+		uint32_t block = ((uint32_t *) block_buffer.data())[asked_data_block % blocks_per_array];
 		if (block == 0) return FROG::Error::from_errno(EIO);
 		return block;
 	}
@@ -223,7 +230,9 @@ FROG::ErrorOr<size_t> Ext2Inode::read(size_t offset, void *buffer, size_t count)
 	if (offset >= m_inode.size) return 0;
 	if (offset + count > m_inode.size) count = m_inode.size - offset;
 
-	const uint32_t block_size = 1024 << m_fs.superblock().log_block_size;
+	uint32_t              block_size = 1024 << m_fs.superblock().log_block_size;
+	FROG::Vector<uint8_t> block_buffer;
+	TRY(block_buffer.resize(block_size));
 
 	const uint32_t first_block = offset / block_size;
 	const uint32_t last_block = FROG::Math::div_round_up<uint32_t>(offset + count, block_size);
@@ -232,12 +241,11 @@ FROG::ErrorOr<size_t> Ext2Inode::read(size_t offset, void *buffer, size_t count)
 
 	for (uint32_t block = first_block; block < last_block; block++) {
 		uint32_t block_index = TRY(data_block_index(block));
-		auto     block_data = TRY(m_fs.read_block(block_index));
-		ASSERT(block_data.size() == block_size);
+		m_fs.read_block(block_index, block_buffer.span());
 
 		uint32_t copy_offset = (offset + n_read) % block_size;
 		uint32_t to_copy = FROG::Math::min<uint32_t>(block_size - copy_offset, count - n_read);
-		memcpy((uint8_t *) buffer + n_read, block_data.data() + copy_offset, to_copy);
+		memcpy((uint8_t *) buffer + n_read, block_buffer.data() + copy_offset, to_copy);
 
 		n_read += to_copy;
 	}
@@ -249,6 +257,10 @@ FROG::ErrorOr<void> Ext2Inode::create_file(FROG::StringView name, mode_t mode) {
 	if (!ifdir()) return FROG::Error::from_errno(ENOTDIR);
 
 	if (name.size() > 255) return FROG::Error::from_errno(ENAMETOOLONG);
+
+	uint32_t              block_size = m_fs.block_size();
+	FROG::Vector<uint8_t> block_buffer;
+	TRY(block_buffer.resize(block_size));
 
 	auto error_or = directory_find_impl(name);
 	if (!error_or.is_error()) return FROG::Error::from_errno(EEXISTS);
@@ -281,15 +293,15 @@ FROG::ErrorOr<void> Ext2Inode::create_file(FROG::StringView name, mode_t mode) {
 	// Insert inode to this directory
 	uint32_t data_block_count = m_inode.blocks / (2 << m_fs.superblock().log_block_size);
 	uint32_t block_index = TRY(data_block_index(data_block_count - 1));
-	auto     block_data = TRY(m_fs.read_block(block_index));
+	m_fs.read_block(block_index, block_buffer.span());
 
-	const uint8_t *block_data_end = block_data.data() + block_data.size();
-	const uint8_t *entry_addr = block_data.data();
+	const uint8_t *block_buffer_end = block_buffer.data() + block_size;
+	const uint8_t *entry_addr = block_buffer.data();
 
 	uint32_t needed_entry_len = sizeof(Ext2::LinkedDirectoryEntry) + name.size();
 
 	bool insered = false;
-	while (entry_addr < block_data_end) {
+	while (entry_addr < block_buffer_end) {
 		auto &entry = *(Ext2::LinkedDirectoryEntry *) entry_addr;
 
 		if (needed_entry_len <= entry.rec_len - entry.name_len - sizeof(Ext2::LinkedDirectoryEntry)) {
@@ -298,12 +310,12 @@ FROG::ErrorOr<void> Ext2Inode::create_file(FROG::StringView name, mode_t mode) {
 
 			auto &new_entry = *(Ext2::LinkedDirectoryEntry *) (entry_addr + entry.rec_len);
 			new_entry.inode = inode_index;
-			new_entry.rec_len = block_data_end - (uint8_t *) &new_entry;
+			new_entry.rec_len = block_buffer_end - (uint8_t *) &new_entry;
 			new_entry.name_len = name.size();
 			new_entry.file_type = Ext2::Enum::REG_FILE;
 			memcpy(new_entry.name, name.data(), name.size());
 
-			TRY(m_fs.write_block(block_index, block_data.span()));
+			m_fs.write_block(block_index, block_buffer.span());
 
 			insered = true;
 			break;
@@ -321,17 +333,21 @@ FROG::ErrorOr<void> Ext2Inode::create_file(FROG::StringView name, mode_t mode) {
 FROG::ErrorOr<FROG::RefPtr<Inode>> Ext2Inode::directory_find_impl(FROG::StringView file_name) {
 	if (!ifdir()) return FROG::Error::from_errno(ENOTDIR);
 
+	uint32_t              block_size = m_fs.block_size();
+	FROG::Vector<uint8_t> block_buffer;
+	TRY(block_buffer.resize(block_size));
+
 	uint32_t data_block_count = m_inode.blocks / (2 << m_fs.superblock().log_block_size);
 
 	for (uint32_t i = 0; i < data_block_count; i++) {
 		uint32_t block_index = TRY(data_block_index(i));
-		auto     block_data = TRY(m_fs.read_block(block_index));
+		m_fs.read_block(block_index, block_buffer.span());
 
-		const uint8_t *block_data_end = block_data.data() + block_data.size();
-		const uint8_t *entry_addr = block_data.data();
+		const uint8_t *block_buffer_end = block_buffer.data() + block_size;
+		const uint8_t *entry_addr = block_buffer.data();
 
-		while (entry_addr < block_data_end) {
-			const auto     &entry = *(const Ext2::LinkedDirectoryEntry *) entry_addr;
+		while (entry_addr < block_buffer_end) {
+			const auto      &entry = *(const Ext2::LinkedDirectoryEntry *) entry_addr;
 			FROG::StringView entry_name(entry.name, entry.name_len);
 			if (entry.inode && entry_name == file_name)
 				return TRY(Ext2Inode::create(m_fs, entry.inode, entry.name));
@@ -345,21 +361,25 @@ FROG::ErrorOr<FROG::RefPtr<Inode>> Ext2Inode::directory_find_impl(FROG::StringVi
 FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> Ext2Inode::directory_inodes_impl() {
 	if (!ifdir()) return FROG::Error::from_errno(ENOTDIR);
 
+	uint32_t              block_size = m_fs.block_size();
+	FROG::Vector<uint8_t> block_buffer;
+	TRY(block_buffer.resize(block_size));
+
 	uint32_t data_block_count = m_inode.blocks / (2 << m_fs.superblock().log_block_size);
 
 	FROG::Vector<FROG::RefPtr<Inode>> inodes;
 
 	for (uint32_t i = 0; i < data_block_count; i++) {
 		uint32_t block_index = TRY(data_block_index(i));
-		auto     block_data = TRY(m_fs.read_block(block_index));
+		m_fs.read_block(block_index, block_buffer.span());
 
-		const uint8_t *block_data_end = block_data.data() + block_data.size();
-		const uint8_t *entry_addr = block_data.data();
-		while (entry_addr < block_data_end) {
+		const uint8_t *block_buffer_end = block_buffer.data() + block_size;
+		const uint8_t *entry_addr = block_buffer.data();
+		while (entry_addr < block_buffer_end) {
 			const auto &entry = *(const Ext2::LinkedDirectoryEntry *) entry_addr;
 			if (entry.inode) {
 				FROG::StringView entry_name(entry.name, entry.name_len);
-				auto            inode = TRY(Ext2Inode::create(m_fs, entry.inode, entry_name));
+				auto             inode = TRY(Ext2Inode::create(m_fs, entry.inode, entry_name));
 				TRY(inodes.push_back(inode));
 			}
 			entry_addr += entry.rec_len;
@@ -450,25 +470,31 @@ FROG::ErrorOr<void> Ext2FS::initialize_root_inode() {
 FROG::ErrorOr<uint32_t> Ext2FS::create_inode(const Ext2::Inode &ext2_inode) {
 	ASSERT(ext2_inode.size == 0);
 
+	uint32_t              block_size = this->block_size();
+	FROG::Vector<uint8_t> bgd_buffer;
+	TRY(bgd_buffer.resize(block_size));
+	FROG::Vector<uint8_t> inode_bitmap;
+	TRY(inode_bitmap.resize(block_size));
+
 	uint32_t number_of_block_groups =
 	    FROG::Math::div_round_up(superblock().inodes_count, superblock().inodes_per_group);
 	for (uint32_t group = 0; group < number_of_block_groups; group++) {
-		auto bgd_location = this->locate_block_group_descriptior(group);
-		auto bgd_buffer = TRY(this->read_block(bgd_location.block));
+		auto bgd_location = locate_block_group_descriptior(group);
+		read_block(bgd_location.block, bgd_buffer.span());
 
 		auto &bgd = *(Ext2::BlockGroupDescriptor *) (bgd_buffer.data() + bgd_location.offset);
 		if (bgd.free_inodes_count == 0) continue;
 
-		auto inode_bitmap = TRY(read_block(bgd.inode_bitmap));
+		read_block(bgd.inode_bitmap, inode_bitmap.span());
 		for (uint32_t inode_offset = 0; inode_offset < superblock().inodes_per_group; inode_offset++) {
 			uint32_t byte = inode_offset / 8;
 			uint32_t bit = inode_offset % 8;
 			if ((inode_bitmap[byte] & (1 << bit)) == 0) {
 				inode_bitmap[byte] |= (1 << bit);
-				TRY(write_block(bgd.inode_bitmap, inode_bitmap.span()));
+				write_block(bgd.inode_bitmap, inode_bitmap.span());
 
 				bgd.free_inodes_count--;
-				TRY(write_block(bgd_location.block, bgd_buffer.span()));
+				write_block(bgd_location.block, bgd_buffer.span());
 
 				return group * superblock().inodes_per_group + inode_offset + 1;
 			}
@@ -478,56 +504,53 @@ FROG::ErrorOr<uint32_t> Ext2FS::create_inode(const Ext2::Inode &ext2_inode) {
 	return FROG::Error::from_c_string("No free inodes available in the whole filesystem");
 }
 
-FROG::ErrorOr<FROG::Vector<uint8_t>> Ext2FS::read_block(uint32_t block) {
+void Ext2FS::read_block(uint32_t block, FROG::Span<uint8_t> buffer) {
 	uint32_t sector_size = m_partition.device().sector_size();
 	uint32_t block_size = this->block_size();
 	uint32_t sectors_per_block = block_size / sector_size;
 
-	FROG::Vector<uint8_t> block_buffer;
-	TRY(block_buffer.resize(block_size));
-	TRY(m_partition.read_sectors(block * sectors_per_block, sectors_per_block, block_buffer.data()));
+	ASSERT(buffer.size() >= block_size);
 
-	return block_buffer;
+	MUST(m_partition.read_sectors(block * sectors_per_block, sectors_per_block, buffer.data()));
 }
 
-FROG::ErrorOr<void> Ext2FS::write_block(uint32_t block, FROG::Span<const uint8_t> data) {
+void Ext2FS::write_block(uint32_t block, FROG::Span<const uint8_t> data) {
 	uint32_t sector_size = m_partition.device().sector_size();
 	uint32_t block_size = this->block_size();
 	uint32_t sectors_per_block = block_size / sector_size;
 
 	ASSERT(data.size() <= block_size);
-	TRY(m_partition.write_sectors(block * sectors_per_block, sectors_per_block, data.data()));
-
-	return {};
+	MUST(m_partition.write_sectors(block * sectors_per_block, sectors_per_block, data.data()));
 }
 
 FROG::ErrorOr<Ext2FS::BlockLocation> Ext2FS::locate_inode(uint32_t inode_index) {
-	if (inode_index >= superblock().inodes_count)
-		return FROG::Error::from_format(
-		    "Asked to read inode {}, but only {} exist in the filesystem", inode_index, superblock().inodes_count);
+	ASSERT(inode_index < superblock().inodes_count);
 
-	uint32_t block_size = this->block_size();
+	uint32_t             block_size = this->block_size();
+	FROG::Vector<uint8_t> bgd_buffer;
+	TRY(bgd_buffer.resize(block_size));
 
 	uint32_t inode_block_group = (inode_index - 1) / superblock().inodes_per_group;
 	uint32_t local_inode_index = (inode_index - 1) % superblock().inodes_per_group;
 
 	uint32_t inode_table_byte_offset = (local_inode_index * superblock().inode_size);
 
-	auto  bgd_location = locate_block_group_descriptior(inode_block_group);
-	auto  bgd_buffer = TRY(read_block(bgd_location.block));
+	auto bgd_location = locate_block_group_descriptior(inode_block_group);
+	read_block(bgd_location.block, bgd_buffer.span());
 	auto &bgd = *(Ext2::BlockGroupDescriptor *) (bgd_buffer.data() + bgd_location.offset);
-
-#if VERIFY_INODE_EXISTANCE
-	ASSERT(superblock().inodes_per_group <= block_size * 8);
-	auto     inode_bitmap = TRY(read_block(bgd.inode_bitmap));
-	uint32_t byte = local_inode_index / 8;
-	uint32_t bit = local_inode_index % 8;
-	ASSERT(inode_bitmap[byte] & (1 << bit));
-#endif
 
 	BlockLocation location;
 	location.block = bgd.inode_table + inode_table_byte_offset / block_size;
 	location.offset = inode_table_byte_offset % block_size;
+
+#if VERIFY_INODE_EXISTANCE
+	// Note we reuse the bgd_buffer since it is not needed anymore
+	ASSERT(superblock().inodes_per_group <= block_size * 8);
+	read_block(bgd.inode_bitmap, bgd_buffer.span());
+	uint32_t byte = local_inode_index / 8;
+	uint32_t bit = local_inode_index % 8;
+	ASSERT(bgd_buffer[byte] & (1 << bit));
+#endif
 	return location;
 }
 

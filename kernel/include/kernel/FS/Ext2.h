@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:24:57 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 02:18:56 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 13:15:29 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,10 +158,10 @@ class Ext2Inode : public Inode {
 	static FROG::ErrorOr<FROG::RefPtr<Inode>> create(Ext2FS &, uint32_t, FROG::StringView);
 
   private:
-	Ext2FS     &m_fs;
-	Ext2::Inode m_inode;
+	Ext2FS      &m_fs;
+	Ext2::Inode  m_inode;
 	FROG::String m_name;
-	uint32_t    m_index;
+	uint32_t     m_index;
 
 	friend class Ext2FS;
 	friend class FROG::RefPtr<Ext2Inode>;
@@ -183,8 +183,8 @@ class Ext2FS : public FileSystem {
 	FROG::ErrorOr<void>     delete_inode(uint32_t);
 	FROG::ErrorOr<void>     resize_inode(uint32_t, size_t);
 
-	FROG::ErrorOr<FROG::Vector<uint8_t>> read_block(uint32_t);
-	FROG::ErrorOr<void>                 write_block(uint32_t, FROG::Span<const uint8_t>);
+	void read_block(uint32_t, FROG::Span<uint8_t>);
+	void write_block(uint32_t, FROG::Span<const uint8_t>);
 
 	const Ext2::Superblock &superblock() const { return m_superblock; }
 
@@ -193,7 +193,7 @@ class Ext2FS : public FileSystem {
 		uint32_t offset;
 	};
 	FROG::ErrorOr<BlockLocation> locate_inode(uint32_t);
-	BlockLocation               locate_block_group_descriptior(uint32_t);
+	BlockLocation                locate_block_group_descriptior(uint32_t);
 
 	uint32_t block_size() const { return 1024 << superblock().log_block_size; }
 
