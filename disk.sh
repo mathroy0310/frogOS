@@ -106,7 +106,7 @@ sudo umount $MOUNT_DIR
 
 sudo mkfs.ext2 $PARTITION3
 sudo mount $PARTITION3 $MOUNT_DIR
-echo 'hello from mnt' | sudo tee ${MOUNT_DIR}/hello.txt
+echo 'hello from mnt' > ${MOUNT_DIR}/hello.txt
 sudo umount $MOUNT_DIR
 
 sudo losetup -d $LOOP_DEV

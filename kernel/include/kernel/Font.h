@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/27 01:56:58 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/11 00:34:31 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:49:29 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,8 +31,8 @@ class Font {
 	const uint8_t *glyph(uint32_t) const;
 
   private:
-	static FROG::ErrorOr<Font> parse_psf1(const FROG::Span<uint8_t>);
-	static FROG::ErrorOr<Font> parse_psf2(const FROG::Span<uint8_t>);
+	static FROG::ErrorOr<Font> parse_psf1(FROG::Span<const uint8_t>);
+	static FROG::ErrorOr<Font> parse_psf2(FROG::Span<const uint8_t>);
 
   private:
 	FROG::HashMap<uint32_t, uint32_t> m_glyph_offsets;

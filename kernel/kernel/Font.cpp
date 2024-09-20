@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/27 01:56:39 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 01:26:53 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:50:08 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ namespace Kernel {
 
 FROG::ErrorOr<Font> Font::prefs() {
 	size_t              font_data_size = _binary_font_prefs_psf_end - _binary_font_prefs_psf_start;
-	FROG::Span<uint8_t> font_data(_binary_font_prefs_psf_start, font_data_size);
+	FROG::Span<const uint8_t> font_data(_binary_font_prefs_psf_start, font_data_size);
 	return parse_psf1(font_data);
 }
 
@@ -65,7 +65,7 @@ FROG::ErrorOr<Font> Font::load(FROG::StringView path) {
 	return FROG::Error::from_c_string("Unsupported font format");
 }
 
-FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Span<uint8_t> font_data) {
+FROG::ErrorOr<Font> Font::parse_psf1(FROG::Span<const uint8_t> font_data) {
 	if (font_data.size() < 4) return FROG::Error::from_c_string("Font file is too small");
 
 	struct PSF1Header {
@@ -135,7 +135,7 @@ FROG::ErrorOr<Font> Font::parse_psf1(const FROG::Span<uint8_t> font_data) {
 	return result;
 }
 
-FROG::ErrorOr<Font> Font::parse_psf2(const FROG::Span<uint8_t> font_data) {
+FROG::ErrorOr<Font> Font::parse_psf2(FROG::Span<const uint8_t> font_data) {
 	struct PSF2Header {
 		uint8_t                      magic[4];
 		FROG::LittleEndian<uint32_t> version;

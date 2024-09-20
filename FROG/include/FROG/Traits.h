@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/09 14:23:11 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:39:50 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:45:58 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,6 +108,10 @@ template <typename T> struct is_pointer<T *const volatile> : true_type {};
 template <typename T> inline constexpr bool is_pointer_v = is_pointer<T>::value;
 template <typename T>
 concept pointer = is_pointer_v<T>;
+
+template <typename T> struct is_const : false_type {};
+template <typename T> struct is_const<const T> : true_type {};
+template <typename T> inline constexpr bool is_const_v = is_const<T>::value;
 
 template <typename T> struct less {
 	constexpr bool operator()(const T &lhs, const T &rhs) const { return lhs < rhs; }

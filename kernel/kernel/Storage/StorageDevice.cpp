@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 01:35:28 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 01:40:50 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:50:32 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ struct PartitionEntry {
 	FROG::LittleEndian<uint64_t> ending_lba;
 	FROG::LittleEndian<uint64_t> attributes;
 	FROG::LittleEndian<uint16_t> partition_name[36];
-} __attribute__((packed));
+};
 
 static uint32_t crc32_table[256] = {
     0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA, 0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
@@ -133,7 +133,6 @@ FROG::ErrorOr<void> StorageDevice::initialize_partitions() {
 
 	for (uint32_t i = 0; i < header.partition_entry_count; i++) {
 		const PartitionEntry &entry = *(const PartitionEntry *) (entry_array.data() + header.partition_entry_size * i);
-		ASSERT((uintptr_t) &entry % 2 == 0);
 
 		char utf8_name[36 * 4 + 1]; // 36 16-bit codepoints + nullbyte
 		FROG::UTF8::from_codepoints(entry.partition_name, 36, utf8_name);

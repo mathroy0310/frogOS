@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/11 00:10:53 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/11 00:23:36 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:51:19 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,10 @@ template <typename T> class Span {
   public:
 	Span() = default;
 	Span(T *, size_type);
+	Span(Span<T> &);
+	template <typename S>
+	    requires(is_same_v<T, const S>)
+	Span(const Span<S> &);
 
 	iterator       begin() { return iterator(m_data); }
 	iterator       end() { return iterator(m_data + m_size); }
@@ -54,6 +58,13 @@ template <typename T> class Span {
 };
 
 template <typename T> Span<T>::Span(T *data, size_type size) : m_data(data), m_size(size) {}
+
+template <typename T> Span<T>::Span(Span &other) : m_data(other.data()), m_size(other.size()) {}
+
+template <typename T>
+template <typename S>
+    requires(is_same_v<T, const S>)
+Span<T>::Span(const Span<S> &other) : m_data(other.data()), m_size(other.size()) {}
 
 template <typename T> T &Span<T>::operator[](size_type index) {
 	ASSERT(m_data);
