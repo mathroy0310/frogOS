@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/20 01:14:45 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:33:32 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -200,6 +200,30 @@ static uint32_t const crc32_table[256] = {
     0x89b8fd09, 0x8d79e0be, 0x803ac667, 0x84fbdbd0, 0x9abc8bd5, 0x9e7d9662, 0x933eb0bb, 0x97ffad0c,
     0xafb010b1, 0xab710d06, 0xa6322bdf, 0xa2f33668, 0xbcb4666d, 0xb8757bda, 0xb5365d03, 0xb1f740b4};
 
+static bool is_leap_year(uint64_t year) {
+	if (year % 400 == 0) return true;
+	if (year % 100 == 0) return false;
+	if (year % 4 == 0) return true;
+	return false;
+}
+static uint64_t leap_days_since_epoch(const FROG::Time &time) {
+	uint64_t leap_years = 0;
+	for (int year = 1970; year < time.year; year++)
+		if (is_leap_year(year)) leap_years++;
+	if (is_leap_year(time.year))
+		if (time.month >= 3 || (time.month == 2 && time.day == 29)) leap_years++;
+	return leap_years;
+}
+static uint64_t unix_time(const FROG::Time &time) {
+	uint64_t month_days[]{0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+	uint64_t years = time.year - 1970;
+	uint64_t days = years * 365 + month_days[time.month - 1] + time.day + leap_days_since_epoch(time) - 1;
+	uint64_t hours = days * 24 + time.hour;
+	uint64_t minutes = hours * 60 + time.minute;
+	uint64_t seconds = minutes * 60 + time.second;
+	return seconds;
+}
+
 FROG::ErrorOr<void> Shell::process_command(const FROG::Vector<FROG::String> &arguments) {
 	if (arguments.empty()) {
 	} else if (arguments.front() == "date") {
@@ -208,6 +232,7 @@ FROG::ErrorOr<void> Shell::process_command(const FROG::Vector<FROG::String> &arg
 		}
 		auto time = RTC::get_current_time();
 		TTY_PRINTLN("{}", time);
+		TTY_PRINTLN("{}", unix_time(time));
 	} else if (arguments.front() == "echo") {
 		if (arguments.size() > 1) {
 			TTY_PRINT("{}", arguments[1]);
