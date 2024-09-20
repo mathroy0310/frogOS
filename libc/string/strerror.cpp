@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/30 15:32:07 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/03 16:52:35 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 01:58:58 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,9 @@ char *strerror(int error) {
 		break;
 	case ENOTEMPTY:
 		strcpy(buffer, "Directory not empty");
+		break;
+	case ENAMETOOLONG:
+		strcpy(buffer, "Filename too long");
 		break;
 	default:
 		// FIXME: sprintf
