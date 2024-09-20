@@ -1,33 +1,35 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   types.h                                            :+:      :+:    :+:   */
+/*   stat.h                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/03 14:00:27 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 14:43:36 by maroy            ###   ########.fr       */
+/*   Created: 2024/09/20 14:43:08 by maroy             #+#    #+#             */
+/*   Updated: 2024/09/20 14:43:08 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
-
-#include <stdint.h>
-#include <sys/cdefs.h>
-
+#include <sys/types.h>
+#include <time.h>
 __BEGIN_DECLS
-
-using blkcnt_t = int32_t;
-using blksize_t = int32_t;
-using dev_t = uint64_t;
-using ino_t = uint32_t;
-using mode_t = uint16_t;
-using nlink_t = uint32_t;
-using off_t = int64_t;
-using time_t = uint64_t;
-using id_t = int32_t;
-using pid_t = id_t;
-using uid_t = id_t;
-using gid_t = id_t;
-
+#define st_atime st_atim.tv_sec
+#define st_ctime st_ctim.tv_sec
+#define st_mtime st_mtim.tv_sec
+struct stat {
+	dev_t     st_dev;
+	ino_t     st_ino;
+	mode_t    st_mode;
+	nlink_t   st_nlink;
+	uid_t     st_uid;
+	gid_t     st_gid;
+	dev_t     st_rdev;
+	off_t     st_size;
+	timespec  st_atim;
+	timespec  st_mtim;
+	timespec  st_ctim;
+	blksize_t st_blksize;
+	blkcnt_t  st_blocks;
+};
 __END_DECLS
