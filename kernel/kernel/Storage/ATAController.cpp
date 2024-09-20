@@ -6,12 +6,11 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 01:34:53 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 01:40:10 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 14:31:46 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <kernel/IO.h>
-#include <kernel/LockGuard.h>
 #include <kernel/Storage/ATAController.h>
 
 #define ATA_PRIMARY 0
@@ -182,8 +181,6 @@ FROG::ErrorOr<void> ATAController::read(ATADevice *device, uint64_t lba, uint8_t
 	if (lba + sector_count > device->lba_count)
 		return FROG::Error::from_c_string("Attempted to read outside of the device boundaries");
 
-	LockGuard _(m_lock);
-
 	if (lba < (1 << 28)) {
 		// LBA28
 		device->bus->write(ATA_PORT_DRIVE_SELECT, 0xE0 | device->slave_bit | ((lba >> 24) & 0x0F));
@@ -209,7 +206,7 @@ FROG::ErrorOr<void> ATAController::read(ATADevice *device, uint64_t lba, uint8_t
 FROG::ErrorOr<void> ATAController::write(ATADevice *device, uint64_t lba, uint8_t sector_count, const uint8_t *buffer) {
 	if (lba + sector_count > device->lba_count)
 		return FROG::Error::from_c_string("Attempted to read outside of the device boundaries");
-	LockGuard _(m_lock);
+		
 	if (lba < (1 << 28)) {
 		// LBA28
 		device->bus->write(ATA_PORT_DRIVE_SELECT, 0xE0 | device->slave_bit | ((lba >> 24) & 0x0F));
@@ -227,8 +224,8 @@ FROG::ErrorOr<void> ATAController::write(ATADevice *device, uint64_t lba, uint8_
 		// LBA48
 		ASSERT(false);
 	}
-	device->bus->write(ATA_PORT_COMMAND, ATA_COMMAND_CACHE_FLUSH);
 	TRY(device->bus->wait(false));
+	device->bus->write(ATA_PORT_COMMAND, ATA_COMMAND_CACHE_FLUSH);
 	return {};
 }
 

@@ -6,14 +6,13 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/28 01:29:12 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 01:37:09 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 14:29:49 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <FROG/Errors.h>
-#include <kernel/SpinLock.h>
 #include <kernel/Storage/StorageController.h>
 
 namespace Kernel {
@@ -75,7 +74,6 @@ class ATAController : public StorageController {
 	FROG::ErrorOr<void>  write(ATADevice *, uint64_t, uint8_t, const uint8_t *);
 
   private:
-	SpinLock         m_lock;
 	ATABus           m_buses[2];
 	const PCIDevice &m_pci_device;
 

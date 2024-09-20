@@ -6,12 +6,13 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 14:06:34 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 02:17:07 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 14:30:47 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/StringView.h>
 #include <kernel/FS/VirtualFileSystem.h>
+#include <kernel/LockGuard.h>
 #include <kernel/Process.h>
 #include <kernel/Scheduler.h>
 
@@ -40,6 +41,8 @@ FROG::ErrorOr<void> Process::add_thread(entry_t entry, void *data) {
 void Process::on_thread_exit(Thread &thread) { (void) thread; }
 
 FROG::ErrorOr<int> Process::open(FROG::StringView path, int flags) {
+	LockGuard _(m_lock);
+
 	if (flags != O_RDONLY) return FROG::Error::from_errno(ENOTSUP);
 
 	FROG::String absolute_path = TRY(absolute_path_of(path));
@@ -57,6 +60,8 @@ FROG::ErrorOr<int> Process::open(FROG::StringView path, int flags) {
 }
 
 FROG::ErrorOr<void> Process::close(int fd) {
+	LockGuard _(m_lock);
+
 	TRY(validate_fd(fd));
 	auto &open_file_description = this->open_file_description(fd);
 	open_file_description.inode = nullptr;
@@ -64,6 +69,8 @@ FROG::ErrorOr<void> Process::close(int fd) {
 }
 
 FROG::ErrorOr<size_t> Process::read(int fd, void *buffer, size_t count) {
+	LockGuard _(m_lock);
+	
 	TRY(validate_fd(fd));
 	auto &open_file_description = this->open_file_description(fd);
 	if (open_file_description.offset >= open_file_description.inode->size()) return 0;
@@ -72,6 +79,8 @@ FROG::ErrorOr<size_t> Process::read(int fd, void *buffer, size_t count) {
 }
 
 FROG::ErrorOr<void> Process::creat(FROG::StringView path, mode_t mode) {
+	LockGuard _(m_lock);
+
 	auto absolute_path = TRY(absolute_path_of(path));
 	while (absolute_path.sv().back() != '/')
 		absolute_path.pop_back();
@@ -83,11 +92,15 @@ FROG::ErrorOr<void> Process::creat(FROG::StringView path, mode_t mode) {
 }
 
 Inode &Process::inode_for_fd(int fd) {
+	LockGuard _(m_lock);
+	
 	MUST(validate_fd(fd));
 	return *open_file_description(fd).inode;
 }
 
 FROG::ErrorOr<void> Process::set_working_directory(FROG::StringView path) {
+	LockGuard _(m_lock);
+
 	FROG::String absolute_path = TRY(absolute_path_of(path));
 
 	auto file = TRY(VirtualFileSystem::get().file_from_absolute_path(absolute_path));
