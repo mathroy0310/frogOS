@@ -1,18 +1,20 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   SpinLock.h                                   ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/12 20:51:22 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 21:55:41 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   SpinLock.h                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/12 20:51:22 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/09/20 14:38:06 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <FROG/NoCopyMove.h>
+
+#include <sys/types.h>
 
 namespace Kernel {
 
@@ -28,6 +30,22 @@ class SpinLock {
 
   private:
 	int m_lock = 0;
+};
+
+class RecursiveSpinLock {
+	FROG_NON_COPYABLE(RecursiveSpinLock);
+	FROG_NON_MOVABLE(RecursiveSpinLock);
+
+  public:
+	RecursiveSpinLock() = default;
+	void lock();
+	void unlock();
+	bool is_locked() const;
+
+  private:
+	pid_t    m_locker = 0;
+	uint32_t m_lock_depth = 0;
+	SpinLock m_lock;
 };
 
 } // namespace Kernel

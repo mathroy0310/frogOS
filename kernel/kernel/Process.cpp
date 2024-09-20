@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 14:06:34 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 14:30:47 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 14:41:14 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,8 @@ FROG::ErrorOr<FROG::RefPtr<Process>> Process::create_kernel(entry_t entry, void 
 }
 
 FROG::ErrorOr<void> Process::add_thread(entry_t entry, void *data) {
+	LockGuard _(m_lock);
+
 	auto thread = TRY(Thread::create(entry, data, this));
 	TRY(m_threads.push_back(thread));
 	if (auto res = Scheduler::get().add_thread(thread); res.is_error()) {
@@ -38,7 +40,10 @@ FROG::ErrorOr<void> Process::add_thread(entry_t entry, void *data) {
 	return {};
 }
 
-void Process::on_thread_exit(Thread &thread) { (void) thread; }
+void Process::on_thread_exit(Thread &thread) {
+	LockGuard _(m_lock);
+	(void) thread;
+}
 
 FROG::ErrorOr<int> Process::open(FROG::StringView path, int flags) {
 	LockGuard _(m_lock);
@@ -70,7 +75,7 @@ FROG::ErrorOr<void> Process::close(int fd) {
 
 FROG::ErrorOr<size_t> Process::read(int fd, void *buffer, size_t count) {
 	LockGuard _(m_lock);
-	
+
 	TRY(validate_fd(fd));
 	auto &open_file_description = this->open_file_description(fd);
 	if (open_file_description.offset >= open_file_description.inode->size()) return 0;
@@ -93,9 +98,14 @@ FROG::ErrorOr<void> Process::creat(FROG::StringView path, mode_t mode) {
 
 Inode &Process::inode_for_fd(int fd) {
 	LockGuard _(m_lock);
-	
+
 	MUST(validate_fd(fd));
 	return *open_file_description(fd).inode;
+}
+
+FROG::String Process::working_directory() const {
+	LockGuard _(m_lock);
+	return m_working_directory;
 }
 
 FROG::ErrorOr<void> Process::set_working_directory(FROG::StringView path) {
@@ -112,6 +122,8 @@ FROG::ErrorOr<void> Process::set_working_directory(FROG::StringView path) {
 }
 
 FROG::ErrorOr<FROG::String> Process::absolute_path_of(FROG::StringView path) const {
+	LockGuard _(m_lock);
+
 	if (path.empty()) return m_working_directory;
 	FROG::String absolute_path;
 	if (path.front() != '/') {
@@ -130,17 +142,23 @@ FROG::ErrorOr<size_t> Process::OpenFileDescription::read(void *buffer, size_t co
 }
 
 FROG::ErrorOr<void> Process::validate_fd(int fd) {
+	LockGuard _(m_lock);
+
 	if (fd < 0 || m_open_files.size() <= (size_t) fd || !m_open_files[fd].inode)
 		return FROG::Error::from_errno(EBADF);
 	return {};
 }
 
 Process::OpenFileDescription &Process::open_file_description(int fd) {
+	LockGuard _(m_lock);
+
 	MUST(validate_fd(fd));
 	return m_open_files[fd];
 }
 
 FROG::ErrorOr<int> Process::get_free_fd() {
+	LockGuard _(m_lock);
+
 	for (size_t fd = 0; fd < m_open_files.size(); fd++)
 		if (!m_open_files[fd].inode) return fd;
 	TRY(m_open_files.push_back({}));

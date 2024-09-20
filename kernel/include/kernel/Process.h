@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/03 14:03:32 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 14:29:32 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 14:40:47 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ class Process : FROG::RefCounted<Process> {
 	FROG::ErrorOr<size_t> read(int, void *, size_t);
 	FROG::ErrorOr<void>   creat(FROG::StringView, mode_t);
 
-	FROG::StringView    working_directory() const { return m_working_directory; }
+	FROG::String        working_directory() const;
 	FROG::ErrorOr<void> set_working_directory(FROG::StringView);
 
 	Inode &inode_for_fd(int);
@@ -70,9 +70,9 @@ class Process : FROG::RefCounted<Process> {
 
 	FROG::Vector<OpenFileDescription> m_open_files;
 
-	mutable SpinLock m_lock;
+	mutable RecursiveSpinLock m_lock;
 
-	pid_t                              m_pid = 0;
+	const pid_t                              m_pid = 0;
 	FROG::String                       m_working_directory;
 	FROG::Vector<FROG::RefPtr<Thread>> m_threads;
 

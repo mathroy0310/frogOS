@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/20 02:17:57 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/20 14:41:40 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -321,7 +321,7 @@ FROG::ErrorOr<void> Shell::process_command(const FROG::Vector<FROG::String> &arg
 	} else if (arguments.front() == "ls") {
 		if (arguments.size() > 2) return FROG::Error::from_c_string("usage: 'ls [path]'");
 
-		FROG::StringView path = (arguments.size() == 2) ? arguments[1].sv() : Process::current()->working_directory();
+		FROG::String path = (arguments.size() == 2) ? arguments[1] : Process::current()->working_directory();
 
 		int              fd = TRY(Process::current()->open(path, O_RDONLY));
 		FROG::ScopeGuard _([fd] { MUST(Process::current()->close(fd)); });

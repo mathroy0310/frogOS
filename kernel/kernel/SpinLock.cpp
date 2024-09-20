@@ -1,16 +1,17 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   SpinLock.cpp                                 ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/12 20:51:02 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/13 21:55:52 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   SpinLock.cpp                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/12 20:51:02 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/09/20 14:39:49 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <kernel/SpinLock.h>
+#include <kernel/Thread.h>
 
 namespace Kernel {
 
@@ -22,4 +23,25 @@ void SpinLock::lock() { spinlock_lock_asm(&m_lock); }
 void SpinLock::unlock() { spinlock_unlock_asm(&m_lock); }
 
 bool SpinLock::is_locked() const { return m_lock; }
+
+void RecursiveSpinLock::lock() {
+	// FIXME: is this thread safe?
+	if (m_locker == Thread::current()->tid()) {
+		m_lock_depth++;
+	} else {
+		m_lock.lock();
+		ASSERT(m_locker == 0);
+		m_locker = Thread::current()->tid();
+		m_lock_depth = 1;
+	}
+}
+void RecursiveSpinLock::unlock() {
+	m_lock_depth--;
+	if (m_lock_depth == 0) {
+		m_locker = 0;
+		m_lock.unlock();
+	}
+}
+bool RecursiveSpinLock::is_locked() const { return m_lock.is_locked(); }
+
 } // namespace Kernel
