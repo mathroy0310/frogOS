@@ -1,18 +1,19 @@
 /* ************************************************************************** */
-/*                                                             _              */
-/*                                                 __   ___.--'_\`.           */
-/*   Move.h                                       ( _\`.' -   'o\` )          */
-/*                                                _\\.'_'      _.-'           */
-/*   By: mathroy0310 <maroy0310@gmail.com>       ( \`. )    //\\\`            */
-/*                                                \\_'-`---'\\__,             */
-/*   Created: 2024/08/05 01:16:43 by mathroy0310   \`        `-\\             */
-/*   Updated: 2024/08/12 23:31:18 by mathroy0310    `                         */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Move.h                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/08/05 01:16:43 by mathroy0310       #+#    #+#             */
+/*   Updated: 2024/09/21 00:45:34 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <FROG/Traits.h>
+#include <stddef.h>
 
 namespace FROG {
 
@@ -30,3 +31,6 @@ template <typename T> constexpr T &&forward(remove_reference_t<T> &&arg) {
 }
 
 } // namespace FROG
+
+inline void *operator new(size_t, void *addr) { return addr; }
+inline void *operator new[](size_t, void *addr) { return addr; }

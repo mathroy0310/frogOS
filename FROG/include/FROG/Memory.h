@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 23:35:30 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/03 14:02:47 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 00:45:17 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,5 +126,3 @@ template <typename T> class RefPtr {
 
 } // namespace FROG
 
-inline void *operator new(size_t, void *addr) { return addr; }
-inline void *operator new[](size_t, void *addr) { return addr; }

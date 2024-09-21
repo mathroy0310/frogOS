@@ -1,7 +1,9 @@
 #!/bin/sh
 set -e
 . ./build.sh
- 
+
+cp -r base/* $SYSROOT
+
 DISK_NAME=frog-os.img
 DISK_SIZE=$[50 * 1024 * 1024]
 MOUNT_DIR=/mnt
@@ -46,6 +48,11 @@ PARTITION1=${LOOP_DEV}p1
 PARTITION2=${LOOP_DEV}p2
 PARTITION3=${LOOP_DEV}p3
 
+sudo mkfs.ext2 $PARTITION3
+sudo mount $PARTITION3 $MOUNT_DIR
+echo 'hello from mnt' > ${MOUNT_DIR}/hello.txt
+sudo umount $MOUNT_DIR
+
 sudo mkfs.ext2 $PARTITION2
 
 # Create the mount point directory if it doesn't exist
@@ -54,9 +61,7 @@ sudo mkdir -p $MOUNT_DIR
 sudo mount $PARTITION2 $MOUNT_DIR
 
 sudo cp -r ${SYSROOT}/* ${MOUNT_DIR}/
-sudo mkdir -p ${MOUNT_DIR}/usr/share/
-sudo cp -r fonts ${MOUNT_DIR}/usr/share/
-sudo mkdir -p ${MOUNT_DIR}/mnt
+sudo mkdir -p ${MOUNT_DIR}/mnt/
 
 sudo grub-install --no-floppy --target=i386-pc --modules="normal ext2 multiboot" --boot-directory=${MOUNT_DIR}/boot $LOOP_DEV
 
@@ -102,11 +107,6 @@ menuentry "Exit" {
 
 '  | sudo tee ${MOUNT_DIR}/boot/grub/grub.cfg
 
-sudo umount $MOUNT_DIR
-
-sudo mkfs.ext2 $PARTITION3
-sudo mount $PARTITION3 $MOUNT_DIR
-echo 'hello from mnt' > ${MOUNT_DIR}/hello.txt
 sudo umount $MOUNT_DIR
 
 sudo losetup -d $LOOP_DEV
