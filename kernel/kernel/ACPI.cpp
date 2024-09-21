@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/21 00:56:22 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/21 00:57:07 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 01:25:31 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ struct RSDP {
 	uint8_t  oemid[6];
 	uint8_t  revision;
 	uint32_t rsdt_address;
-    
+
 	// only in revision >= 2
 	uint32_t length;
 	uint64_t xsdt_address;
@@ -122,17 +122,17 @@ FROG::ErrorOr<const ACPI::SDTHeader *> ACPI::get_header(const char signature[4])
 	for (uint32_t i = 0; i < m_entry_count; i++) {
 		const SDTHeader *header = get_header_from_index(i);
 		MMU::get().allocate_range((uintptr_t) header, header->length, MMU::Flags::Present);
-		if (!is_valid_std_header(header)) {
-			unmap_header(header);
-			continue;
+		if (is_valid_std_header(header) && memcmp(header->signature, signature, 4) == 0) {
+			return header;
 		}
-		if (memcmp(header->signature, signature, 4) == 0) return header;
+		unmap_header(header);
 	}
 	return FROG::Error::from_format("Could not find ACPI header '{}'", FROG::StringView(signature, 4));
 }
 
 void ACPI::unmap_header(const ACPI::SDTHeader *header) {
-	MMU::get().unallocate_range((uintptr_t) header, header->length);
+    (void)header;
+	//MMU::get().unallocate_range((uintptr_t) header, header->length);
 }
 
 const ACPI::SDTHeader *ACPI::get_header_from_index(size_t index) {
