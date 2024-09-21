@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/30 15:32:07 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 01:58:58 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 16:13:33 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,9 @@ char *strerror(int error) {
 		break;
 	case ENAMETOOLONG:
 		strcpy(buffer, "Filename too long");
+		break;
+	case ENOBUFS:
+		strcpy(buffer, "No buffer space available");
 		break;
 	default:
 		// FIXME: sprintf
