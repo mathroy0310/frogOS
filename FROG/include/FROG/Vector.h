@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:17:04 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/11 00:22:22 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 15:28:01 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,9 +15,9 @@
 #include <FROG/Errors.h>
 #include <FROG/Iterators.h>
 #include <FROG/Math.h>
-#include <FROG/Span.h>
 #include <FROG/Memory.h>
 #include <FROG/Move.h>
+#include <FROG/Span.h>
 
 namespace FROG {
 
@@ -73,7 +73,7 @@ template <typename T> class Vector {
 	const T &front() const;
 	T       &front();
 
-	ErrorOr<void> resize(size_type);
+	ErrorOr<void> resize(size_type, const T & = T());
 	ErrorOr<void> reserve(size_type);
 	ErrorOr<void> shrink_to_fit();
 
@@ -254,14 +254,14 @@ template <typename T> T &Vector<T>::front() {
 	return m_data[0];
 }
 
-template <typename T> ErrorOr<void> Vector<T>::resize(size_type size) {
+template <typename T> ErrorOr<void> Vector<T>::resize(size_type size, const T &value) {
 	TRY(ensure_capacity(size));
 	if (size < m_size)
 		for (size_type i = size; i < m_size; i++)
 			m_data[i].~T();
 	if (size > m_size)
 		for (size_type i = m_size; i < size; i++)
-			new (m_data + i) T();
+			new (m_data + i) T(value);
 	m_size = size;
 	return {};
 }
