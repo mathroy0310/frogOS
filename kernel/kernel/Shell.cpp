@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/21 00:38:42 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 15:51:22 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,8 @@
 #include <FROG/StringView.h>
 #include <FROG/Vector.h>
 #include <kernel/CPUID.h>
+#include <kernel/Device.h>
 #include <kernel/IO.h>
-#include <kernel/Input.h>
 #include <kernel/PCI.h>
 #include <kernel/PIT.h>
 #include <kernel/Process.h>
@@ -34,7 +34,6 @@ namespace Kernel {
 static auto s_default_prompt = "\\[\e[32m\\]user\\[\e[m\\]:\\[\e[34m\\]\\w\\[\e[m\\]# "sv;
 
 Shell::Shell(TTY *tty) : m_tty(tty) {
-	Input::register_key_event_callback({&Shell::key_event_callback, this});
 	MUST(set_prompt(s_default_prompt));
 	MUST(m_buffer.push_back(""sv));
 }
@@ -83,8 +82,9 @@ FROG::ErrorOr<void> Shell::update_prompt() {
 void Shell::run() {
 	TTY_PRINT("{}", m_prompt);
 	for (;;) {
-		PIT::sleep(1);
-		Input::update();
+		Input::KeyEvent event;
+		MUST(((CharacterDevice *) DeviceManager::get().devices()[0])->read({(uint8_t *) &event, sizeof(event)}));
+		key_event_callback(event);
 	}
 }
 
@@ -478,7 +478,7 @@ static uint32_t get_unicode_character_count(FROG::StringView sv) {
 }
 
 void Shell::key_event_callback(Input::KeyEvent event) {
-	if (!event.pressed) return;
+	if (event.released()) return;
 
 	FROG::String &current_buffer = m_buffer[m_cursor_pos.line];
 
@@ -520,7 +520,7 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 	case Input::Key::Tab:
 		break;
 
-	case Input::Key::Left:
+	case Input::Key::ArrowLeft:
 		if (m_cursor_pos.index > 0) {
 			uint32_t len = get_last_length(current_buffer.sv().substring(0, m_cursor_pos.index));
 			m_cursor_pos.index -= len;
@@ -528,7 +528,7 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 		}
 		break;
 
-	case Input::Key::Right:
+	case Input::Key::ArrowRight:
 		if (m_cursor_pos.index < current_buffer.size()) {
 			uint32_t len = get_next_length(current_buffer.sv().substring(m_cursor_pos.index));
 			m_cursor_pos.index += len;
@@ -536,7 +536,7 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 		}
 		break;
 
-	case Input::Key::Up:
+	case Input::Key::ArrowUp:
 		if (m_cursor_pos.line > 0) {
 			const auto &new_buffer = m_buffer[m_cursor_pos.line - 1];
 			m_cursor_pos.line--;
@@ -546,7 +546,7 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 		}
 		break;
 
-	case Input::Key::Down:
+	case Input::Key::ArrowDown:
 		if (m_cursor_pos.line < m_buffer.size() - 1) {
 			const auto &new_buffer = m_buffer[m_cursor_pos.line + 1];
 			m_cursor_pos.line++;
@@ -556,7 +556,7 @@ void Shell::key_event_callback(Input::KeyEvent event) {
 		}
 		break;
 	case Input::Key::A:
-		if (event.modifiers & 2) {
+		if (event.ctrl()) {
 			m_cursor_pos.col = m_cursor_pos.index = 0;
 			break;
 		}

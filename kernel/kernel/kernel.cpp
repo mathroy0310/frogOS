@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/21 01:01:46 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 15:40:52 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@
 #include <kernel/GDT.h>
 #include <kernel/IDT.h>
 #include <kernel/IO.h>
-#include <kernel/Input.h>
+#include <kernel/Input/PS2Controller.h>
 #include <kernel/InterruptController.h>
 #include <kernel/MMU.h>
 #include <kernel/PCI.h>
@@ -115,6 +115,7 @@ extern "C" uintptr_t g_userspace_end;
 extern void userspace_entry();
 
 void init2(void *);
+void device_updater(void *);
 
 extern "C" void kernel_main() {
 	using namespace Kernel;
@@ -158,9 +159,6 @@ extern "C" void kernel_main() {
 
 	PIT::initialize();
 	dprintln("PIT initialized");
-
-	if (!Input::initialize()) Kernel::panic("Could not initialize Input drivers");
-	dprintln("Input initialized");
 
 	MUST(Scheduler::initialize());
 	Scheduler &scheduler = Scheduler::get();
@@ -210,19 +208,31 @@ extern "C" void kernel_main() {
 	))));
 #else
 	MUST(scheduler.add_thread(MUST(Thread::create(init2, tty1, nullptr))));
+	MUST(scheduler.add_thread(MUST(Thread::create(device_updater))));
 #endif
 	scheduler.start();
 	ASSERT(false);
 }
 
+void device_updater(void *) {
+	while (true) {
+		Kernel::DeviceManager::get().update();
+		PIT::sleep(1);
+	}
+}
+
 void init2(void *tty1_ptr) {
 	using namespace Kernel;
+	using namespace Kernel::Input;
 
 	TTY *tty1 = (TTY *) tty1_ptr;
 
 	MUST(VirtualFileSystem::initialize());
 	if (auto res = VirtualFileSystem::get().mount_test(); res.is_error())
 		dwarnln("{}", res.error());
+
+	if (auto res = PS2Controller::initialize(); res.is_error()) dprintln("{}", res.error());
+
 	MUST(Process::create_kernel(
 	    [](void *tty1) {
 		    Shell *shell = new Shell((TTY *) tty1);

@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/05 01:34:45 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/09/21 00:55:17 by maroy            ###   ########.fr        #
+#    Updated: 2024/09/21 15:32:52 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -53,11 +53,14 @@ kernel/APIC.o					\
 kernel/build_libc.o				\
 kernel/CPUID.o					\
 kernel/Debug.o 					\
+kernel/Device.o 				\
 kernel/Font.o					\
 kernel/FS/Ext2.o				\
 kernel/FS/Inode.o				\
 kernel/FS/VirtualFileSystem.o	\
-kernel/Input.o					\
+kernel/Input/PS2Controller.o	\
+kernel/Input/PS2Keyboard.o		\
+kernel/Input/PS2Keymap.o		\
 kernel/InterruptController.o	\
 kernel/kernel.o					\
 kernel/kmalloc.o				\
@@ -125,6 +128,7 @@ always:
 	mkdir -p $(BUILDDIR)/$(ARCHDIR)
 	mkdir -p $(BUILDDIR)/kernel
 	mkdir -p $(BUILDDIR)/kernel/FS
+	mkdir -p $(BUILDDIR)/kernel/Input
 	mkdir -p $(BUILDDIR)/kernel/Storage
 	mkdir -p $(BUILDDIR)/userspace
 	mkdir -p $(BUILDDIR)/font

@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:45:21 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/03 16:02:19 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 15:49:27 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 #include <FROG/String.h>
 #include <FROG/Vector.h>
-#include <kernel/Input.h>
+#include <kernel/Input/KeyEvent.h>
 #include <kernel/TTY.h>
 
 namespace Kernel {
