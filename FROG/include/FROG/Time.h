@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:17:07 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:46:59 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 00:33:48 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,14 +19,17 @@
 namespace FROG {
 
 struct Time {
-	uint8_t second;
-	uint8_t minute;
-	uint8_t hour;
-	uint8_t week_day;
-	uint8_t day;
-	uint8_t month;
-	int     year;
+	uint32_t year;
+	uint8_t  month;
+	uint8_t  day;
+	uint8_t  hour;
+	uint8_t  minute;
+	uint8_t  second;
+	uint8_t  week_day;
 };
+
+uint64_t  to_unix_time(const FROG::Time &);
+FROG::Time from_unix_time(uint64_t);
 
 } // namespace FROG
 

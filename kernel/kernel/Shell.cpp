@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/21 00:23:43 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 00:38:42 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -207,7 +207,6 @@ FROG::ErrorOr<void> Shell::process_command(const FROG::Vector<FROG::String> &arg
 			return FROG::Error::from_c_string("'date' does not support command line arguments");
 		}
 		TTY_PRINTLN("{}", RTC::get_current_time());
-		TTY_PRINTLN("{}", RTC::get_unix_time());
 	} else if (arguments.front() == "echo") {
 		if (arguments.size() > 1) {
 			TTY_PRINT("{}", arguments[1]);
@@ -337,8 +336,8 @@ FROG::ErrorOr<void> Shell::process_command(const FROG::Vector<FROG::String> &arg
 		};
 
 		FROG::String path = (arguments.size() == 2) ? arguments[1] : Process::current()->working_directory();
-		int                      fd = TRY(Process::current()->open(path, O_RDONLY));
-		FROG::ScopeGuard          _([fd] { MUST(Process::current()->close(fd)); });
+		int                        fd = TRY(Process::current()->open(path, O_RDONLY));
+		FROG::ScopeGuard           _([fd] { MUST(Process::current()->close(fd)); });
 		FROG::Vector<FROG::String> all_entries;
 		FROG::Vector<FROG::String> entries;
 		while (!(entries = TRY(Process::current()->read_directory_entries(fd))).empty()) {
@@ -350,7 +349,7 @@ FROG::ErrorOr<void> Shell::process_command(const FROG::Vector<FROG::String> &arg
 		TRY(entry_prefix.append(path));
 		TRY(entry_prefix.push_back('/'));
 		for (const auto &entry : all_entries) {
-			stat        st;
+			stat         st;
 			FROG::String entry_path;
 			TRY(entry_path.append(entry_prefix));
 			TRY(entry_path.append(entry));
@@ -374,6 +373,36 @@ FROG::ErrorOr<void> Shell::process_command(const FROG::Vector<FROG::String> &arg
 			TTY_PRINT("{}", FROG::StringView(buffer, n_read));
 		}
 		TTY_PRINTLN("");
+	} else if (arguments.front() == "stat") {
+		if (arguments.size() != 2) return FROG::Error::from_c_string("usage: 'stat path'");
+
+		stat st;
+		TRY(Process::current()->stat(arguments[1], &st));
+		auto mode_string = [](mode_t mode) {
+			static char buffer[11]{};
+			buffer[0] = (mode & Inode::Mode::IFDIR) ? 'd' : '-';
+			buffer[1] = (mode & Inode::Mode::IRUSR) ? 'r' : '-';
+			buffer[2] = (mode & Inode::Mode::IWUSR) ? 'w' : '-';
+			buffer[3] = (mode & Inode::Mode::IXUSR) ? 'x' : '-';
+			buffer[4] = (mode & Inode::Mode::IRGRP) ? 'r' : '-';
+			buffer[5] = (mode & Inode::Mode::IWGRP) ? 'w' : '-';
+			buffer[6] = (mode & Inode::Mode::IXGRP) ? 'x' : '-';
+			buffer[7] = (mode & Inode::Mode::IROTH) ? 'r' : '-';
+			buffer[8] = (mode & Inode::Mode::IWOTH) ? 'w' : '-';
+			buffer[9] = (mode & Inode::Mode::IXOTH) ? 'x' : '-';
+			return (const char *) buffer;
+		};
+		const char *type = (st.st_mode & Inode::Mode::IFREG) ? "regular file" :
+		                   (st.st_mode & Inode::Mode::IFDIR) ? "directory" :
+		                                                       "other";
+
+		TTY_PRINTLN("  File: {}", arguments[1]);
+		TTY_PRINTLN("  Size: {}\tBlocks: {}\tIO Block: {}\t {}", st.st_size, st.st_blocks, st.st_blksize, type);
+		TTY_PRINTLN("Device: {},{}\tInode: {}\tLinks: {}", st.st_dev, st.st_rdev, st.st_ino, st.st_nlink);
+		TTY_PRINTLN("Access: ({}/{})\tUid: {}\tGid: {}", st.st_mode, mode_string(st.st_mode), st.st_uid, st.st_gid);
+		TTY_PRINTLN("Access: {}", FROG::from_unix_time(st.st_atime));
+		TTY_PRINTLN("Modify: {}", FROG::from_unix_time(st.st_mtime));
+		TTY_PRINTLN("Change: {}", FROG::from_unix_time(st.st_ctime));
 	} else if (arguments.front() == "cd") {
 		if (arguments.size() > 2) return FROG::Error::from_c_string("usage 'cd path'");
 		FROG::StringView path = arguments.size() == 2 ? arguments[1].sv() : "/"sv;

@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/05 01:17:18 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/08/30 16:17:52 by maroy            ###   ########.fr        #
+#    Updated: 2024/09/21 00:31:02 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -46,6 +46,7 @@ $(ARCH_FREEOBJS)	\
 FROG/Memory.o		\
 FROG/String.o		\
 FROG/StringView.o	\
+FROG/Time.o			\
  
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \

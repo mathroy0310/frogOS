@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/04 20:04:41 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/20 02:01:53 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 00:35:04 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,31 +88,6 @@ FROG::Time get_current_time() {
 	if (time.year < CURRENT_YEAR) time.year += 100;
 
 	return time;
-}
-
-static bool is_leap_year(uint64_t year) {
-	if (year % 400 == 0) return true;
-	if (year % 100 == 0) return false;
-	if (year % 4 == 0) return true;
-	return false;
-}
-static uint64_t leap_days_since_epoch(const FROG::Time &time) {
-	uint64_t leap_years = 0;
-	for (int year = 1970; year < time.year; year++)
-		if (is_leap_year(year)) leap_years++;
-	if (is_leap_year(time.year))
-		if (time.month >= 3 || (time.month == 2 && time.day == 29)) leap_years++;
-	return leap_years;
-}
-uint64_t get_unix_time() {
-	auto     time = get_current_time();
-	uint64_t month_days[]{0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
-	uint64_t years = time.year - 1970;
-	uint64_t days = years * 365 + month_days[time.month - 1] + time.day + leap_days_since_epoch(time) - 1;
-	uint64_t hours = days * 24 + time.hour;
-	uint64_t minutes = hours * 60 + time.minute;
-	uint64_t seconds = minutes * 60 + time.second;
-	return seconds;
 }
 
 } // namespace RTC

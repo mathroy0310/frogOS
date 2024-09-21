@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:27:18 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/21 00:18:31 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 00:37:42 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -294,7 +294,7 @@ FROG::ErrorOr<void> Ext2Inode::create_file(FROG::StringView name, mode_t mode) {
 	if (!error_or.is_error()) return FROG::Error::from_errno(EEXISTS);
 	if (error_or.error().get_error_code() != ENOENT) return error_or.error();
 
-	uint64_t current_time = RTC::get_unix_time();
+	uint64_t current_time = FROG::to_unix_time(RTC::get_current_time());
 
 	Ext2::Inode ext2_inode;
 	ext2_inode.mode = mode;
@@ -366,7 +366,7 @@ FROG::ErrorOr<FROG::RefPtr<Inode>> Ext2Inode::read_directory_inode_impl(FROG::St
 	TRY(block_buffer.resize(block_size));
 
 	uint32_t data_block_count = blocks();
-	
+
 	for (uint32_t i = 0; i < data_block_count; i++) {
 		uint32_t block_index = TRY(data_block_index(i));
 		m_fs.read_block(block_index, block_buffer.span());
@@ -385,7 +385,6 @@ FROG::ErrorOr<FROG::RefPtr<Inode>> Ext2Inode::read_directory_inode_impl(FROG::St
 
 	return FROG::Error::from_errno(ENOENT);
 }
-
 
 bool Ext2Inode::operator==(const Inode &other) const {
 	if (type() != other.type()) return false;
