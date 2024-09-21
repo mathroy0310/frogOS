@@ -6,7 +6,7 @@
 #    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/05 01:34:45 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/09/03 16:54:15 by maroy            ###   ########.fr        #
+#    Updated: 2024/09/21 00:55:17 by maroy            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -48,6 +48,7 @@ BUILDDIR=$(abspath build)
 KERNEL_OBJS=					\
 $(KERNEL_ARCH_OBJS)				\
 font/prefs.o  					\
+kernel/ACPI.o					\
 kernel/APIC.o					\
 kernel/build_libc.o				\
 kernel/CPUID.o					\

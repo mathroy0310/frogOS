@@ -6,13 +6,15 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:19 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/20 01:42:25 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 01:01:46 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/Memory.h>
 #include <FROG/StringView.h>
 #include <FROG/Vector.h>
+#include <kernel/ACPI.h>
+#include <kernel/Arch.h>
 #include <kernel/Debug.h>
 #include <kernel/FS/VirtualFileSystem.h>
 #include <kernel/GDT.h>
@@ -147,6 +149,9 @@ extern "C" void kernel_main() {
 	dprintln("VESA initialized");
 	TTY *tty1 = new TTY(terminal_driver);
 	ASSERT(tty1);
+
+	MUST(ACPI::initialize());
+	dprintln("ACPI initialized");
 
 	InterruptController::initialize(cmdline.force_pic);
 	dprintln("Interrupt controller initialized");

@@ -6,11 +6,12 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 17:47:09 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/08/30 17:53:40 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 01:00:04 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <FROG/ScopeGuard.h>
+#include <kernel/ACPI.h>
 #include <kernel/APIC.h>
 #include <kernel/CPUID.h>
 #include <kernel/Debug.h>
@@ -33,34 +34,9 @@
 static constexpr uint32_t RSPD_SIZE = 20;
 static constexpr uint32_t RSPDv2_SIZE = 36;
 
-struct RSDP {
-	char     signature[8];
-	uint8_t  checksum;
-	char     OEMID[6];
-	uint8_t  revision;
-	uint32_t rsdt_address;
-	uint32_t v2_length;
-	uint64_t v2_xsdt_address;
-	uint8_t  v2_extended_checksum;
-	uint8_t  v2_reserved[3];
-} __attribute__((packed));
-
-struct SDTHeader {
-	char     signature[4];
-	uint32_t length;
-	uint8_t  revision;
-	uint8_t  checksum;
-	char     OEMID[6];
-	char     OEM_table_id[8];
-	uint32_t OEM_revision;
-	uint32_t creator_id;
-	uint32_t creator_revision;
-} __attribute__((packed));
-
-struct MADT {
-	SDTHeader header;
-	uint32_t  local_apic;
-	uint32_t  flags;
+struct MADT : public Kernel::ACPI::SDTHeader {
+	uint32_t local_apic;
+	uint32_t flags;
 } __attribute__((packed));
 
 struct MADTEntry {
@@ -110,93 +86,6 @@ union RedirectionEntry {
 	};
 };
 
-static bool is_rsdp(uintptr_t rsdp_addr) {
-	const RSDP *rsdp = (const RSDP *) rsdp_addr;
-
-	if (memcmp(rsdp->signature, "RSD PTR ", 8) != 0) return false;
-
-	{
-		uint8_t checksum = 0;
-		for (uint32_t i = 0; i < RSPD_SIZE; i++)
-			checksum += ((uint8_t *) rsdp)[i];
-		if (checksum != 0) return false;
-	}
-
-	if (rsdp->revision == 2) {
-		uint8_t checksum = 0;
-		for (uint32_t i = 0; i < RSPDv2_SIZE; i++)
-			checksum += ((uint8_t *) rsdp)[i];
-		if (checksum != 0) return false;
-	}
-
-	return true;
-}
-
-static uintptr_t locate_rsdp() {
-	// Look in main BIOS area below 1 MB
-	for (uintptr_t addr = 0x000E0000; addr < 0x000FFFFF; addr += 16)
-		if (is_rsdp(addr)) return addr;
-	return 0;
-}
-
-static bool is_valid_std_header(const SDTHeader *header) {
-	uint8_t sum = 0;
-	for (uint32_t i = 0; i < header->length; i++)
-		sum += ((uint8_t *) header)[i];
-	return sum == 0;
-}
-
-uintptr_t locate_madt(uintptr_t rsdp_addr) {
-	uintptr_t entry_address_base = 0;
-	ptrdiff_t entry_pointer_size = 0;
-	uint32_t  entry_count = 0;
-
-	const RSDP *rsdp = (const RSDP *) rsdp_addr;
-	if (rsdp->revision == 2) {
-		uintptr_t xsdt_addr = rsdp->v2_xsdt_address;
-		MMU::get().allocate_page(xsdt_addr, MMU::Flags::ReadWrite | MMU::Flags::Present);
-		entry_address_base = xsdt_addr + sizeof(SDTHeader);
-		entry_count = (((const SDTHeader *) xsdt_addr)->length - sizeof(SDTHeader)) / 8;
-		entry_pointer_size = 8;
-		MMU::get().unallocate_page(xsdt_addr);
-	} else {
-		uintptr_t rsdt_addr = rsdp->rsdt_address;
-		MMU::get().allocate_page(rsdt_addr, MMU::Flags::ReadWrite | MMU::Flags::Present);
-		entry_address_base = rsdt_addr + sizeof(SDTHeader);
-		entry_count = (((const SDTHeader *) rsdt_addr)->length - sizeof(SDTHeader)) / 4;
-		entry_pointer_size = 4;
-		MMU::get().unallocate_page(rsdt_addr);
-	}
-
-	for (uint32_t i = 0; i < entry_count; i++) {
-		uintptr_t entry_addr_ptr = entry_address_base + i * entry_pointer_size;
-		MMU::get().allocate_page(entry_addr_ptr, MMU::Flags::ReadWrite | MMU::Flags::Present);
-
-		union dummy {
-			uint32_t addr32;
-			uint64_t addr64;
-		} __attribute__((aligned(1), packed));
-
-		uintptr_t entry_addr;
-		if (entry_pointer_size == 4)
-			entry_addr = ((dummy *) entry_addr_ptr)->addr32;
-		else
-			entry_addr = ((dummy *) entry_addr_ptr)->addr64;
-		MMU::get().allocate_page(entry_addr, MMU::Flags::ReadWrite | MMU::Flags::Present);
-
-		FROG::ScopeGuard _([&]() {
-			MMU::get().unallocate_page(entry_addr);
-			MMU::get().unallocate_page(entry_addr_ptr);
-		});
-
-		const SDTHeader *entry = (const SDTHeader *) entry_addr;
-		if (memcmp(entry->signature, "APIC", 4) == 0 && is_valid_std_header(entry))
-			return entry_addr;
-	}
-
-	return 0;
-}
-
 APIC *APIC::create() {
 	uint32_t ecx, edx;
 	CPUID::get_features(ecx, edx);
@@ -205,21 +94,13 @@ APIC *APIC::create() {
 		return nullptr;
 	}
 
-	uintptr_t rsdp_addr = locate_rsdp();
-	if (!rsdp_addr) {
-		dprintln("Could not locate RSDP");
+	auto header_or_error = Kernel::ACPI::get().get_header("APIC");
+	if (header_or_error.is_error()) {
+		dprintln("{}", header_or_error.error());
 		return nullptr;
 	}
 
-	uintptr_t madt_addr = locate_madt(rsdp_addr);
-	if (!madt_addr) {
-		dprintln("Could not find MADT in RSDP");
-		return nullptr;
-	}
-
-	MMU::get().allocate_page(madt_addr, MMU::Flags::ReadWrite | MMU::Flags::Present);
-
-	const MADT *madt = (const MADT *) madt_addr;
+	const MADT *madt = (const MADT *) header_or_error.value();
 
 	APIC *apic = new APIC;
 	apic->m_local_apic = madt->local_apic;
@@ -227,7 +108,7 @@ APIC *APIC::create() {
 		apic->m_irq_overrides[i] = i;
 
 	uintptr_t madt_entry_addr = (uintptr_t) madt + sizeof(MADT);
-	while (madt_entry_addr < (uintptr_t) madt + madt->header.length) {
+	while (madt_entry_addr < (uintptr_t) madt + madt->length) {
 		const MADTEntry *entry = (const MADTEntry *) madt_entry_addr;
 		switch (entry->type) {
 		case 0:
@@ -257,7 +138,8 @@ APIC *APIC::create() {
 		}
 		madt_entry_addr += entry->length;
 	}
-	MMU::get().unallocate_page((uintptr_t) madt);
+	
+	Kernel::ACPI::get().unmap_header(madt);
 
 	if (apic->m_local_apic == 0 || apic->m_io_apics.empty()) {
 		dprintln("MADT did not provide necessary information");
