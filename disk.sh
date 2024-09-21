@@ -55,13 +55,12 @@ sudo umount $MOUNT_DIR
 
 sudo mkfs.ext2 $PARTITION2
 
-# Create the mount point directory if it doesn't exist
-sudo mkdir -p $MOUNT_DIR
-
 sudo mount $PARTITION2 $MOUNT_DIR
+# Create the mount point directory if it doesn't exist
+sudo mkdir -p ${MOUNT_DIR}/mnt/
 
 sudo cp -r ${SYSROOT}/* ${MOUNT_DIR}/
-sudo mkdir -p ${MOUNT_DIR}/mnt/
+
 
 sudo grub-install --no-floppy --target=i386-pc --modules="normal ext2 multiboot" --boot-directory=${MOUNT_DIR}/boot $LOOP_DEV
 
@@ -105,7 +104,7 @@ menuentry "Exit" {
       halt
 }
 
-'  | sudo tee ${MOUNT_DIR}/boot/grub/grub.cfg
+'  | sudo cat > ${MOUNT_DIR}/boot/grub/grub.cfg
 
 sudo umount $MOUNT_DIR
 
