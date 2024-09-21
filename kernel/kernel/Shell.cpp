@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/05 01:34:34 by mathroy0310       #+#    #+#             */
-/*   Updated: 2024/09/20 14:41:40 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 00:23:43 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -321,14 +321,6 @@ FROG::ErrorOr<void> Shell::process_command(const FROG::Vector<FROG::String> &arg
 	} else if (arguments.front() == "ls") {
 		if (arguments.size() > 2) return FROG::Error::from_c_string("usage: 'ls [path]'");
 
-		FROG::String path = (arguments.size() == 2) ? arguments[1] : Process::current()->working_directory();
-
-		int              fd = TRY(Process::current()->open(path, O_RDONLY));
-		FROG::ScopeGuard _([fd] { MUST(Process::current()->close(fd)); });
-
-		auto &directory = Process::current()->inode_for_fd(fd);
-		auto  inodes = TRY(directory.directory_inodes());
-
 		auto mode_string = [](mode_t mode) {
 			static char buffer[11]{};
 			buffer[0] = (mode & Inode::Mode::IFDIR) ? 'd' : '-';
@@ -344,13 +336,31 @@ FROG::ErrorOr<void> Shell::process_command(const FROG::Vector<FROG::String> &arg
 			return (const char *) buffer;
 		};
 
-		for (auto &inode : inodes)
-			if (inode->ifdir())
-				TTY_PRINTLN("  {} {7} \e[34m{}\e[m", mode_string(inode->mode()), inode->size(),
-				            inode->name());
-		for (auto &inode : inodes)
-			if (!inode->ifdir())
-				TTY_PRINTLN("  {} {7} {}", mode_string(inode->mode()), inode->size(), inode->name());
+		FROG::String path = (arguments.size() == 2) ? arguments[1] : Process::current()->working_directory();
+		int                      fd = TRY(Process::current()->open(path, O_RDONLY));
+		FROG::ScopeGuard          _([fd] { MUST(Process::current()->close(fd)); });
+		FROG::Vector<FROG::String> all_entries;
+		FROG::Vector<FROG::String> entries;
+		while (!(entries = TRY(Process::current()->read_directory_entries(fd))).empty()) {
+			TRY(all_entries.reserve(all_entries.size() + entries.size()));
+			for (auto &entry : entries)
+				TRY(all_entries.push_back(entry));
+		}
+		FROG::String entry_prefix;
+		TRY(entry_prefix.append(path));
+		TRY(entry_prefix.push_back('/'));
+		for (const auto &entry : all_entries) {
+			stat        st;
+			FROG::String entry_path;
+			TRY(entry_path.append(entry_prefix));
+			TRY(entry_path.append(entry));
+			TRY(Process::current()->stat(entry_path, &st));
+			const char *color = (st.st_mode & Inode::Mode::IFDIR) ? "34" :
+			                    (st.st_mode & Inode::Mode::IXUSR) ? "32" :
+			                                                        "";
+
+			TTY_PRINTLN("  {} {7} \e[{}m{}\e[m", mode_string(st.st_mode), st.st_size, color, entry);
+		}
 	} else if (arguments.front() == "cat") {
 		if (arguments.size() != 2) return FROG::Error::from_c_string("usage: 'cat path'");
 

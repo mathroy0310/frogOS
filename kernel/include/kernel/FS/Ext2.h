@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 14:24:57 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 13:15:29 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 00:10:57 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,15 +128,28 @@ class Ext2FS;
 
 class Ext2Inode : public Inode {
   public:
-	virtual uid_t  uid() const override { return m_inode.uid; }
-	virtual gid_t  gid() const override { return m_inode.gid; }
-	virtual size_t size() const override { return m_inode.size; }
-
-	virtual mode_t mode() const override { return m_inode.mode; }
+	virtual ino_t    ino() const override { return m_index; };
+	virtual mode_t   mode() const override { return m_inode.mode; }
+	virtual nlink_t  nlink() const override { return m_inode.links_count; }
+	virtual uid_t    uid() const override { return m_inode.uid; }
+	virtual gid_t    gid() const override { return m_inode.gid; }
+	virtual off_t    size() const override { return m_inode.size; }
+	virtual timespec atime() const override {
+		return timespec{.tv_sec = m_inode.atime, .tv_nsec = 0};
+	}
+	virtual timespec mtime() const override {
+		return timespec{.tv_sec = m_inode.mtime, .tv_nsec = 0};
+	}
+	virtual timespec ctime() const override {
+		return timespec{.tv_sec = m_inode.ctime, .tv_nsec = 0};
+	}
+	virtual blksize_t blksize() const override;
+	virtual blkcnt_t  blocks() const override;
 
 	virtual FROG::StringView name() const override { return m_name; }
 
-	virtual FROG::ErrorOr<size_t> read(size_t, void *, size_t) override;
+	virtual FROG::ErrorOr<size_t>                  read(size_t, void *, size_t) override;
+	virtual FROG::ErrorOr<FROG::Vector<FROG::String>> read_directory_entries_impl(size_t) override;
 
 	virtual FROG::ErrorOr<void> create_file(FROG::StringView, mode_t) override;
 
@@ -144,8 +157,7 @@ class Ext2Inode : public Inode {
 	virtual bool operator==(const Inode &other) const override;
 
   protected:
-	virtual FROG::ErrorOr<FROG::Vector<FROG::RefPtr<Inode>>> directory_inodes_impl() override;
-	virtual FROG::ErrorOr<FROG::RefPtr<Inode>> directory_find_impl(FROG::StringView) override;
+	virtual FROG::ErrorOr<FROG::RefPtr<Inode>> read_directory_inode_impl(FROG::StringView) override;
 
   private:
 	FROG::ErrorOr<uint32_t> data_block_index(uint32_t);

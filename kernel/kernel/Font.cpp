@@ -6,7 +6,7 @@
 /*   By: maroy <maroy@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/27 01:56:39 by maroy             #+#    #+#             */
-/*   Updated: 2024/09/20 01:50:08 by maroy            ###   ########.fr       */
+/*   Updated: 2024/09/21 00:20:31 by maroy            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ extern uint8_t _binary_font_prefs_psf_end[];
 namespace Kernel {
 
 FROG::ErrorOr<Font> Font::prefs() {
-	size_t              font_data_size = _binary_font_prefs_psf_end - _binary_font_prefs_psf_start;
+	size_t font_data_size = _binary_font_prefs_psf_end - _binary_font_prefs_psf_start;
 	FROG::Span<const uint8_t> font_data(_binary_font_prefs_psf_start, font_data_size);
 	return parse_psf1(font_data);
 }
@@ -49,10 +49,11 @@ FROG::ErrorOr<Font> Font::load(FROG::StringView path) {
 	int              fd = TRY(Process::current()->open(path, O_RDONLY));
 	FROG::ScopeGuard _([fd] { MUST(Process::current()->close(fd)); });
 
-	size_t                file_size = Process::current()->inode_for_fd(fd).size();
+	stat st;
+	TRY(Process::current()->fstat(fd, &st));
 	FROG::Vector<uint8_t> file_data;
-	TRY(file_data.resize(file_size));
-	TRY(Process::current()->read(fd, file_data.data(), file_size));
+	TRY(file_data.resize(st.st_size));
+	TRY(Process::current()->read(fd, file_data.data(), st.st_size));
 
 	if (file_data.size() < 4) return FROG::Error::from_c_string("Font file is too small");
 
