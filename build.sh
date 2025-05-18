@@ -10,10 +10,23 @@
 #                                                                              #
 # **************************************************************************** #
 
-#!/bin/sh
+echo "===== Starting OS Build Process ====="
+
 set -e
+
+echo "Installing system headers first..."
 . ./headers.sh
- 
+echo "  ✓ Headers installation complete"
+
+echo "Building and installing all projects: $PROJECTS"
 for PROJECT in $PROJECTS; do
+  echo "========================================"
+  echo "  → Building project: $PROJECT"
+  echo "    • Changing to directory: $PROJECT"
+  echo "    • Running make install with DESTDIR=$SYSROOT"
   (cd $PROJECT && DESTDIR="$SYSROOT" $MAKE install)
+  echo "    ✓ Project $PROJECT built and installed successfully"
+  echo "========================================"
 done
+
+echo "All components have been built and installed to $SYSROOT"

@@ -12,11 +12,11 @@
 
 #!/bin/sh
 set -e
-. ./disk.sh
+# . ./disk.sh
 
-qemu-system-$(./target-triplet-to-arch.sh $HOST) 			\
-    -m 128													\
-    -smp 2													\
-    -drive format=raw,media=disk,file=frog-os.img			\
-    -serial stdio 											\
-	-accel kvm												\
+qemu-system-$(sh ./target-triplet-to-arch.sh $(sh default-host.sh))\
+    -m 128													        \
+    -smp 2													        \
+    -drive format=raw,media=disk,file=frog-os.img			        \
+    -serial stdio 											        \
+	-accel kvm											        	\

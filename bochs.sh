@@ -1,8 +1,8 @@
 set -e
-. ./disk.sh
+./disk.sh
 
 BOCHS_CONFIG_FILE=bochsrc
-COM1_TERMINAL=kitty
+COM1_TERMINAL=foot
 COM1_DEVICE_FILE=com1-term-device
 
 $COM1_TERMINAL sh -c "tty > $COM1_DEVICE_FILE && sleep infinity" &

@@ -1,18 +1,16 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/08/04 11:38:17 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/08/30 15:31:22 by maroy            ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
 
-DEFAULT_HOST!=../default-host.sh
+ROOT_DIR:=$(shell dirname $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
+$(info ===== Build Configuration [LIBC] =====)
+$(info Root directory: $(ROOT_DIR))
+
+DEFAULT_HOST:=$(shell sh $(ROOT_DIR)/default-host.sh)
+$(info Using default-host.sh from: $(DEFAULT_HOST))
+
 HOST?=DEFAULT_HOST
-HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
+$(info HOST set to: $(HOST))
+
+HOSTARCH:=$(shell sh $(ROOT_DIR)/target-triplet-to-arch.sh $(HOST))
+$(info Host architecture: $(HOSTARCH))
  
 CFLAGS?=-O2 -g
 CPPFLAGS?=
@@ -25,13 +23,18 @@ EXEC_PREFIX?=$(PREFIX)
 INCLUDEDIR?=$(PREFIX)/include
 LIBDIR?=$(EXEC_PREFIX)/lib
  
+$(info CFLAGS: $(CFLAGS))
+$(info DESTDIR: $(DESTDIR))
+$(info PREFIX: $(PREFIX))
+
 CFLAGS:=$(CFLAGS) -D__is_libc -Iinclude -ffreestanding -Wall -Wextra -Werror=return-type
 CPPFLAGS:=$(CPPFLAGS)
 LIBK_CFLAGS:=$(CFLAGS) -D__is_libk
 LIBK_CPPFLAGS:=$(CPPFLAGS)
  
 ARCHDIR=arch/$(HOSTARCH)
- 
+$(info Architecture directory: $(ARCHDIR))
+
 include $(ARCHDIR)/make.config
  
 CFLAGS:=$(CFLAGS) $(ARCH_CFLAGS)
@@ -40,7 +43,8 @@ LIBK_CFLAGS:=$(LIBK_CFLAGS) $(KERNEL_ARCH_CFLAGS)
 LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
  
 BUILDDIR=$(abspath build)
- 
+$(info Build directory: $(BUILDDIR))
+
 FREEOBJS=			\
 $(ARCH_FREEOBJS)	\
 ctype.o             \
@@ -76,13 +80,13 @@ BINARIES=libk.a
 .SUFFIXES: .o .libk.o .cpp .S
  
 all: $(BINARIES)
- 
+
 libc.a: always $(OBJS)
 	cd $(BUILDDIR) && $(AR) rcs $@ $(OBJS)
- 
+
 libk.a: always $(LIBK_OBJS)
 	cd $(BUILDDIR) && $(AR) rcs $@ $(LIBK_OBJS)
- 
+
 .cpp.o:
 	$(CXX) -MD -c $< -o $(BUILDDIR)/$@ $(CFLAGS) $(CPPFLAGS)
  

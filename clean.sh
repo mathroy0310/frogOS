@@ -11,12 +11,23 @@
 # **************************************************************************** #
 
 #!/bin/sh
+echo "===== Starting Clean Script ====="
+
 set -e
+
+echo "Loading configuration from config.sh..."
 . ./config.sh
  
+ echo "Building and installing all projects: $PROJECTS"
 for PROJECT in $PROJECTS; do
+  echo "========================================"
+  echo "  → Building project: $PROJECT"
+  echo "    • Changing to directory: $PROJECT"
   (cd $PROJECT && $MAKE clean)
+  echo "    ✓ Project $PROJECT built and installed successfully"
+  echo "========================================"
 done
  
 rm -rf sysroot
 rm -rf frog-os.img
+echo "===== Done Clean Script ====="

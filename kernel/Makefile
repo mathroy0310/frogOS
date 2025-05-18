@@ -1,18 +1,15 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: maroy <maroy@student.42.fr>                +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/08/05 01:34:45 by mathroy0310       #+#    #+#              #
-#    Updated: 2024/09/21 15:32:52 by maroy            ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+ROOT_DIR:=$(shell dirname $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
+$(info ===== Build Configuration [KERNEL] =====)
+$(info Root directory: $(ROOT_DIR))
 
-DEFAULT_HOST!=../default-host.sh
+DEFAULT_HOST:=$(shell sh $(ROOT_DIR)/default-host.sh)
+$(info Using default-host.sh from: $(DEFAULT_HOST))
+
 HOST?=DEFAULT_HOST
-HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
+$(info HOST set to: $(HOST))
+
+HOSTARCH:=$(shell sh $(ROOT_DIR)/target-triplet-to-arch.sh $(HOST))
+$(info Host architecture: $(HOSTARCH))
  
 CFLAGS?=-O2 -g
 CPPFLAGS?=
@@ -25,12 +22,18 @@ EXEC_PREFIX?=$(PREFIX)
 BOOTDIR?=$(EXEC_PREFIX)/boot
 INCLUDEDIR?=$(PREFIX)/include
  
+$(info CFLAGS: $(CFLAGS))
+$(info DESTDIR: $(DESTDIR))
+$(info PREFIX: $(PREFIX))
+
 CFLAGS:=$(CFLAGS) -D__is_kernel -D__arch=$(HOSTARCH) -Iinclude -fstack-protector -ffreestanding -Wall -Wextra -Wno-unused-function -Werror=return-type
 CPPFLAGS:=$(CPPFLAGS) -fno-rtti -fno-exceptions -fno-omit-frame-pointer -mno-sse -mno-sse2
 LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -L$(SYSROOT)/usr/lib -lk -lfrogk -lgcc
  
 ARCHDIR=arch/$(HOSTARCH)
+$(info Architecture directory: $(ARCHDIR))
+
 
 include $(ARCHDIR)/make.config
  
@@ -44,6 +47,8 @@ CFLAGS:=$(CFLAGS) -fsanitize=undefined
 endif
 
 BUILDDIR=$(abspath build)
+$(info Build directory: $(BUILDDIR))
+
  
 KERNEL_OBJS=					\
 $(KERNEL_ARCH_OBJS)				\

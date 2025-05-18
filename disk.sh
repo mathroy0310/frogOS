@@ -26,10 +26,7 @@ sed -e 's/\s*\([-\+[:alnum:]]*\).*/\1/' << EOF | fdisk $DISK_NAME
 	  # default (to the end of disk)
   t     # set type
   1     # ... of partition 1
-  4     # bios boot partition
-  t     # set type
-  2     # ... of partition 2
-  20    # Linux filesystem
+  4     # bios . ./disk.shx filesystem
   x	  # expert menu
   n     # partition name
   3	  # ... of partition 3
@@ -50,7 +47,7 @@ PARTITION3=${LOOP_DEV}p3
 
 sudo mkfs.ext2 $PARTITION3
 sudo mount $PARTITION3 $MOUNT_DIR
-echo 'hello from mnt' > ${MOUNT_DIR}/hello.txt
+sudo echo 'hello from mnt' > ${MOUNT_DIR}/hello.txt
 sudo umount $MOUNT_DIR
 
 sudo mkfs.ext2 $PARTITION2
@@ -64,7 +61,7 @@ sudo cp -r ${SYSROOT}/* ${MOUNT_DIR}/
 
 sudo grub-install --no-floppy --target=i386-pc --modules="normal ext2 multiboot" --boot-directory=${MOUNT_DIR}/boot $LOOP_DEV
 
-sudo cp assets/frogbg.jpg ${MOUNT_DIR}/boot/grub/background.jpg
+sudo cp assets/frog.jpg ${MOUNT_DIR}/boot/grub/background.jpg
 
 echo -e '
 set timeout=5
